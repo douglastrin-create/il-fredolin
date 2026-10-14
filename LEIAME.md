@@ -11,7 +11,7 @@ Tempo total: 20 a 30 minutos, uma única vez. Tudo no plano gratuito.
    - Nome: `il-fredolin` · Região: **South America (São Paulo)** · crie e guarde a senha do banco.
 2. Quando o projeto terminar de criar: menu **SQL Editor** → **New query**.
    - Abra o arquivo `supabase/schema.sql` deste pacote, copie **tudo**, cole e clique em **Run**. Deve aparecer "Success".
-   - Nova query de novo: cole todo o `supabase/biblioteca_mestres.sql` e **Run** (são as 47 receitas dos mestres; ficam só no banco, visíveis apenas para Maestro e Chef).
+   - Nova query de novo: cole todo o `supabase/biblioteca_mestres.sql` e **Run** (são as receitas dos mestres; ficam só no banco, visíveis apenas para Maestro e Chef).
 3. Menu **Project Settings → API** (ou **Data API / API Keys**). Anote:
    - **Project URL** (algo como `https://abcdefgh.supabase.co`)
    - **anon public** key (começa com `eyJ…`) — ou, em projetos novos, a **publishable key** (`sb_publishable_…`).
