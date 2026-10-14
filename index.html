@@ -469,8 +469,8 @@ const PROF={
  gastro:{n:'Gastronômico (salgado)',sol:[30,42],fat:[5,14],msnf:[5,11],swt:[4,14],pod:[3,10],prot:[2,8],stab:[.2,.6],fz:[66,74],ov:[20,35],draw:[-11,-7],frt:null},
  semacucar:{n:'Sem açúcar / low-carb',sol:[30,40],fat:[6,12],msnf:[6,11],swt:[12,22],pod:[14,19],prot:[3,8],stab:[.3,.6],fz:[68,74],ov:[20,35],draw:[-11,-7],frt:null}
 };
-const STAB_RNG={tara:[.05,.2],pect:[.05,.2],citf:[.15,.6],gel:[.1,.3],acacia:[.2,1],neutro:[.25,.6],lbg:[.1,.3],guar:[.05,.2],xan:[.03,.15],carr:[.01,.03],cmc:[.1,.3],starch:[.5,3],lec:[.2,.5],mono:[.1,.3]};
-const STAB_N={tara:'Goma tara',pect:'Pectina',citf:'Fibra de citros',gel:'Gelatina',acacia:'Goma acácia',neutro:'Neutro',lbg:'Goma jataí (LBG)',guar:'Goma guar',xan:'Goma xantana',carr:'Carragena',cmc:'CMC',starch:'Amido',lec:'Lecitina',mono:'Mono e diglicerídeos'};
+const STAB_RNG={konj:[.1,.5],tara:[.05,.2],pect:[.05,.2],citf:[.15,.6],gel:[.1,.3],acacia:[.2,1],neutro:[.25,.6],lbg:[.1,.3],guar:[.05,.2],xan:[.03,.15],carr:[.01,.03],cmc:[.1,.3],starch:[.5,3],lec:[.2,.5],mono:[.1,.3]};
+const STAB_N={konj:'Glucomanano',tara:'Goma tara',pect:'Pectina',citf:'Fibra de citros',gel:'Gelatina',acacia:'Goma acácia',neutro:'Neutro',lbg:'Goma jataí (LBG)',guar:'Goma guar',xan:'Goma xantana',carr:'Carragena',cmc:'CMC',starch:'Amido',lec:'Lecitina',mono:'Mono e diglicerídeos'};
 
 /* ---------- PROCESSO PADRÃO ---------- */
 const PROC0={pastT:85,pastHold:30,pastHoldU:'s',coolMin:60,matH:8,matT:4,machine:'horiz',drawT:-9,drawMin:10,blastT:-35,hardMin:40,storeT:-20,storeFluct:1,serveFrom:'vitrine',fruitStage:'depois',alcStage:'depois',portion:90,labelPortion:60,markup:3.5};
@@ -498,22 +498,47 @@ const NCOMP={
  acacia:{n:'Goma acácia',c:{fib:87,w:10,ash:3},hyd:20,dose:[.2,1],f:{visc:1,anti:2,corpo:2,derr:1,siner:0,emul:3},cost:85},
  inu:{n:'Inulina',c:{inu:92,w:5,oth:3},hyd:20,dose:[1,4],f:{visc:1,anti:2,corpo:3,derr:1,siner:0,emul:0},cost:45},
  lec:{n:'Lecitina',c:{emul:97,w:1,oth:2},hyd:20,dose:[.2,.5],f:{visc:0,anti:0,corpo:1,derr:2,siner:0,emul:5},cost:90},
+ starch:{n:'Amido de milho (maisena)',c:{w:12,oth:88},hyd:85,dose:[1,3],f:{visc:3,anti:3,corpo:4,derr:2,siner:2,emul:0},cost:10},
+ konj:{n:'Glucomanano (konjac / salep)',c:{stab:90,w:10},hyd:60,dose:[.1,.5],f:{visc:5,anti:4,corpo:5,derr:5,siner:1,emul:0},cost:150},
  mono:{n:'Mono e diglicerídeos',c:{emul:100},hyd:60,dose:[.1,.3],f:{visc:0,anti:1,corpo:2,derr:3,siner:0,emul:5},cost:60},
  dex:{n:'Dextrose (veículo)',c:{glu:99.5,w:.5},hyd:20,dose:null,f:{},cost:16},
  malto:{n:'Maltodextrina DE 19 (veículo)',c:{gs:95,w:5},hyd:20,dose:null,f:{},cost:14},
  sac:{n:'Sacarose (veículo)',c:{suc:99.9,w:.1},hyd:20,dose:null,f:{},cost:5}
 };
 const NFUN=[['visc','Viscosidade da mistura'],['anti','Anti-recristalização'],['corpo','Corpo e cremosidade'],['derr','Resistência ao derretimento'],['siner','Proteção contra soro'],['emul','Emulsificação']];
+/* Blends de "Partir de" no Creator. Só fórmulas publicadas por mestres, tradições documentadas ou centros acadêmicos;
+   kind: mestre | tradicao | academia | casa. best = onde rende mais; note = por quê / cuidados; ref = fonte. */
 const NEUTRO_PRESETS=[
- {id:'nx_dondoli',name:'Addensanti Dondoli',src:'Sergio Dondoli · Corso di Gelateria',dose:5,parts:{citf:500,guar:200,lbg:300}},
- {id:'nx_migoya',name:'Stabilizer-Emulsifier Mix Migoya',src:'F. Migoya · Frozen Desserts, p. 371',dose:3.6,parts:{xan:200,lbg:250,guar:250,mono:200}},
- {id:'nx_migoyas',name:'Sorbet Stabilizer Mix Migoya',src:'F. Migoya · Frozen Desserts, p. 390',dose:3.6,parts:{gel:275,cmc:175,lbg:250,guar:250}},
- {id:'nx_fredolin',name:'Neutro Il Fredolin',src:'Sua formulação',dose:25,parts:{inu:350,acacia:100,lbg:30,guar:12,tara:8}}
+ {id:'nx_dondoli',name:'Addensanti Dondoli',src:'Sergio Dondoli · Corso di Gelateria',kind:'mestre',dairy:true,dose:5,parts:{citf:500,guar:200,lbg:300},
+  best:'Sorbetti e gelati di frutta; também cremas leves de vitrine.',note:'Fibra de citros + guar + jataí: a fibra retém água e segura o derretimento sem pesar; é o neutro de todas as receitas do curso de Dondoli (San Gimignano). Pasteurize a 85 °C para a jataí trabalhar inteira.',ref:'S. Dondoli, Corso di Gelateria Artigianale'},
+ {id:'nx_migoya',name:'Stabilizer-Emulsifier Mix Migoya',src:'F. Migoya · Frozen Desserts, p. 371',kind:'mestre',dairy:true,dose:3.6,parts:{xan:200,lbg:250,guar:250,mono:200},
+  best:'Cremas com gordura (fiordilatte, chocolate, frutos secos) servidas a −11/−13 °C.',note:'Galactomananas + xantana para corpo e derretimento lento; mono e diglicerídeos dão textura seca e cremosa. Livro-texto do The Culinary Institute of America.',ref:'F. Migoya, Frozen Desserts (CIA, 2008)'},
+ {id:'nx_migoyas',name:'Sorbet Stabilizer Mix Migoya',src:'F. Migoya · Frozen Desserts, p. 390',kind:'mestre',dairy:false,dose:3.6,parts:{gel:275,cmc:175,lbg:250,guar:250},
+  best:'Sorbetti de fruta (não vegano: contém gelatina).',note:'Gelatina + CMC dão corpo e brilho a misturas sem proteína; jataí e guar seguram os cristais na vitrine.',ref:'F. Migoya, Frozen Desserts (CIA, 2008)'},
+ {id:'nx_goff',name:'Clássico acadêmico: jataí + guar + carragena',src:'Goff & Hartel · Ice Cream (2013) · University of Guelph',kind:'academia',dairy:true,dose:2.5,parts:{lbg:650,guar:275,carr:75},
+  best:'Gelati a base de leite (fiordilatte, crema, cioccolato) em vitrine com variação de temperatura.',note:'A jataí é a goma mais eficaz contra a recristalização no choque térmico (Sutton & Wilcox 1998; Donhowe & Hartel, Wisconsin 1996); o guar dá viscosidade a frio; a carragena a 0,01–0,015% da mistura impede a separação de soro que jataí e guar provocam com as caseínas (Thaiudom & Goff, Guelph 2003). Dose do blend 0,2–0,3%.',ref:'H.D. Goff & R.W. Hartel, Ice Cream, 7ª ed. (Springer, 2013)'},
+ {id:'nx_carrube',name:'Farina di semi di carrube (jataí pura)',src:'Tradição italiana · Grom · S. Orsoni (Arte Heladero)',kind:'tradicao',dairy:false,dose:3,parts:{lbg:1000},
+  best:'Sorbetti e gelati di frutta; cremas simples quando se quer rótulo de um só espessante.',note:'O espessante natural mais antigo da gelateria italiana; a Grom (Turim) usa apenas E410. Precisa de 85 °C. Em base láctea pode separar soro na maturação: com leite, prefira o clássico com carragena ou some fibra de citros.',ref:'Il Fatto Alimentare (Grom, G. Martinetti); Arte Heladero, AH 159'},
+ {id:'nx_giapo',name:'Blend natural Giapo',src:'Giapo · Auckland · Arte Heladero, AH 167',kind:'mestre',dairy:true,dose:3.2,parts:{lbg:330,guar:170,xan:170,acacia:165,lec:165},
+  best:'Cremas ricas (baunilha, chocolate branco, frutos secos) e gelatos de vitrine longa.',note:'Cinco componentes vegetais: jataí e guar para cristais e corpo, xantana para derretimento lento, goma acácia e lecitina de soja como emulsificantes naturais. Proporção da receita de baunilha de Giapo (12 g em ≈3,7 kg de mistura).',ref:'Arte Heladero, recetario de heladería artesana, AH 167'},
+ {id:'nx_sicilia',name:'Amido: crema rinforzata siciliana',src:'Tradição siciliana (gelato sem ovos)',kind:'tradicao',dairy:true,dose:25,parts:{starch:1000},
+  best:'Gelati di latte sem ovos: pistacchio, mandorla, nocciola, cioccolato e cremas para brioche; também a base de Jeni\'s (EUA, ~1% de amido + cream cheese).',note:'Leite, açúcar e amido cozidos a 85–90 °C por 1–2 min. Textura densa e fresca, sabor limpo do leite. Não serve para frutas cruas nem sorbetti (o amido precisa cozinhar e turva a fruta). Acima de ~3% vira pudim.',ref:'Tradição do Sul da Itália; D. Lebovitz (pistacchio siciliano); J. Britton Bauer, Jeni\'s Splendid Ice Creams'},
+ {id:'nx_salep',name:'Glucomanano estilo salep (dondurma)',src:'Tradição de Kahramanmaraş · Ankara University',kind:'tradicao',dairy:true,dose:4,parts:{konj:1000},
+  best:'Gelato elástico estilo dondurma turco (leite de cabra, mastic). Não indicado para vitrine italiana.',note:'O salep (tubérculo de orquídea) estabiliza pelo glucomanano: textura elástica que estica e quase não derrete. O teor de glucomanano decide a separação de fases, a dureza e o derretimento (Turkmen et al., Ankara 2021). Salep selvagem é protegido: o konjac é o substituto usado na prática.',ref:'N. Turkmen et al., J. Food Processing and Preservation 45 (2021)'},
+ {id:'nx_fredolin',name:'Neutro Il Fredolin',src:'Sua formulação',kind:'casa',dairy:true,dose:25,parts:{inu:350,acacia:100,lbg:30,guar:12,tara:8},
+  best:'Base da casa para cremas.',note:'Inulina como veículo funcional (corpo e fibra) com jataí, guar, tara e goma acácia.',ref:'Il Fredolin'}
+];
+/* Estudos promissores (não entram como blend pronto: ainda sem uso consolidado na gelateria) */
+const NEUTRO_STUDIES=[
+ {n:'Goma de semente de manjericão (Ocimum basilicum)',where:'University of Guelph (Canadá), M. BahramParvar & H.D. Goff, 2013',res:'A 0,1–0,2% reduziu o crescimento dos cristais de gelo em ≈30–40% frente a um estabilizante comercial de CMC + guar no ciclo térmico, e deixou o derretimento mais lento.',best:'Cremas de vitrine com variação de temperatura.'},
+ {n:'Fibras vegetais (inclusive de citros)',where:'University of Nottingham (Reino Unido), M. Neville, T. Foster & S. Harding, 2017',res:'Controlam a recristalização na medida da água que retêm e atrasam a primeira gota no derretimento; fibras pouco refinadas deixam sensação pulverulenta. Com guar, controle ótimo, mas textura excessiva.',best:'Sorbetti e frutta, combinadas com pouca goma.'},
+ {n:'Mucilagem de chia',where:'Universidade Estadual de Maringá (2017) e Massey University (Nova Zelândia, 2024)',res:'Substitui parte da gordura e do estabilizante: mais overrun e menos firmeza; com jataí alta, derretimento mais lento. Aceitação sensorial boa, ainda com variação de extração.',best:'Gelatos leves e veganos.'},
+ {n:'Salep de diferentes orquídeas',where:'Ankara University (Turquia), Turkmen et al., 2021',res:'O teor de glucomanano explica dureza, separação de fases e derretimento; algumas espécies servem melhor ao dondurma, outras não devem ser colhidas.',best:'Gelatos elásticos de leite.'}
 ];
 
 /* ---------- PROPRIEDADES FÍSICAS ---------- */
 /* viscosidade intrínseca relativa de cada hidrocoloide (mPa·s por % na mistura, escala log) */
-const VISK={lbg:8,guar:9,tara:8,xan:11,carr:4,cmc:7,pect:3,citf:4,gel:3,acacia:.5,starch:1.2,neutro:5.5};
+const VISK={konj:10,lbg:8,guar:9,tara:8,xan:11,carr:4,cmc:7,pect:3,citf:4,gel:3,acacia:.5,starch:1.2,neutro:5.5};
 /* Tg′ (°C) de cada soluto da fase concentrada */
 const TGP={suc:-32,glu:-43,fru:-42,lac:-28,tre:-30,alu:-40,iso:-34,ery:-50,sor:-44,xyl:-47,mlt:-34,gly:-65,inu:-20,fos:-30,salt:-21,acd:-50,alc:-100};
 
@@ -1025,7 +1050,7 @@ function analyzeBlend(nx,dairy){
  const sh=blendShares(nx.parts),dose=(+nx.dose||0)/10; // % da mistura
  const eff={},prof={};NFUN.forEach(([k])=>prof[k]=0);let hyd=20,hydro=0,cost=0;const notes=[];
  for(const k in sh){const nc=NCOMP[k];if(!nc)continue;const e=sh[k]/100*dose;eff[k]=e;cost+=nc.cost*sh[k]/100;
-  if(nc.c.stab)hydro+=e*nc.c.stab/100;if(sh[k]>=1)hyd=Math.max(hyd,nc.hyd);
+  if(nc.c.stab)hydro+=e*nc.c.stab/100;if(k==='starch')hydro+=e*.1; /* amido: ~10× a dose de goma para o mesmo efeito na água livre */if(sh[k]>=1)hyd=Math.max(hyd,nc.hyd);
   if(nc.dose){const mid=(nc.dose[0]+nc.dose[1])/2,load=e/mid;for(const f in nc.f)prof[f]+=load*nc.f[f];}}
  const P={};NFUN.forEach(([k])=>P[k]=Math.round(prof[k]>0?100*(1-Math.exp(-prof[k]/8)):0));
  const has=k=>(eff[k]||0)>0;const pr=k=>NCOMP[k]&&NCOMP[k].dose;
@@ -1039,6 +1064,8 @@ function analyzeBlend(nx,dairy){
  if(has('lbg')&&has('xan'))notes.push({sev:'info',t:'Sinergia jataí + xantana',fix:'Juntas formam gel elástico: ótimo para segurar o derretimento, mas mantenha a xantana baixa para não ficar "puxa-puxa".'});
  if(has('lbg')&&has('guar'))notes.push({sev:'ok',t:'Jataí + guar: dupla clássica',fix:'O guar dá viscosidade a frio e a jataí controla os cristais após 85 °C.'});
  if(has('tara')&&has('lbg'))notes.push({sev:'ok',t:'Tara complementa a jataí',fix:'Tara tem comportamento intermediário entre guar e jataí e hidrata parcialmente a frio.'});
+ if(has('starch'))notes.push({sev:'info',t:'Estabilização por amido (técnica siciliana)',fix:'Cozinhe a 85–90 °C por 1–2 min para gelatinizar; acima de ~3% da mistura a textura vira pudim. Não use em frutas cruas.'});
+ if(has('konj')&&(eff.konj||0)>.3)notes.push({sev:'info',t:'Glucomanano alto: textura elástica',fix:'Acima de ~0,3% o gelato estica e quase não derrete (estilo dondurma). Para vitrine italiana, fique em 0,1–0,2% e combine com jataí.'});
  if(has('gel'))notes.push({sev:'info',t:'Contém gelatina animal',fix:'Não serve para receitas veganas; hidrate acima de 60 °C.'});
  if(has('inu')&&sh.inu>40)notes.push({sev:'info',t:'Blend com base de inulina ('+f0(sh.inu)+'%)',fix:'A inulina funciona como veículo funcional: dá corpo, conta como fibra e adiciona PAC/POD baixos. A dose do neutro precisa ser alta ('+f0(nx.dose)+' g/kg) para as gomas chegarem à faixa.'});
  if(has('acacia'))notes.push({sev:'ok',t:'Goma acácia como emulsificante natural',fix:'Baixa viscosidade; ajuda a manter gordura e aromas dispersos e retarda cristais de açúcar.'});
@@ -1250,7 +1277,7 @@ function normalizeState(){
  S.lab=S.lab||{};S.lab.variants=S.lab.variants||[];
  S.lab.gen=S.lab.gen||{tipo:S.tipo,batch:1000,fixed:[{id:'pistache',g:100}],...(GEN_DEF[S.tipo]||GEN_DEF.crema),stabId:'nx_fredolin',stabGkg:25};
  S.lab.sens=S.lab.sens||{id:'',lo:-50,hi:50};
- S.nxEdit=S.nxEdit||{id:null,name:'Neutro Il Fredolin',dose:25,dairy:true,parts:{...NEUTRO_PRESETS[3].parts}};
+ S.nxEdit=S.nxEdit||{id:null,name:'Neutro Il Fredolin',dose:25,dairy:true,parts:{...NEUTRO_PRESETS.find(n=>n.id==='nx_fredolin').parts},from:'nx_fredolin'};
  S.libTab=S.libTab||'mestres';S.libAuthor=S.libAuthor||'Todos';
  S.vitrine=S.vitrine||{temp:-13,items:[]};S.plan=S.plan||[];
  S.creatorTab=S.creatorTab||'gelato';if(!['gerar','comparar','sens'].includes(S.crSub))S.crSub='gerar';
@@ -1907,7 +1934,7 @@ function microModel(st,m,F,sc,days){
 }
 
 /* ===================== CREATOR — MODELO DA REDE DO NEUTRO ===================== */
-const NSTYLE={lbg:{col:'#7dd3fc',seg:11,L:11,w:2},guar:{col:'#6ee7b7',seg:11,L:11,w:2,branch:1},tara:{col:'#5eead4',seg:9,L:11,w:2,branch:.5},xan:{col:'#f6c90e',seg:8,L:12,w:2.6,stiff:1},carr:{col:'#a78bfa',seg:5,L:10,w:1.6,helix:2},cmc:{col:'#f472b6',seg:8,L:11,w:2},pect:{col:'#fb923c',seg:6,L:10,w:2},citf:{col:'#a3e635',seg:6,L:9,w:1.4,fiber:1},gel:{col:'#fda4af',seg:7,L:10,w:1.4,helix:3},acacia:{col:'#e2e8f0',glob:1},inu:{col:'#cbd5e1',glob:1},lec:{col:'#fbbf24',surf:1},mono:{col:'#fbbf24',surf:1}};
+const NSTYLE={starch:{col:'#fde68a',glob:1},konj:{col:'#38bdf8',seg:12,L:11,w:2.4,branch:1},lbg:{col:'#7dd3fc',seg:11,L:11,w:2},guar:{col:'#6ee7b7',seg:11,L:11,w:2,branch:1},tara:{col:'#5eead4',seg:9,L:11,w:2,branch:.5},xan:{col:'#f6c90e',seg:8,L:12,w:2.6,stiff:1},carr:{col:'#a78bfa',seg:5,L:10,w:1.6,helix:2},cmc:{col:'#f472b6',seg:8,L:11,w:2},pect:{col:'#fb923c',seg:6,L:10,w:2},citf:{col:'#a3e635',seg:6,L:9,w:1.4,fiber:1},gel:{col:'#fda4af',seg:7,L:10,w:1.4,helix:3},acacia:{col:'#e2e8f0',glob:1},inu:{col:'#cbd5e1',glob:1},lec:{col:'#fbbf24',surf:1},mono:{col:'#fbbf24',surf:1}};
 function neutroModel(E,pastT){
  const b=analyzeBlend(E,E.dairy);const comps=[];
  for(const k in b.eff){const nc=NCOMP[k];if(!nc||!nc.dose)continue;const mid=(nc.dose[0]+nc.dose[1])/2;const load=b.eff[k]/mid;
@@ -2141,7 +2168,13 @@ function crGelato(m,F,sc){
 function crNeutros(m){
  const E=S.nxEdit;const pastT=+S.proc.pastT;const p=neutroModel(E,pastT);U.np=p;const b=p.b;const T=U.nxTest;
  const tot=Object.values(E.parts).reduce((a,x)=>a+(+x||0),0);const avail=Object.keys(NCOMP).filter(k=>!(k in E.parts));
- return`<div class="card"><h2>Partir de</h2><div class="chips">${NEUTRO_PRESETS.map(n=>`<button data-a="nxLoad" data-v="${n.id}">${esc(n.name)}</button>`).join('')}${NXLIB.map(n=>`<button data-a="nxLoad" data-v="${n.id}">★ ${esc(n.name)}</button>`).join('')}<button data-a="nxNew">Em branco</button></div></div>
+ const fromP=NEUTRO_PRESETS.find(n=>n.id===E.from);
+ const grp=[['mestre','Mestres'],['tradicao','Tradições'],['academia','Academia'],['casa','Il Fredolin']].map(([k,t])=>{const L=NEUTRO_PRESETS.filter(n=>(n.kind||'casa')===k);return L.length?`<div style="margin-top:10px"><div class="muted" style="font-size:12px;margin-bottom:4px">${t}</div><div class="chips">${L.map(n=>`<button data-a="nxLoad" data-v="${n.id}" aria-pressed="${E.from===n.id}">${esc(n.name)}</button>`).join('')}</div></div>`:'';}).join('');
+ return`<div class="card"><h2>Partir de</h2>${grp}
+  <div style="margin-top:10px"><div class="muted" style="font-size:12px;margin-bottom:4px">Seus</div><div class="chips">${NXLIB.map(n=>`<button data-a="nxLoad" data-v="${n.id}">★ ${esc(n.name)}</button>`).join('')}<button data-a="nxNew">Em branco</button></div></div>
+  ${fromP&&fromP.best?`<div class="card flat" style="margin-top:12px"><h3 style="margin:0 0 4px">${esc(fromP.name)}</h3><div class="muted" style="font-size:12px">${esc(fromP.src)} · ${f1(fromP.dose)} g/kg</div>
+   <p class="note" style="margin:8px 0 4px"><b class="c-ok">Indicado para:</b> ${esc(fromP.best)}</p><p class="note" style="margin:0 0 4px">${esc(fromP.note)}</p><p class="muted" style="font-size:11.5px;margin:0">Fonte: ${esc(fromP.ref)}</p></div>`:''}
+  <details style="margin-top:10px"><summary class="t2" style="cursor:pointer;font-size:13px">Estudos promissores (${NEUTRO_STUDIES.length})</summary>${NEUTRO_STUDIES.map(x=>`<div class="kv" style="display:block;padding:8px 0"><b style="color:var(--t1)">${esc(x.n)}</b><div class="muted" style="font-size:12px">${esc(x.where)}</div><p class="note" style="margin:4px 0 0">${esc(x.res)} <span class="c-ok">Onde promete mais:</span> ${esc(x.best)}</p></div>`).join('')}<p class="note">Ainda sem uso consolidado em gelateria; ficam como referência, não como blend pronto.</p></details></div>
  <div class="crgrid">
   <div class="card crleft"><h2>Blend</h2>
    <div class="form" style="margin-bottom:10px;grid-template-columns:repeat(2,minmax(0,1fr))"><label class="field" style="grid-column:1/-1"><span class="lbl">Nome</span><input type="text" id="nx-name" data-i="nxName" value="${esc(E.name)}" maxlength="40"></label>
@@ -2515,7 +2548,7 @@ const ACT={
  varToBench:v=>{const x=S.lab.variants[+v];if(!x)return;S.recipe=JSON.parse(JSON.stringify(x.recipe));S.name=x.name;S.page='bancada';render();toast(x.name+' na bancada');},
  sensRun:()=>{const s=S.lab.sens;U.sens=sweep(S,s.id,+s.lo,+s.hi,11);render();},
  sensApply:v=>{const r=S.recipe.find(x=>x.id===S.lab.sens.id);if(r){r.g=+v;U.sens=null;render();toast('Aplicado na bancada');}},
- nxLoad:v=>{const n=NEUTRO_PRESETS.find(x=>x.id===v)||NXLIB.find(x=>x.id===v);if(!n)return;const own=NXLIB.some(x=>x.id===v);S.nxEdit={id:own?n.id:null,name:own?n.name:n.name+' (cópia)',dose:n.dose,dairy:S.nxEdit.dairy,parts:{...n.parts}};U.nxTest=null;render();},
+ nxLoad:v=>{const n=NEUTRO_PRESETS.find(x=>x.id===v)||NXLIB.find(x=>x.id===v);if(!n)return;const own=NXLIB.some(x=>x.id===v);S.nxEdit={id:own?n.id:null,name:own?n.name:n.name+' (cópia)',dose:n.dose,dairy:n.dairy!=null?n.dairy:S.nxEdit.dairy,parts:{...n.parts},from:own?null:v};U.nxTest=null;render();},
  nxNew:()=>{S.nxEdit={id:null,name:'Meu neutro',dose:5,dairy:true,parts:{lbg:40,guar:30,carr:5,dex:425}};U.nxTest=null;render();},
  nxRm:v=>{delete S.nxEdit.parts[v];U.nxTest=null;render();},
  nxTest:()=>{const tmp=registerNeutro({...S.nxEdit,id:'nx_tmp'});const a=analyze(S),Fa=diagnose(S,a);const s2=withBlend(S,tmp.id,+S.nxEdit.dose);const b=analyze(s2),Fb=diagnose(s2,b);U.nxTest={a:{m:a,sc:score(S,a,Fa).total},b:{m:b,sc:score(s2,b,Fb).total},F:Fb};render();},
