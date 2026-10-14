@@ -166,6 +166,15 @@ h3{font:600 14px/1.3 var(--fb);margin:0}
 svg text{font-family:var(--fm)}
 .note{font-size:12px;color:var(--t3);max-width:80ch}
 @media (max-width:1100px){.tiles{grid-template-columns:repeat(3,minmax(0,1fr))}.g3{grid-template-columns:repeat(2,minmax(0,1fr))}}
+/* bancada em duas colunas (iPad na horizontal e telas largas): receita à esquerda, aprovação e alertas à direita */
+.bgrid{display:flex;flex-direction:column;gap:14px}.bcol{display:flex;flex-direction:column;gap:14px;min-width:0}
+@media (min-width:761px){.bgrid{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(0,1fr);align-items:start}}
+/* iPad: menu lateral mais estreito para sobrar espaço à bancada */
+@media (min-width:861px) and (max-width:1180px){.app{grid-template-columns:196px minmax(0,1fr)}}
+@media (min-width:761px) and (max-width:1180px){.g3{grid-template-columns:repeat(2,minmax(0,1fr))}}
+/* toque (iPad, celular): alvos de pelo menos 44 px */
+@media (pointer:coarse){.btn{min-height:44px;padding:10px 14px}.btn.sm{min-height:40px}.btn.del{min-width:40px;min-height:40px}.chips button{min-height:40px;padding:9px 14px}
+ input[type=text],input[type=number],input[type=date],select{min-height:42px}.tbl input[type=number]{min-height:40px}#nav a,#nav button{min-height:44px}}
 @media (max-width:860px){
   .app{grid-template-columns:minmax(0,1fr);grid-template-rows:auto auto minmax(0,1fr)}
   header{padding:10px 16px}
@@ -457,7 +466,23 @@ I('aguacoco','Água de coco','Bebidas e aromas',{w:94.5,glu:1.4,fru:1.4,suc:1.2,
  I('licorfruta','Licor de fruta 25% (30% açúcar)','Bebidas e aromas',{w:50.3,alc:19.7,suc:30},{added:1,cost:120,lab:'licor de fruta'}),
  I('baileys','Licor de creme (tipo Baileys)','Bebidas e aromas',{w:49.8,alc:13.5,fat:15.7,suc:18,prot:2,lac:1},{...DAI,added:1,cost:150,lab:'licor de creme'}),
  I('vinhodoce','Vinho doce 16% (20% açúcar)','Bebidas e aromas',{w:65.5,alc:12.7,glu:10,fru:10,acd:.5,oth:1.3},{ph:3.6,added:1,cost:120,al:['sulfito'],lab:'vinho licoroso'}),
- I('eiswein','Vinho de gelo (Eiswein) 12%','Bebidas e aromas',{w:70,alc:9.5,glu:9,fru:9,acd:1,oth:1.5},{ph:3.3,cost:300,al:['sulfito'],lab:'vinho de sobremesa'})
+ I('eiswein','Vinho de gelo (Eiswein) 12%','Bebidas e aromas',{w:70,alc:9.5,glu:9,fru:9,acd:1,oth:1.5},{ph:3.3,cost:300,al:['sulfito'],lab:'vinho de sobremesa'}),
+ /* ---------- frutas brasileiras (composição média TACO/Embrapa; Brix típico da fruta madura) ---------- */
+ I('acerola','Acerola (polpa)','Frutas',{w:91.5,glu:1.5,fru:1.5,suc:.5,fib:1.5,prot:.9,fat:.2,acd:1.6,oth:.8},{ph:3.2,brix:7,acid:1,cost:14,lab:'polpa de acerola'}),
+ I('caju','Caju (polpa)','Frutas',{w:87.7,glu:4,fru:4.5,suc:.5,fib:1.7,prot:.9,fat:.3,acd:.4},{ph:4.3,brix:11,cost:12,lab:'polpa de caju'}),
+ I('graviola','Graviola (polpa)','Frutas',{w:82,glu:5,fru:5.5,suc:1,fib:1.9,prot:1,fat:.3,acd:.8,oth:2.5},{ph:3.8,brix:14,acid:1,cost:18,lab:'polpa de graviola'}),
+ I('caja','Cajá (polpa)','Frutas',{w:87,glu:3,fru:3.5,suc:2,fib:1.5,prot:.8,fat:.3,acd:1.4,oth:.5},{ph:2.9,brix:10,acid:1,cost:20,lab:'polpa de cajá'}),
+ I('pitanga','Pitanga (polpa)','Frutas',{w:88,glu:3.5,fru:4,suc:.5,fib:1.5,prot:.9,fat:.4,acd:1.2},{ph:3.2,brix:9,acid:1,cost:22,lab:'polpa de pitanga'}),
+ I('umbu','Umbu (polpa)','Frutas',{w:88,glu:3,fru:3.5,suc:1.5,fib:1.5,prot:.8,fat:.2,acd:1.5},{ph:2.8,brix:10,acid:1,cost:18,lab:'polpa de umbu'}),
+ I('carambola','Carambola (polpa)','Frutas',{w:90.7,glu:2.2,fru:2.5,suc:1,fib:1.8,prot:.6,fat:.3,acd:.9},{ph:3.5,brix:7,acid:1,cost:10,lab:'carambola'}),
+ I('pitaya','Pitaya vermelha (polpa)','Frutas',{w:85.5,glu:5.5,fru:3.5,suc:.5,fib:3,prot:1.2,fat:.4,acd:.4},{ph:4.7,brix:12,cost:25,lab:'pitaya'}),
+ I('lichia','Lichia (polpa)','Frutas',{w:81.7,glu:5,fru:5,suc:5.5,fib:1.3,prot:.8,fat:.4,acd:.3},{ph:4.6,brix:17,cost:30,lab:'lichia'}),
+ I('mamao','Mamão formosa (polpa)','Frutas',{w:88.5,glu:3.5,fru:3.5,suc:2,fib:1.7,prot:.5,fat:.2,acd:.1},{ph:5.4,brix:11,cost:6,lab:'mamão'}),
+ I('cacaupolpa','Polpa de cacau (mel de cacau)','Frutas',{w:82,glu:7,fru:6.5,suc:.5,fib:1,prot:.6,fat:.3,acd:.9,oth:1.2},{ph:3.5,brix:16,acid:1,cost:30,lab:'polpa de cacau'}),
+ I('bacuri','Bacuri (polpa)','Frutas',{w:79.5,glu:4,fru:4,suc:6,fib:3.5,prot:1.2,fat:1.2,acd:.6},{ph:3.3,brix:16,acid:1,cost:60,lab:'polpa de bacuri'}),
+ I('mangaba','Mangaba (polpa)','Frutas',{w:83.1,glu:4,fru:4.5,suc:3,fib:2.5,prot:.7,fat:1,acd:1.2},{ph:3.4,brix:14,acid:1,cost:35,lab:'polpa de mangaba'}),
+ I('uva','Uva niágara (polpa)','Frutas',{w:81,glu:7.5,fru:8,suc:.5,fib:.9,prot:.7,fat:.2,acd:.6,oth:.6},{ph:3.4,brix:16,acid:1,cost:12,lab:'uva'}),
+ I('seriguela','Seriguela (polpa)','Frutas',{w:78.5,glu:7,fru:7,suc:2,fib:2.5,prot:1.4,fat:.4,acd:1.2},{ph:3.6,brix:18,acid:1,cost:25,lab:'polpa de seriguela'})
 ];
 
 /* ---------- PERFIS (faixas-alvo por tipo) ---------- */
@@ -473,9 +498,9 @@ const STAB_RNG={konj:[.1,.5],tara:[.05,.2],pect:[.05,.2],citf:[.15,.6],gel:[.1,.
 const STAB_N={konj:'Glucomanano',tara:'Goma tara',pect:'Pectina',citf:'Fibra de citros',gel:'Gelatina',acacia:'Goma acácia',neutro:'Neutro',lbg:'Goma jataí (LBG)',guar:'Goma guar',xan:'Goma xantana',carr:'Carragena',cmc:'CMC',starch:'Amido',lec:'Lecitina',mono:'Mono e diglicerídeos'};
 
 /* ---------- PROCESSO PADRÃO ---------- */
-const PROC0={pastT:85,pastHold:30,pastHoldU:'s',coolMin:60,matH:8,matT:4,machine:'horiz',drawT:-9,drawMin:10,blastT:-35,hardMin:40,storeT:-20,storeFluct:1,serveFrom:'vitrine',fruitStage:'depois',alcStage:'depois',portion:90,labelPortion:60,markup:3.5};
+const PROC0={pastT:85,pastHold:30,pastHoldU:'s',coolMin:60,matH:8,matT:4,machine:'horiz',drawT:-9,drawMin:10,blastT:-35,hardMin:40,storeT:-20,storeFluct:1,serveFrom:'vitrine',lossPct:0,fruitStage:'depois',alcStage:'depois',portion:90,labelPortion:60,markup:3.5};
 /* limites físicos/práticos de cada campo numérico do processo (entrada fora disso é trazida para o limite) */
-const PROC_LIM={pastT:[60,95],pastHold:[0,3600],coolMin:[5,480],matH:[0,96],matT:[0,10],drawT:[-16,-3],drawMin:[2,40],blastT:[-45,-10],hardMin:[5,480],storeT:[-35,-8],storeFluct:[0,10],portion:[20,500],labelPortion:[10,500],markup:[1,15]};
+const PROC_LIM={lossPct:[0,60],pastT:[60,95],pastHold:[0,3600],coolMin:[5,480],matH:[0,96],matT:[0,10],drawT:[-16,-3],drawMin:[2,40],blastT:[-45,-10],hardMin:[5,480],storeT:[-35,-8],storeFluct:[0,10],portion:[20,500],labelPortion:[10,500],markup:[1,15]};
 const MACH={maqp1:{n:'Maqp1 350 W (compressor)',ov:22,max:35,batch:850},horiz:{n:'Mantecadora horizontal (batch, tipo Labo)',ov:26,max:42},vert:{n:'Mantecadora vertical (Bravo / Trittico)',ov:20,max:32},dom:{n:'Sorveteira doméstica',ov:15,max:25},paco:{n:'Pacojet (pacotização)',ov:10,max:20}};
 /* Fator de dureza: forma de Corvitto (manteiga de cacau, sólidos de cacau, gordura de oleaginosas),
    coeficientes recalibrados para que o Helado de chocolate e o Helado de nata do Recetario de Corvitto
@@ -535,6 +560,21 @@ const NEUTRO_STUDIES=[
  {n:'Mucilagem de chia',where:'Universidade Estadual de Maringá (2017) e Massey University (Nova Zelândia, 2024)',res:'Substitui parte da gordura e do estabilizante: mais overrun e menos firmeza; com jataí alta, derretimento mais lento. Aceitação sensorial boa, ainda com variação de extração.',best:'Gelatos leves e veganos.'},
  {n:'Salep de diferentes orquídeas',where:'Ankara University (Turquia), Turkmen et al., 2021',res:'O teor de glucomanano explica dureza, separação de fases e derretimento; algumas espécies servem melhor ao dondurma, outras não devem ser colhidas.',best:'Gelatos elásticos de leite.'}
 ];
+
+/* ---------- GORDURA SÓLIDA (SFC) ----------
+   % da gordura que está sólida em cada temperatura, por tipo de gordura. Valores típicos de literatura (curvas
+   de RMN de gordura láctea anidra, manteiga de cacau, óleo de coco, estearina tipo karité, óleos de oleaginosas,
+   óleos líquidos e lipídios da gema). Usados na dureza percebida, na sensação na boca (33 °C) e na desestabilização. */
+const SFC_T=[-20,-10,0,10,20,25,30,35,40];
+const SFC={milk:[78,72,62,48,26,16,8,3,0],cocoa:[95,93,90,86,78,70,45,8,0],coco:[94,92,88,70,35,8,0,0,0],
+ palm:[85,80,72,60,42,30,18,8,2],nut:[30,10,4,2,1,0,0,0,0],oil:[15,5,1,0,0,0,0,0,0],egg:[60,45,30,18,8,4,2,0,0]};
+const SFC_N={milk:'gordura do leite',cocoa:'manteiga de cacau',coco:'gordura de coco',palm:'gordura dura (karité, margarina, animal)',nut:'óleo de oleaginosas',oil:'óleo líquido',egg:'gordura da gema'};
+/* ---------- INFUSÕES ----------
+   Ingrediente marcado "infusionar e coar" não entra inteiro: os sólidos coados levam mistura retida (ret, g por g)
+   e deixam na mistura uma fração dos seus sólidos solúveis (ext). fat = parte do extraído que é gordura. */
+const INF0={ret:1.8,ext:.05,fat:0};
+const INF={ervas:{ret:1.5,ext:.04},especiaria:{ret:2.5,ext:.06},fava:{ret:1,ext:.05},cocoralado:{ret:1.2,ext:.25,fat:.6},
+ alfarroba:{ret:2,ext:.2},cafesol:{ret:0,ext:1},matcha:{ret:1.2,ext:.3},cacau:{ret:1.5,ext:.15,fat:.2},tamara:{ret:1,ext:.3}};
 
 /* ---------- PROPRIEDADES FÍSICAS ---------- */
 /* viscosidade intrínseca relativa de cada hidrocoloide (mPa·s por % na mistura, escala log) */
@@ -605,18 +645,33 @@ function meltModel(m){return clamp(55-(m.melt-50)*.9,3,95);}
 const ING_BY={};ING.forEach(i=>ING_BY[i.id]=i);
 let ING_VER=0;
 /* estado do motor que depende do usuário: calibração (lotes) e custo médio do estoque */
-const CAL={on:true,tShift:0,ov:{},meltBias:0,kMult:1,n:0,ver:0,res:{}};
+const CAL={on:true,tShift:0,ov:{},meltBias:0,kMult:1,n:0,ver:0,res:{},pref:{pod:0,fz:0,n:0}};
 let INVCOST={},INVVER=0;
+
+/* ---------- tipo de gordura de cada ingrediente (para a curva de gordura sólida) ---------- */
+const COCO_IDS=new Set(['cococreme','cocoleite','cocooleo','cocopure','cocoralado']),HARD_IDS=new Set(['karite','margarina','foiegras']),OIL_IDS=new Set(['azeite','girassolao']);
+const _FT=new Map();
+function fatTypes(ing){const hit=_FT.get(ing);if(hit)return hit;const f=(ing.c&&ing.c.fat)||0;let o={};
+ if(f<=0)o={};else if(COCO_IDS.has(ing.id))o={coco:1};else if(HARD_IDS.has(ing.id))o={palm:1};else if(OIL_IDS.has(ing.id))o={oil:1};else if(ing.yolk||ing.egg)o={egg:1};
+ else{let r=f;const add=(k,g)=>{if(g>0){o[k]=(o[k]||0)+g/f;r-=g;}};
+  if(ing.hfB)add(ing.cat==='Cacau'||ing.id==='mcacau'?'cocoa':'coco',Math.min(r,ing.hfB));if(ing.hfN)add('nut',Math.min(r,ing.hfN));
+  if(r>1e-9)add(ing.dairy||ing.msnf||ing.cat==='Lácteos'||ing.cat==='Cacau'||ing.cat==='Açúcares'?'milk':ing.cat==='Oleaginosas'?'nut':ing.cat==='Ovos'?'egg':ing.cat==='Gastronômicos'?'palm':'oil',r);}
+ _FT.set(ing,o);return o;}
+const sfcOf=(type,T)=>{const y=SFC[type]||SFC.milk;if(T<=SFC_T[0])return y[0];for(let i=1;i<SFC_T.length;i++)if(T<=SFC_T[i]){const a=SFC_T[i-1],b=SFC_T[i];return y[i-1]+(y[i]-y[i-1])*(T-a)/(b-a);}return y[y.length-1];};
+const infParams=ing=>Object.assign({},INF0,INF[ing.id]||{},ing.inf||{});
+/* encolhe tudo o que já foi somado na mistura (fração f): usado quando sólidos coados levam parte da mistura */
+const A_EXTRA=['sat','tr','msnf','na','hfB','hfS','hfN','pac','pod','addSug','gsSug','fruitG','acidFruitG','dairyG','eggFresh','eggPast','yolk','cocoaG','nutG'];
+function scaleMix(A,f){A.tot*=f;MASS.forEach(k=>A[k]*=f);A_EXTRA.forEach(k=>A[k]*=f);for(const k in A.keys)A.keys[k]*=f;for(const k in A.fatT)A.fatT[k]*=f;}
 
 /* ---------- ANÁLISE ---------- */
 /* ===================== ANÁLISE ===================== */
 function analyzeRaw(st){
  const P0=PROF[st.tipo]||PROF.crema, pr=Object.assign({},PROC0,st.proc||{});
  const A={tot:0};MASS.forEach(f=>A[f]=0);
- Object.assign(A,{sat:0,tr:0,msnf:0,na:0,hfB:0,hfS:0,hfN:0,pac:0,pod:0,addSug:0,gsSug:0,fruitG:0,acidFruitG:0,dairyG:0,eggFresh:0,eggPast:0,yolk:0,cost:0,keys:{},al:new Set(),br:new Set(),cocoaG:0,nutG:0,lines:[]});
- (st.recipe||[]).forEach(r=>{const ing=ING_BY[r.id];if(!ing)return;const g=Math.max(0,+r.g||0);if(!g)return;const c=compOf(ing,st.brix);
+ Object.assign(A,{sat:0,tr:0,msnf:0,na:0,hfB:0,hfS:0,hfN:0,pac:0,pod:0,addSug:0,gsSug:0,fruitG:0,acidFruitG:0,dairyG:0,eggFresh:0,eggPast:0,yolk:0,cost:0,keys:{},al:new Set(),br:new Set(),cocoaG:0,nutG:0,lines:[],fatT:{},inf:[]});
+ (st.recipe||[]).forEach(r=>{const ing=ING_BY[r.id];if(!ing)return;const g=Math.max(0,+r.g||0);if(!g)return;if(r.inf){A.inf.push({ing,g});return;}const c=compOf(ing,st.brix);
   A.tot+=g;MASS.forEach(f=>A[f]+=g*(c[f]||0)/100);
-  const fatG=g*(c.fat||0)/100;A.sat+=fatG*(ing.sat!=null?ing.sat:.2);A.tr+=fatG*(ing.tr||0);
+  const fatG=g*(c.fat||0)/100;A.sat+=fatG*(ing.sat!=null?ing.sat:.2);A.tr+=fatG*(ing.tr||0);if(fatG>0){const ft=fatTypes(ing);for(const k in ft)A.fatT[k]=(A.fatT[k]||0)+fatG*ft[k];}
   A.msnf+=ing.msnf!=null?g*ing.msnf/100:(ing.dairy?g*((c.lac||0)+(c.prot||0)+(c.ash||0))/100:0);
   A.na+=g*(ing.na||0)/100;A.hfB+=g*(ing.hfB||0)/100;A.hfS+=g*(ing.hfS||0)/100;A.hfN+=g*(ing.hfN||0)/100;
   let pac=0,pod=0;for(const f in PACK)pac+=(c[f]||0)*PACK[f]/100;for(const f in PODK)pod+=(c[f]||0)*PODK[f]/100;
@@ -634,11 +689,22 @@ function analyzeRaw(st){
   const own=st.costs?parseFloat(st.costs[ing.id]):NaN;const unit=isFinite(own)&&own>=0?own:INVCOST[ing.id]!=null?INVCOST[ing.id]:ing.cost||0;A.cost+=g/1000*unit;
   A.lines.push({ing,g,c,unit});
  });
+ /* infusões: os sólidos coados levam mistura retida e deixam parte dos solúveis */
+ A.infRet=0;A.infExt=0;
+ if(A.inf.length&&A.tot>0){let ret=0;const ext=[];
+  A.inf.forEach(({ing,g})=>{const p=infParams(ing),c=ing.c;ret+=g*p.ret;const dry=Math.max(0,100-(c.w||0));ext.push({ing,g,ex:g*dry/100*p.ext,fat:p.fat||0});
+   (ing.al||[]).forEach(a=>A.al.add(a));if(ing.br)A.br.add(ing.br);const own=st.costs?parseFloat(st.costs[ing.id]):NaN;A.cost+=g/1000*(isFinite(own)&&own>=0?own:INVCOST[ing.id]!=null?INVCOST[ing.id]:ing.cost||0);});
+  ret=Math.min(ret,A.tot*.5);A.infRet=ret;scaleMix(A,(A.tot-ret)/A.tot);
+  ext.forEach(e=>{const fg=e.ex*e.fat;A.tot+=e.ex;A.oth+=e.ex-fg;A.fat+=fg;A.infExt+=e.ex;if(fg>0){const ft=fatTypes(e.ing);const k=Object.keys(ft)[0]||'milk';A.fatT[k]=(A.fatT[k]||0)+fg;}});}
+ /* perda de água no cozimento (creme inglês, reduções, frutas cozidas) */
+ A.lossG=0;{const lp=+pr.lossPct||0;if(lp>0&&A.tot>0){const lg=Math.min(A.w*.9,A.tot*lp/100);A.w-=lg;A.tot-=lg;A.lossG=lg;}}
  const T=A.tot||1,pc=v=>v/T*100,W=A.w;
  /* faixas ajustadas: cacau e oleaginosas carregam sólidos insolúveis que não pesam como açúcar/leite */
  const cocoaPct=A.cocoaG/T*100,nutPct=A.nutG/T*100;
  const P=Object.assign({},P0);const solAdj=Math.min(5,cocoaPct*.8+nutPct*.35),podAdj=Math.min(4,cocoaPct*.8);
  P.sol=[P0.sol[0],P0.sol[1]+solAdj];P.pod=[P0.pod[0]+podAdj*.5,P0.pod[1]+podAdj];P.adj=solAdj>.3||podAdj>.3;
+ /* preferência da casa (painel cego): desloca as faixas de doçura e de água congelada */
+ const pf=CAL.on&&CAL.pref&&CAL.pref.n?CAL.pref:null;if(pf){P.pod=[P.pod[0]+pf.pod,P.pod[1]+pf.pod];P.fz=[P0.fz[0]+pf.fz,P0.fz[1]+pf.fz];P.pref=pf;}
  const m={A,P,pr,tot:A.tot,empty:A.tot<=0,tipo:st.tipo};
  m.wat=pc(W);m.sol=pc(A.tot-W-A.alc);m.fat=pc(A.fat);m.prot=pc(A.prot);m.lac=pc(A.lac);m.msnf=pc(A.msnf);
  m.swtG=A.suc+A.glu+A.fru+A.gs+A.tre+A.alu+A.iso+A.ery+A.sor+A.xyl+A.mlt+A.gly;m.swt=pc(m.swtG);
@@ -682,6 +748,14 @@ function analyzeRaw(st){
  m.ovModel=clamp(ov,5,mach.max);m.ovBias=calOv(pr.machine);m.ov=clamp(m.ovModel+m.ovBias,5,mach.max+8);m.mach=mach;
  m.rhoMix=1/((m.wat/100)/1+(m.fat/100)/.93+((100-m.wat-m.fat)/100)/1.59);
  m.gPerL=m.rhoMix*1000/(1+m.ov/100);
+ /* gordura sólida por temperatura (SFC) e desestabilização parcial da gordura */
+ m.fatTypes={};for(const k in A.fatT)if(A.fat>0)m.fatTypes[k]=A.fatT[k]/A.fat*100;
+ m.sfcAt=t=>{if(!(A.fat>0))return 0;let x=0;for(const k in A.fatT)x+=A.fatT[k]*sfcOf(k,t);return x/A.fat;};
+ m.sfcVit=m.sfcAt(vit);m.sfcDraw=m.sfcAt(pr.drawT);m.sfcMouth=m.sfcAt(35);m.solidFatVit=m.fat*m.sfcVit/100;
+ {let d=0;if(m.fat>1.5){d=8+2.4*(m.fat-4)+30*Math.min(1,(m.keyPct.mono||0)/.2)+8*Math.min(1,(m.keyPct.lec||0)/.3)+5*Math.min(1,m.yolkPct/4)
+   -1.8*(m.prot-3.5)+1.4*(-9-pr.drawT)+.6*(pr.drawMin-10)+.2*(m.ov-30);
+   if(m.sfcDraw>85)d*=.75;else if(m.sfcDraw<20)d*=1.25;d=clamp(d,0,90);}
+  m.destab=d;m.oilOff=m.fat>4&&m.sfcDraw<20;}
  /* cristalização (heurística) */
  let ci=100;const cn=[];
  if(m.fzDraw<35){ci-=22;cn.push('pouca água congelada na saída');}else if(m.fzDraw<45){ci-=10;cn.push('saída da mantecadora um pouco quente');}
@@ -712,22 +786,41 @@ const _MEMO=new Map();
 function analyze(st){let key;try{key=JSON.stringify([st.tipo,st.vit,st.recipe,st.proc,st.brix,st.costs,CAL.on?CAL.ver:-1,ING_VER,INVVER]);}catch(e){return analyzeRaw(st);}
  const hit=_MEMO.get(key);if(hit)return hit;const m=analyzeRaw(st);_MEMO.set(key,m);if(_MEMO.size>400)_MEMO.delete(_MEMO.keys().next().value);return m;}
 
+/* ---------- INCERTEZA ----------
+   Composição real varia: Brix das frutas (±15% sem medir; ±3% medido no refratômetro), gordura dos lácteos (±3%),
+   cacau e oleaginosas (±5%), açúcares (±1%). Cada grupo é perturbado e o efeito na temperatura de serviço é somado
+   em quadratura, mais ±0,4 °C do próprio modelo. A faixa mostrada cobre ≈90% dos casos (±1,65 σ). */
+const UNC_G=[['Frutas (Brix)',i=>i.cat==='Frutas'&&i.brix,.15],['Lácteos',i=>i.dairy,.03],['Cacau e oleaginosas',i=>i.cat==='Cacau'||i.cat==='Oleaginosas',.05],['Açúcares',i=>i.cat==='Açúcares',.01]];
+const _UNC=new Map();
+function uncertainty(st){const m0=analyze(st);if(m0.empty||!(m0.wat>0))return null;let key;try{key=JSON.stringify([st.tipo,st.vit,st.recipe,st.proc,st.brix,CAL.on?CAL.ver:-1,ING_VER]);}catch(e){key=null;}
+ if(key&&_UNC.has(key))return _UNC.get(key);const parts=[];let v=.4*.4;
+ UNC_G.forEach(([n,sel,cv])=>{const ids=(st.recipe||[]).filter(r=>!r.inf&&ING_BY[r.id]&&sel(ING_BY[r.id])&&+r.g>0).map(r=>r.id);if(!ids.length)return;
+  let st2;if(n.startsWith('Frutas')){const br=Object.assign({},st.brix||{});ids.forEach(id=>{const meas=(st.brix||{})[id];const b0=meas!=null&&meas!==''&&isFinite(+meas)?+meas:ING_BY[id].brix;const c=meas!=null&&meas!==''?.03:cv;br[id]=b0*(1+c);});st2=Object.assign({},st,{brix:br});}
+  else st2=Object.assign({},st,{recipe:st.recipe.map(r=>ids.includes(r.id)?Object.assign({},r,{g:+r.g*(1+cv)}):r)});
+  const d=analyze(st2).serveT-m0.serveT;v+=d*d;parts.push({n,d});});
+ const sd=Math.sqrt(v),r={sd,lo:m0.serveT-1.65*sd,hi:m0.serveT+1.65*sd,parts,fzLo:m0.fz(m0.vit-1.65*sd),fzHi:m0.fz(m0.vit+1.65*sd)};
+ if(key){_UNC.set(key,r);if(_UNC.size>200)_UNC.delete(_UNC.keys().next().value);}return r;}
+
 /* ---------- CALIBRAÇÃO PELA PRODUÇÃO ---------- */
 function calOv(machine){return (CAL.on&&CAL.ov[machine])?CAL.ov[machine]:0;}
 /* ajuste bayesiano simples: média dos resíduos encolhida em direção a zero (prior de 3 lotes) */
 function fitCalibration(lots){
- const prev=CAL.on;CAL.on=false;const ovR={},fzR=[],mR=[],kR=[];const res=[];
+ const prev=CAL.on;CAL.on=false;const ovR={},fzR=[],mR=[],kR=[],pS=[],pF=[];const res=[];
  (lots||[]).forEach(L=>{if(!L.recipe||!L.recipe.length)return;const st={tipo:L.tipo,vit:L.meas&&L.meas.texTemp!=null&&L.meas.texTemp!==''?+L.meas.texTemp:L.vit,recipe:L.recipe,proc:L.proc||{},brix:L.brix||{},costs:{}};const m=analyzeRaw(st);const me=L.meas||{};const r={id:L.id,code:L.code};
   const ov=measuredOverrun(me);if(ov!=null){const mc=(L.proc&&L.proc.machine)||'horiz';(ovR[mc]=ovR[mc]||[]).push(ov-m.ovModel);r.ov=[m.ovModel,ov];}
   if(me.tex!=null&&me.tex!==''){const tt=st.vit;const pred=(frozenPct(tt,m.SE,m.S)-m.fzMid)/3.5;fzR.push(-.8*(+me.tex-pred));r.tex=[Math.round(pred*10)/10,+me.tex];}
   if(me.melt10!=null&&me.melt10!==''){const pm=meltModel(m);mR.push(+me.melt10-pm);r.melt=[pm,+me.melt10];}
   if(me.icyDay!=null&&me.icyDay!==''&&+me.icyDay>0){const K=kinetics(m,st).Kvit;const implied=(Math.pow(50,3)-Math.pow(m.crystal,3))/(+me.icyDay);if(implied>0)kR.push(Math.log(implied/K));r.icy=+me.icyDay;}
   if(me.brix!=null&&me.brix!=='')r.brix=[m.brixMix,+me.brix];
+  /* painel cego: escala do ponto ideal (−2 falta · 0 ideal · +2 sobra) vira preferência da casa */
+  const pn=(L.panel||[]).filter(x=>x&&!x.ex);const jm=k=>{const v=pn.map(x=>x[k]).filter(v=>v!==''&&v!=null&&isFinite(+v)).map(Number);return v.length?v.reduce((a,b)=>a+b,0)/v.length:null;};
+  const js=jm('jDoce'),jd=jm('jDuro');if(js!=null){pS.push(-1.2*js);r.jDoce=js;}if(jd!=null){pF.push(-3*jd);r.jDuro=jd;}if(pn.length)r.panel=pn.length;
   res.push(r);});
  const shrink=(a,k=3)=>a.length?a.reduce((x,y)=>x+y,0)/(a.length+k):0;
  CAL.ov={};for(const mc in ovR)CAL.ov[mc]=Math.round(shrink(ovR[mc])*10)/10;
  CAL.tShift=Math.round(shrink(fzR)*100)/100;CAL.meltBias=Math.round(shrink(mR)*10)/10;CAL.kMult=Math.exp(shrink(kR,2));
- CAL.n=res.length;CAL.res=res;CAL.counts={ov:Object.values(ovR).reduce((a,b)=>a+b.length,0),tex:fzR.length,melt:mR.length,icy:kR.length};CAL.on=prev;CAL.ver++;return CAL;}
+ CAL.pref={pod:Math.round(shrink(pS)*2)/2,fz:Math.round(shrink(pF)),n:Math.max(pS.length,pF.length)};if(!CAL.pref.pod&&!CAL.pref.fz)CAL.pref.n=0;
+ CAL.n=res.length;CAL.res=res;CAL.counts={ov:Object.values(ovR).reduce((a,b)=>a+b.length,0),tex:fzR.length,melt:mR.length,icy:kR.length,panel:Math.max(pS.length,pF.length)};CAL.on=prev;CAL.ver++;return CAL;}
 function measuredOverrun(me){if(me.ov!=null&&me.ov!=='')return +me.ov;if(+me.cupMix>0&&+me.cupGel>0)return(+me.cupMix-+me.cupGel)/(+me.cupGel)*100;return null;}
 
 /* ---------- QUÍMICA: pH, Tg′, cinética, sensorial ---------- */
@@ -749,6 +842,9 @@ function chemistry(m,st){const A=m.A,T=A.tot||1;
  /* sensorial */
  m.podPerc=m.pod*podTempFactor(m.vit);
  m.aroma=clamp(100-Math.max(0,m.fat-6)*4-Math.max(0,m.hydro-.3)*45-Math.max(0,m.ov-30)*.4-Math.max(0,m.prot-4.5)*3,0,100);
+ /* aroma na temperatura de serviço: volatilidade cai com o frio; aromas lipossolúveis ficam presos na gordura */
+ {const tf=clamp(1+.035*(m.vit+12),.55,1.15);let lipo=0,fl=0;A.lines.forEach(l=>{const c=l.ing.cat;if(c==='Frutas'||c==='Cacau'||c==='Oleaginosas'||c==='Bebidas e aromas'&&l.ing.id!=='agua'){fl+=l.g;if(c!=='Frutas')lipo+=l.g;}});
+  const lipoShare=fl?lipo/fl:0;m.aromaTemp=tf;m.aromaVit=clamp(m.aroma*tf-lipoShare*Math.max(0,m.fat-8)*2,0,100);m.flavorDose=1/tf;m.lipoShare=lipoShare;}
  m.melt10=clamp(meltModel(m)+(CAL.on?CAL.meltBias:0),3,95);
  const k=kinetics(m,st);m.kin=k;m.d0=m.crystal;
  /* freezer: dureza ao retirar e aclimatação (cuba de 5 L, ≈6 min por °C de diferença) */
@@ -903,6 +999,20 @@ function diagnoseCore(st,m){
  else add('ok','Estrutura','Viscosidade da mistura adequada ('+f0(m.visc)+' mPa·s a 4 °C)','Na faixa que favorece incorporação de ar e cristais finos.','');
  if(m.msnf>.5&&m.ph<5.2){if(m.pr.fruitStage==='antes')add('crit','Química','pH '+f1(m.ph)+' com leite aquecido','Abaixo de pH 5,2 as caseínas coagulam no calor: a mistura talha.','Adicione a fruta à mistura fria (abaixo de 7 °C) após a maturação.');
   else if(m.ph<4.6)add('info','Química','pH '+f1(m.ph)+' perto do ponto isoelétrico da caseína','Mesmo a frio a caseína agrega levemente: textura mais densa e sabor de iogurte.','Normal para gelatos de iogurte; em frutas, reduza o suco ácido ou aumente sólidos lácteos.');}
+ else if(m.msnf>.5&&m.ph<5.6&&m.prot>2&&m.pr.fruitStage==='antes')add('warn','Química','pH '+f1(m.ph)+' na zona de risco com leite aquecido','Entre pH 5,2 e 5,6 a caseína aquecida a 85 °C pode flocular (textura granulosa), sobretudo com proteína alta e retenção longa.','Adicione a fruta na mistura fria após a maturação, ou aumente o leite em pó para tamponar.');
+ /* ---- 9. Gordura: sólida por temperatura e desestabilização ---- */
+ const hardShare=((m.fatTypes.cocoa||0)+(m.fatTypes.palm||0)+(m.fatTypes.coco||0))/100;
+ if(m.fat>3&&m.sfcMouth>9&&hardShare>.4)add('warn','Gordura','Sensação cerosa na boca ('+f0(m.sfcMouth)+'% da gordura sólida a 35 °C)','Gorduras duras (manteiga de cacau, karité, gordura animal) ainda sólidas na temperatura da boca deixam película cerosa e abafam o sabor.','Troque parte por gordura do leite ou óleo; em chocolate, use mais cacau em pó e menos cobertura.');
+ if(m.fat>4&&st.tipo!=='sorbetto'){
+  if(m.destab>55)add('warn','Gordura','Risco de amanteigar (desestabilização ≈'+f0(m.destab)+'%)','Gordura demais coalescida na mantecadora vira grânulos de manteiga: textura gordurosa e seca na boca.','Reduza mono e diglicerídeos/lecitina, extraia menos frio (−8/−9 °C) e encurte a mantecação.');
+  else if(m.destab<12&&m.fat>6)add('info','Gordura','Pouca desestabilização da gordura (≈'+f0(m.destab)+'%)','Sem coalescência parcial a rede de gordura não sustenta o ar: derretimento rápido e textura úmida.','Use 2–4% de gema ou 0,1–0,2% de mono e diglicerídeos; extraia a −9/−10 °C.');
+  else add('ok','Gordura','Desestabilização da gordura na faixa (≈'+f0(m.destab)+'%)','Coalescência parcial entre 12 e 55%: textura seca e cremosa, derretimento lento.','');
+  if(m.oilOff)add('info','Gordura','Gordura quase toda líquida na saída ('+f0(m.sfcDraw)+'% sólida a '+fT(m.pr.drawT)+' °C)','Óleos líquidos não formam a rede de glóbulos parcialmente sólidos: o gelato pode "suar" óleo e derrete sem forma.','Combine com gordura do leite, de coco ou manteiga de cacau, e use emulsificante.');}
+ /* ---- 10. Aroma na temperatura de serviço ---- */
+ if(m.vit<=-14&&m.aromaTemp<.95&&(m.fruit>5||m.lipoShare>0))add('info','Sensorial','Aroma mais fraco a '+fT(m.vit)+' °C (≈'+f0((1-m.aromaTemp)*100)+'% menos volátil)','No frio os aromas evaporam menos e a língua percebe menos doçura e sabor.','Para a mesma intensidade de −12 °C, aumente fruta, pasta ou infusão em ≈'+f0((m.flavorDose-1)*100)+'%, ou sirva mais quente.');
+ /* ---- 11. Infusões e perda no cozimento ---- */
+ if(m.A.infRet>0)add('info','Processo','Infusão: '+f0(m.A.infRet)+' g de mistura retidos nos sólidos coados','A conta já desconta o líquido que fica na fava, folha ou especiaria e soma ≈'+f1(m.A.infExt)+' g de solúveis extraídos.','Pese a mistura depois de coar; se quiser o peso original, complete com o líquido da base (leite ou água) antes de pasteurizar.');
+ if(m.A.lossG>0)add('info','Processo','Perda no cozimento: '+f0(m.A.lossG)+' g de água evaporada','Sólidos, açúcares e gordura ficam mais concentrados na mistura final; a análise já usa a massa depois do cozimento.','Confirme pesando a panela antes e depois; ajuste o campo "Perda no cozimento" com o valor real.');
  if(m.dTgStore>16)add('warn','Processo','Armazenamento longe da transição vítrea','Tg′ da mistura '+f1(m.tg)+' °C; a '+fT(m.pr.storeT)+' °C a fase concentrada está '+f0(m.dTgStore)+' °C acima: recristalização mais rápida (cinética WLF).','Armazene mais frio (−22/−25 °C) ou aumente açúcares de Tg′ alto (sacarose, maltodextrina) em relação a frutose/polióis.');
  return F;
 }
@@ -1226,10 +1336,12 @@ const ROLE_N={maestro:'Maestro',chef:'Chef',sous:'Sous Chef'};
 /* m = Maestro · c = Chef · s = Sous Chef */
 const PAGE_ROLES={bancada:'mc',creator:'mc',laudo:'mc',congelamento:'mc',quimica:'mc',vitrine:'mc',
  execucao:'mcs',lotes:'mcs',planejamento:'mc',estoque:'mc',processo:'mc',brix:'mc',defeitos:'mcs',producao:'mcs',
- ingredientes:'mc',rotulo:'mcs',custos:'m',biblioteca:'mc',equipe:'m',dados:'mcs'};
+ ingredientes:'mc',rotulo:'mcs',custos:'m',biblioteca:'mc',equipe:'m',dados:'mcs',
+ componentes:'mc',degustacao:'mcs',sazonal:'mc'};
 /* o Sous Chef só pode estas ações; o Chef pode tudo menos estas */
-const SOUS_ACT=new Set(['go','chk','unchk','copy','lotNew','lotOpen','lotSave','lotConsume','defect','execRun','logout','logoutYes','logoutNo','syncNow','testRun','delNo','authMode','authGo']);
-const SOUS_INP=new Set(['prodG','lot','lotTxt','auth']),SOUS_CHG=new Set(['lot']);
+const SOUS_ACT=new Set(['go','chk','unchk','copy','lotNew','lotOpen','lotSave','lotConsume','defect','execRun','logout','logoutYes','logoutNo','syncNow','testRun','delNo','authMode','authGo',
+ 'meltTimer','panelStart','panelSet','panelNext','panelCancel','panelReveal','panelReset']);
+const SOUS_INP=new Set(['prodG','lot','lotTxt','auth','panelTaster','panelNote']),SOUS_CHG=new Set(['lot','panelLot']);
 const CHEF_DENY_ACT=new Set(['expJson','expCsv','memInvite','memDel','memDelYes','teamReload']),CHEF_DENY_INP=new Set(['cost']),CHEF_DENY_CHG=new Set(['memRole']);
 /* telas de entrada e saída funcionam para qualquer perfil (inclusive antes de saber o perfil) */
 const ALWAYS_ACT=new Set(['authGo','authMode','authRetry','logout','logoutYes','logoutNo','syncNow']);
@@ -1279,7 +1391,7 @@ function normalizeState(){
  S.lab.sens=S.lab.sens||{id:'',lo:-50,hi:50};
  S.nxEdit=S.nxEdit||{id:null,name:'Neutro Il Fredolin',dose:25,dairy:true,parts:{...NEUTRO_PRESETS.find(n=>n.id==='nx_fredolin').parts},from:'nx_fredolin'};
  S.libTab=S.libTab||'mestres';S.libAuthor=S.libAuthor||'Todos';
- S.vitrine=S.vitrine||{temp:-13,items:[]};S.plan=S.plan||[];
+ S.vitrine=S.vitrine||{temp:-13,items:[]};S.plan=S.plan||[];if(!Array.isArray(S.comps))S.comps=[];
  S.creatorTab=S.creatorTab||'gelato';if(!['gerar','comparar','sens'].includes(S.crSub))S.crSub='gerar';
  /* páginas antigas do Lab de P&D e do Lab de neutros vivem no Creator */
  if(S.page==='lab'){S.page='creator';S.creatorTab='gelato';}if(S.page==='neutros'){S.page='creator';S.creatorTab='neutros';}
@@ -1290,8 +1402,8 @@ normalizeState();
 const U={q:'',sel:null,addG:100,scaleG:'',prodG:'',checks:{},bal:null,del:null,copy:null,gen:null,libQ:'',sens:null,nxTest:null,cq:'',days:0,aging:false,gp:null,np:null,trail:[],test:null};
 
 const PAGES=[
- ['Formulação',[['bancada','Bancada'],['creator','Creator'],['laudo','Laudo técnico'],['congelamento','Congelamento'],['quimica','Química e sensorial'],['vitrine','Vitrine']]],
- ['Produção',[['execucao','Em execução'],['lotes','Lotes e calibração'],['planejamento','Planejamento'],['estoque','Estoque'],['processo','Processo'],['brix','Calibração Brix'],['defeitos','Diagnóstico de defeitos'],['producao','Ficha de produção']]],
+ ['Formulação',[['bancada','Bancada'],['creator','Creator'],['componentes','Componentes'],['laudo','Laudo técnico'],['congelamento','Congelamento'],['quimica','Química e sensorial'],['vitrine','Vitrine'],['sazonal','Frutas da estação']]],
+ ['Produção',[['execucao','Em execução'],['lotes','Lotes e calibração'],['degustacao','Painel cego'],['planejamento','Planejamento'],['estoque','Estoque'],['processo','Processo'],['brix','Calibração Brix'],['defeitos','Diagnóstico de defeitos'],['producao','Ficha de produção']]],
  ['Gestão',[['ingredientes','Ingredientes'],['rotulo','Rótulo e alérgenos'],['custos','Custos'],['biblioteca','Biblioteca'],...(APP_MODE==='app'?[['equipe','Equipe']]:[]),['dados','Dados e sincronização']]]
 ];
 const SEVN={crit:'Crítico',warn:'Atenção',info:'Observação',ok:'Acerto'};
@@ -1337,7 +1449,7 @@ function radar(series,size=230){const ax=[['doce','Doçura'],['cremoso','Cremosi
  return`<svg viewBox="0 0 ${size} ${size}" style="width:100%;max-width:${size+40}px;height:auto" role="img" aria-label="Perfil sensorial">${g}</svg>`;}
 
 /* ---------- cabeçalho / navegação ---------- */
-const VERSION='v12';
+const VERSION='v13';
 const brandHTML=()=>`<div class="brand"><div class="hex"></div><div><b>Il <span>Fredolin</span></b><small>Gelato Lab · ${VERSION}${APP_MODE==='app'&&ME.email?' · '+ROLE_N[ROLE]:''}</small></div></div>`;
 function hdr(m,sc){
  if(ROLE==='sous'){const ex=EXEC.find(e=>e.id===S.execId);return brandHTML()+`<div class="hctl"><div class="field nmf"><span class="lbl">Receita em execução</span><output class="ro">${ex?esc(ex.name)+' <span class="muted">v'+ex.v+'</span>':'Escolha uma receita em "Em execução"'}</output></div>
@@ -1360,9 +1472,9 @@ function pgBancada(m,F,sc){
  const P=m.P;const q=norm(U.q.trim());
  const res=q&&!U.sel?ING.filter(i=>i.id!=='nx_tmp'&&norm(i.n+' '+i.cat).includes(q)).slice(0,14):[];
  const rows=(S.recipe||[]).map(r=>{const i=ING_BY[r.id];if(!i)return'';const pct=m.tot?r.g/m.tot*100:0;
-  return`<tr><td><div style="font-weight:500">${esc(i.n)}</div><div class="muted" style="font-size:11.5px">${esc(i.cat)}${(i.al||[]).length?' · <span class="c-crit">alérgeno</span>':''}${(i.hfB||i.hfS||i.hfN)?' · <span class="c-gold">HF</span>':''}${S.brix[i.id]!=null&&S.brix[i.id]!==''?' · <span class="c-ice">Brix '+esc(S.brix[i.id])+'</span>':''}</div></td>
+  return`<tr><td><div style="font-weight:500">${esc(i.n)}</div><div class="muted" style="font-size:11.5px">${esc(i.cat)}${(i.al||[]).length?' · <span class="c-crit">alérgeno</span>':''}${(i.hfB||i.hfS||i.hfN)?' · <span class="c-gold">HF</span>':''}${S.brix[i.id]!=null&&S.brix[i.id]!==''?' · <span class="c-ice">Brix '+esc(S.brix[i.id])+'</span>':''}${r.inf?' · <span class="c-gold">infusionado e coado</span>':''}</div></td>
   <td class="r"><input type="number" id="g-${r.id}" data-i="g" data-id="${r.id}" value="${r.g}" min="0" step="${r.g<5?.1:1}" aria-label="Gramas de ${esc(i.n)}"></td>
-  <td class="r mono t2">${f1(pct)}%</td><td class="r"><button class="btn del" data-a="rm" data-v="${r.id}" aria-label="Remover ${esc(i.n)}">✕</button></td></tr>`;}).join('');
+  <td class="r mono t2">${r.inf?'<span title="sai na coagem">—</span>':f1(pct)+'%'}</td><td class="r"><div class="row" style="justify-content:flex-end;gap:4px;flex-wrap:nowrap">${INF[r.id]||INF_EXTRA.has(r.id)?`<button class="btn sm${r.inf?' pri':''}" data-a="infToggle" data-v="${r.id}" title="Infusionar no leite quente e coar" aria-pressed="${!!r.inf}">infusão</button>`:''}<button class="btn del" data-a="rm" data-v="${r.id}" aria-label="Remover ${esc(i.n)}">✕</button></div></td></tr>`;}).join('');
  const T=[
   ['Sólidos',m.sol,'%',P.sol,P.sol[0]-10,P.sol[1]+10,'alvo '+P.sol[0]+'–'+f0(P.sol[1])],
   ['Gordura',m.fat,'%',P.fat,0,P.fat[1]+6,'alvo '+P.fat[0]+'–'+P.fat[1]],
@@ -1373,9 +1485,9 @@ function pgBancada(m,F,sc){
  ];
  const top=F.filter(f=>f.sev==='crit'||f.sev==='warn').slice(0,3);
  return`<div class="pg">
- <div><h1>${esc(S.name||'Receita sem nome')}</h1><p class="lead">${P.n} · ${f0(m.tot)} g de mistura · vitrine a ${f1(S.vit)} °C${P.adj?' · faixas ajustadas para cacau/oleaginosas':''}</p></div>
+ <div><h1>${esc(S.name||'Receita sem nome')}</h1><p class="lead">${P.n} · ${f0(m.tot)} g de mistura · vitrine a ${f1(S.vit)} °C${m.empty?'':' · serviço ideal '+f1(m.serveT)+' °C <span class="muted">('+uncLine(m)+')</span>'}${P.adj?' · faixas ajustadas para cacau/oleaginosas':''}${P.pref?' · <span class="c-gold">gosto da casa</span>':''}</p></div>
  <div class="tiles">${T.map(([n,v,u,r,a,b,t])=>`<div class="tile"><span class="lbl">${n}</span><span class="v ${m.empty?'':stCls(v,r)}">${m.empty?'—':f1(v)}<small>${u}</small></span>${m.empty?'':rbar(v,r,a,b)}<span class="t">${t}</span></div>`).join('')}</div>
- <div class="card"><h2>Adicionar ingrediente <span class="muted" style="text-transform:none;letter-spacing:0">${ING.length} no banco</span></h2>
+ <div class="bgrid"><div class="bcol"><div class="card"><h2>Adicionar ingrediente <span class="muted" style="text-transform:none;letter-spacing:0">${ING.length} no banco</span></h2>
   <div class="row"><div class="search"><input type="text" id="q" data-i="q" value="${esc(U.q)}" placeholder="Buscar: leite, dextrose, pistache, maracujá, goma jataí…" autocomplete="off" aria-label="Buscar ingrediente">
    ${res.length?`<div class="res" role="listbox">${res.map((i,k)=>`<button data-a="pick" data-v="${i.id}" id="r${k}"><span>${esc(i.n)}</span><span class="tag">${esc(i.cat)}</span></button>`).join('')}</div>`:''}</div>
    <input type="number" id="addG" data-i="addG" value="${U.addG}" min="0" step="1" style="width:100px" aria-label="Gramas"><span class="muted">g</span>
@@ -1383,10 +1495,10 @@ function pgBancada(m,F,sc){
  <div class="card"><div class="row" style="margin-bottom:8px"><h2 style="margin:0">Receita</h2><span class="sp"></span><span class="chip">${f0(m.tot)} g</span></div>
   ${rows?`<div class="tw"><table class="tbl"><thead><tr><th>Ingrediente</th><th class="r">Gramas</th><th class="r">% mistura</th><th></th></tr></thead><tbody>${rows}</tbody></table></div>`:'<p class="muted">Bancada vazia. Busque um ingrediente acima ou carregue uma base na Biblioteca.</p>'}
   <div class="row" style="margin-top:12px"><button class="btn sm" data-a="norm">Normalizar para 1000 g</button><span class="sp"></span>
-   <input type="number" id="scaleG" data-i="scaleG" value="${U.scaleG}" placeholder="peso do lote" style="width:130px" aria-label="Novo peso do lote em gramas"><button class="btn sm" data-a="scale">Escalar lote</button></div></div>
+   <input type="number" id="scaleG" data-i="scaleG" value="${U.scaleG}" placeholder="peso do lote" style="width:130px" aria-label="Novo peso do lote em gramas"><button class="btn sm" data-a="scale">Escalar lote</button></div>${pairChips()}</div></div><div class="bcol">
  ${approveCard(m,F,sc)}
  ${top.length?`<div class="card"><div class="row"><h2 style="margin:0">Pontos que pedem ajuste</h2><span class="sp"></span><button class="btn sm pri" data-a="go" data-v="laudo">Abrir laudo completo</button></div>${top.map(findHTML).join('')}</div>`:(m.empty?'':`<div class="card"><h2>Laudo</h2><p class="c-ok" style="margin:0">Nenhum erro ou alerta. A receita está equilibrada para ${P.n.toLowerCase()} a ${f1(S.vit)} °C.</p></div>`)}
- </div>`;}
+ </div></div></div>`;}
 
 /* ---------- LAUDO ---------- */
 function pgLaudo(m,F,sc){
@@ -1402,7 +1514,7 @@ function pgLaudo(m,F,sc){
  <div><h1>Laudo técnico</h1><p class="lead">Cada parâmetro é comparado com a faixa de ${P.n.toLowerCase()} e com o processo informado. As soluções trazem gramagens calculadas para o lote atual de ${f0(m.tot)} g.</p></div>
  <div class="card"><div class="row" style="gap:20px;align-items:center">${ring(sc.total)}<div style="flex:1;min-width:240px;display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px 16px">
   ${sc.parts.map(([n,w,v])=>`<div><div class="row" style="justify-content:space-between"><span class="t2" style="font-size:12.5px">${n}</span><span class="mono" style="font-size:11px">${f0(v*100)}</span></div>${rbar(v*100,[85,100],0,100)}</div>`).join('')}</div></div>
-  <div class="row" style="margin-top:12px">${groups.map(g=>{const n=F.filter(f=>f.sev===g).length;const PL={crit:['crítico','críticos'],warn:['alerta','alertas'],info:['observação','observações'],ok:['acerto','acertos']}[g];return n?`<span class="chip ${g}">${n} ${PL[n>1?1:0]}</span>`:'';}).join('')}</div></div>
+  <div class="row" style="margin-top:12px">${groups.map(g=>{const n=F.filter(f=>f.sev===g).length;const PL={crit:['crítico','críticos'],warn:['alerta','alertas'],info:['observação','observações'],ok:['acerto','acertos']}[g];return n?`<span class="chip ${g}">${n} ${PL[n>1?1:0]}</span>`:'';}).join('')}<span class="sp"></span><span class="chip" title="Faixa provável com a variação natural dos ingredientes">serviço ideal ${f1(m.serveT)} °C · ${uncLine(m)}</span></div></div>
  ${approveCard(m,F,sc)}
  ${groups.map(g=>{const L=F.filter(f=>f.sev===g);return L.length?`<div class="card"><h2>${{crit:'Erros críticos',warn:'Atenção',info:'Observações',ok:'Acertos'}[g]}</h2>${L.map(findHTML).join('')}</div>`:'';}).join('')}
  <div class="card"><h2>Balanceador de açúcares</h2>
@@ -1446,7 +1558,7 @@ function pgCongel(m){
    <div class="kv"><span>Início do congelamento</span><span>${f2(m.fp)} °C</span></div>
    <div class="kv"><span>Serviço ideal desta receita</span><span class="c-ok">${f1(m.serveT)} °C</span></div>
    <div class="kv"><span>Faixa de serviço</span><span>${f1(m.serveRange[1])} a ${f1(m.serveRange[0])} °C</span></div>
-   <div class="kv"><span>Vitrine configurada</span><span class="c-ice">${f1(S.vit)} °C</span></div></div>
+   <div class="kv"><span>Vitrine configurada</span><span class="c-ice">${f1(S.vit)} °C</span></div>${uncCard(m)}</div>
   <div class="card"><h2>Água congelada</h2>
    <div class="kv"><span>Na saída (${f1(m.pr.drawT)} °C)</span><span class="${m.fzDraw>=45?'c-ok':'c-warn'}">${f0(m.fzDraw)}%</span></div>
    <div class="kv"><span>Na vitrine (${f1(S.vit)} °C)</span><span class="${stCls(m.fzVit,m.P.fz)}">${f0(m.fzVit)}%</span></div>
@@ -1471,6 +1583,7 @@ function pgProcesso(m,F){
   ${fieldNum('p-pastHold','Retenção',p.pastHold,1,'')}
   ${sel('pastHoldU','Unidade da retenção',[['s','segundos'],['min','minutos']],p.pastHoldU)}
   ${fieldNum('p-coolMin','Resfriar até 4 °C em (min)',p.coolMin,5,'Máximo seguro: 120 min')}
+  ${fieldNum('p-lossPct','Perda no cozimento (%)',p.lossPct,1,'Água evaporada em cremes cozidos e reduções. Pese a panela antes e depois')}
  </div></div>
  <div class="card"><h2>Maturação</h2><div class="form">
   ${fieldNum('p-matH','Tempo (h)',p.matH,1,'Ideal 6–12 h · máx. 72 h')}
@@ -1661,16 +1774,22 @@ function pgBiblioteca(){
  let body;
  if(tab==='ilf'){body=execList();}
  else if(tab==='mestres'){const grp=p=>p.g||p.a;const authors=['Todos',...new Set(MASTERS.map(grp))];const q=norm(U.libQ||'');
-  const LA=MASTERS.map((p,k)=>({p,k})).filter(({p})=>(S.libAuthor==='Todos'||grp(p)===S.libAuthor)&&(!q||norm(p.name+' '+p.a+' '+p.src).includes(q)));
+  const vf=(VIT_F[U.libVitF||0]||VIT_F[0])[1],tp=U.libTipo||'';const qs=q.split(/\s+/).filter(Boolean);
+  const LA=MASTERS.map((p,k)=>({p,k})).filter(({p})=>(S.libAuthor==='Todos'||grp(p)===S.libAuthor)&&(!tp||p.tipo===tp)&&vf(+p.vit)&&(!qs.length||qs.every(w=>mText(p).includes(w))));
+  const idx=MIDX.key===idxKey()?MIDX.list:null;
   const libN=U.libN||LIB_PAGE;const L=LA.slice(0,libN);
-  body=`<div class="card"><div class="row"><div class="chips">${authors.map(a=>`<button data-a="libAuthor" data-v="${a}" aria-pressed="${S.libAuthor===a}">${a}</button>`).join('')}</div><span class="sp"></span><input type="text" id="libQ" data-i="libQ" value="${esc(U.libQ||'')}" placeholder="Buscar receita" style="max-width:220px" aria-label="Buscar receita"></div>
-   <p class="note">Ingredientes e quantidades transcritos dos livros e mapeados para o banco; inclusões e decorações ficam fora do balanceamento. Cada receita foi pensada para a vitrine, máquina e método do autor: o índice abaixo mostra como ela se comporta nas suas condições (vitrine indicada), e "serviço ideal" diz a temperatura em que ela entrega a textura certa.</p></div>
-   <div class="g2">${L.map(({p,k})=>{const st=stOf(p.recipe.map(([id,g])=>({id,g})),p.tipo,p.vit);const mm=analyze(st);const F=diagnose(st,mm);const sc=score(st,mm,F).total;
+  body=`<div class="card"><div class="row"><div class="chips">${authors.map(a=>`<button data-a="libAuthor" data-v="${a}" aria-pressed="${S.libAuthor===a}">${a}</button>`).join('')}</div><span class="sp"></span><input type="text" id="libQ" data-i="libQ" value="${esc(U.libQ||'')}" placeholder="Nome, autor ou ingrediente" style="max-width:240px" aria-label="Buscar receita por nome, autor ou ingrediente"></div>
+   <div class="row" style="margin-top:10px"><select id="libTipo" data-c="libTipoSel" style="max-width:200px" aria-label="Tipo"><option value="">Todos os tipos</option>${Object.entries(PROF).map(([k,v])=>`<option value="${k}"${tp===k?' selected':''}>${esc(v.n)}</option>`).join('')}</select>
+    <div class="chips">${VIT_F.map(([n],i)=>`<button data-a="libVitF" data-v="${i}" aria-pressed="${(U.libVitF||0)===i}">${n}</button>`).join('')}</div><span class="sp"></span><button class="btn sm" data-a="simOpen" data-v="b">Parecidas com a bancada</button></div>
+   <p class="note">Ingredientes e quantidades transcritos dos livros e mapeados para o banco; inclusões e decorações ficam fora do balanceamento. A busca procura também nos ingredientes (ex.: "pistache gema"). Cada receita foi pensada para a vitrine, máquina e método do autor: o índice abaixo mostra como ela se comporta nas suas condições (vitrine indicada), e "serviço ideal" diz a temperatura em que ela entrega a textura certa.</p></div>
+   ${compareCard()}${similarCard(U.simOf?masterIndex():idx)}
+   <p class="note" style="margin:0">${LA.length} receita(s)${qs.length||tp||U.libVitF?' com esses filtros':''}.</p>
+   <div class="g2">${L.map(({p,k})=>{const x=idx&&idx[k];let mm,sc;if(x){mm={sol:x.sol,fat:x.fat,pod:x.pod,pacKg:x.pac,serveT:x.serveT};sc=x.sc;}else{const st=stOf(p.recipe.map(([id,g])=>({id,g})),p.tipo,p.vit);mm=analyze(st);sc=score(st,mm,diagnose(st,mm)).total;}
     return`<div class="card flat"><div class="row"><div style="min-width:0;flex:1"><h3>${esc(p.name)}</h3><div class="muted" style="font-size:12px">${esc(p.a)} · ${esc(p.src)}</div></div><span class="chip ${scoreCls(sc)}" title="Índice a ${fT(p.vit)} °C">${sc}</span></div>
      <p class="note" style="margin:8px 0">${PROF[p.tipo].n} · sólidos ${f1(mm.sol)}% · gordura ${f1(mm.fat)}% · POD ${f1(mm.pod)}% · PAC ${f0(mm.pacKg)}/kg · <span class="c-ok">serviço ideal ${f1(mm.serveT)} °C</span> (vitrine ${fT(p.vit)} °C)</p>${p.note?`<p class="note" style="margin:0 0 8px">${esc(p.note)}</p>`:''}
-     <div class="row"><button class="btn sm pri" data-a="master" data-v="${k}">Carregar</button><button class="btn sm" data-a="masterVar" data-v="${k}">Comparar no Lab</button></div></div>`;}).join('')||'<p class="muted">Nenhuma receita encontrada.</p>'}</div>${LA.length>L.length?`<div class="row" style="justify-content:center;margin-top:12px"><button class="btn" data-a="libMore">Mostrar mais ${Math.min(LIB_PAGE,LA.length-L.length)} (de ${LA.length-L.length} restantes)</button></div>`:''}`;}
- else if(tab==='minhas'){body=`<div class="card"><div class="row" style="margin-bottom:10px"><h2 style="margin:0">Minhas receitas</h2><span class="sp"></span><button class="btn okb" data-a="save">Salvar "${esc(S.name||'Receita')}"</button></div>
-  ${LIB.length?LIB.map(l=>`<div class="kv" style="align-items:center"><span><b style="color:var(--t1)">${esc(l.name)}</b><br><span class="muted" style="font-size:12px">${esc(PROF[l.st.tipo]?PROF[l.st.tipo].n:'')} · ${esc(l.date)}</span></span><span class="row" style="justify-content:flex-end">${U.del===String(l.id)?`<span class="c-crit" style="font-family:var(--fb);font-size:12.5px">Excluir?</span><button class="btn del" data-a="delYes" data-v="${l.id}">Excluir</button><button class="btn sm" data-a="delNo">Cancelar</button>`:`<button class="btn sm pri" data-a="load" data-v="${l.id}">Abrir</button><button class="btn sm" data-a="libVar" data-v="${l.id}">Comparar</button><button class="btn del" data-a="del" data-v="${l.id}" aria-label="Excluir ${esc(l.name)}">✕</button>`}</span></div>`).join(''):'<p class="muted" style="margin:0">Nenhuma receita salva ainda.</p>'}
+     <div class="row"><button class="btn sm pri" data-a="master" data-v="${k}">Carregar</button><button class="btn sm" data-a="masterVar" data-v="${k}">Comparar no Lab</button><button class="btn sm" data-a="simOpen" data-v="m:${k}">Parecidas</button><button class="btn sm" data-a="cmpToggle" data-v="m:${k}" aria-pressed="${(U.cmp||[]).includes('m:'+k)}" title="Comparar lado a lado">⇄${(U.cmp||[]).includes('m:'+k)?' ✓':''}</button></div></div>`;}).join('')||'<p class="muted">Nenhuma receita encontrada.</p>'}</div>${LA.length>L.length?`<div class="row" style="justify-content:center;margin-top:12px"><button class="btn" data-a="libMore">Mostrar mais ${Math.min(LIB_PAGE,LA.length-L.length)} (de ${LA.length-L.length} restantes)</button></div>`:''}`;}
+ else if(tab==='minhas'){body=`<div class="card"><div class="row" style="margin-bottom:10px"><h2 style="margin:0">Minhas receitas</h2><span class="sp"></span><input type="text" id="saveNote" data-i="saveNote" value="${esc(U.saveNote||'')}" placeholder="o que mudou nesta versão (opcional)" style="max-width:260px" aria-label="Nota da versão"><button class="btn okb" data-a="save">Salvar "${esc(S.name||'Receita')}"</button></div>${compareCard()}
+  ${LIB.length?LIB.map(l=>`<div class="kv" style="align-items:center"><span><b style="color:var(--t1)">${esc(l.name)}</b><br><span class="muted" style="font-size:12px">${esc(PROF[l.st.tipo]?PROF[l.st.tipo].n:'')} · ${esc(l.date)}${l.note?' · '+esc(l.note):''}${l.conflict?' · <span class="c-warn">cópia de conflito: compare com a original e apague a que sobrar</span>':''}</span></span><span class="row" style="justify-content:flex-end">${U.del===String(l.id)?`<span class="c-crit" style="font-family:var(--fb);font-size:12.5px">Excluir?</span><button class="btn del" data-a="delYes" data-v="${l.id}">Excluir</button><button class="btn sm" data-a="delNo">Cancelar</button>`:`<button class="btn sm pri" data-a="load" data-v="${l.id}">Abrir</button><button class="btn sm" data-a="libVar" data-v="${l.id}">Comparar</button><button class="btn sm" data-a="cmpToggle" data-v="l:${l.id}" aria-pressed="${(U.cmp||[]).includes('l:'+l.id)}" title="Comparar lado a lado">⇄</button><button class="btn sm" data-a="histOpen" data-v="${l.id}">Versões (${(l.hist||[]).length})</button><button class="btn del" data-a="del" data-v="${l.id}" aria-label="Excluir ${esc(l.name)}">✕</button>`}</span></div>${U.hist===String(l.id)?histHTML(l):''}`).join(''):'<p class="muted" style="margin:0">Nenhuma receita salva ainda.</p>'}
   <p class="note">Salvas neste aparelho. Para levar a outro, use "Copiar ficha" na Ficha de produção.</p></div>`;}
  else{body=`<div class="card"><p class="note" style="margin-top:0">Formulações equilibradas pelo próprio motor para servir a −13 °C.</p><div class="g2">${PRESETS.map((p,k)=>{const st=stOf(p.recipe.map(([id,g])=>({id,g})),p.tipo,p.vit);const mm=analyze(st);const sc=score(st,mm,diagnose(st,mm)).total;return`<div class="card flat"><div class="row"><h3>${esc(p.name)}</h3><span class="sp"></span><span class="chip ${scoreCls(sc)}">${sc}</span></div><p class="note" style="margin:6px 0 10px">${PROF[p.tipo].n} · sólidos ${f1(mm.sol)}% · gordura ${f1(mm.fat)}% · POD ${f1(mm.pod)}% · serviço ${f1(mm.serveT)} °C</p><button class="btn sm pri" data-a="preset" data-v="${k}">Carregar</button></div>`;}).join('')}</div></div>`;}
  return`<div class="pg"><div><h1>Biblioteca</h1><p class="lead">${MASTERS.length?MASTERS.length+' receitas dos mestres ('+listPt([...new Set(MASTERS.map(x=>x.g||x.a))])+'), suas':'Suas'} receitas salvas e as bases Il Fredolin.</p></div>
@@ -1716,6 +1835,7 @@ function lotEditor(L){const me=L.meas||{},se=L.sens||{};const ov=measuredOverrun
  const prev=LOTS.filter(x=>x.id!==L.id&&x.name===L.name&&x.sens&&Object.keys(x.sens).length)[0];
  return`<div class="card" style="border-color:var(--line2)"><div class="row"><h2 style="margin:0">Lote ${esc(L.code)} · ${esc(L.name)}</h2><span class="sp"></span><button class="btn okb sm" data-a="lotSave">Salvar lote</button><button class="btn sm" data-a="lotConsume">Baixar do estoque</button>${can.edit()?`<button class="btn sm" data-a="lotBench">Abrir receita</button><button class="btn del" data-a="lotDel" aria-label="Excluir lote">✕</button>`:''}</div>
  <div class="pills" style="margin:12px 0">${h.map(([n,s,v])=>`<div class="pill2 ${s}"><span class="dot"></span><span class="n">${n}</span><span class="v">${esc(v)}</span></div>`).join('')}</div>
+ ${protocolCard(L)}
  <h3 style="margin:14px 0 8px">Processo real (APPCC)</h3><div class="form">${num('meas.pastT','Pasteurização (°C)',1)}${num('meas.pastHold','Retenção ('+(L.proc.pastHoldU||'s')+')',1)}${num('meas.coolMin','Resfriar a 4 °C (min)',5)}${num('meas.matH','Maturação (h)',1)}${num('meas.matT','Maturação (°C)',.5)}${num('meas.drawT','Saída (°C)',.5)}${num('meas.drawMin','Mantecação (min)',1)}</div>
  <h3 style="margin:16px 0 8px">Medições do produto</h3><div class="form">
   ${num('meas.brix','Brix da mistura (°Bx)',.1,'previsto '+f1(L.pred.brix))}${num('meas.cupMix','Copo com mistura (g)',1)}${num('meas.cupGel','Copo com gelato (g)',1,ov!=null?'overrun '+f0(ov)+'% (previsto '+f0(L.pred.ov)+'%)':'mesmo copo, nivelado')}
@@ -1790,8 +1910,9 @@ function pgQuimica(m){if(m.empty)return`<div class="pg"><h1>Química e sensorial
  <div class="g2">
   <div class="card"><h2>Vida útil prevista</h2><div class="kv"><span>Na vitrine (${f1(m.vit)} °C)</span><span class="${m.shelfVit>=5?'c-ok':m.shelfVit>=2?'c-warn':'c-crit'}">${m.shelfVit>60?'60+':f1(m.shelfVit)} dias</span></div><div class="kv"><span>No freezer (${fT(m.pr.storeT)} °C)</span><span>${m.shelfStore>180?'180+':f0(m.shelfStore)} dias</span></div><div class="kv"><span>Cristal inicial</span><span>${m.crystal} µm</span></div>
    <div class="kv"><span>Fatores de K</span><span>estab. ${f2(m.kin.fStab)} · choque ${f2(m.kin.fShock)} · WLF ${f2(m.kin.fKinVit)}${m.kin.km!==1?' · calib. '+f2(m.kin.km):''}</span></div><p class="note">Dias até o cristal médio passar de 50 µm (Ostwald, d³ = d₀³ + K·t).</p></div>
-  <div class="card"><h2>Percepção</h2><div class="kv"><span>Doçura percebida a ${f1(m.vit)} °C</span><span class="c-gold">${f1(m.podPerc)}%</span></div><div class="kv"><span>Liberação de aroma</span><span class="${m.aroma>=75?'c-ok':m.aroma>=55?'c-warn':'c-crit'}">${f0(m.aroma)}/100</span></div><div class="kv"><span>Derretido em 10 min a 20 °C</span><span>${f0(m.melt10)}%</span></div>
+  <div class="card"><h2>Percepção</h2><div class="kv"><span>Doçura percebida a ${f1(m.vit)} °C</span><span class="c-gold">${f1(m.podPerc)}%</span></div><div class="kv"><span>Liberação de aroma</span><span class="${m.aroma>=75?'c-ok':m.aroma>=55?'c-warn':'c-crit'}">${f0(m.aroma)}/100</span></div><div class="kv"><span>Derretido em 10 min a 20 °C</span><span>${f0(m.melt10)}%</span></div>${aromaRows(m)}
    <p class="note">O frio reduz a doçura percebida (cerca de 2,5% por grau abaixo de −12 °C). Gordura, gomas, ar e proteína em excesso prendem os voláteis: aromas delicados (flores, ervas, frutas brancas) pedem índice acima de 75.</p></div></div>
+ ${fatCard(m)}
  <div class="card"><h2>Doçura percebida × temperatura de serviço</h2><div class="tw"><svg viewBox="0 0 ${W} ${H}" style="width:100%;min-width:460px;height:auto" role="img" aria-label="Doçura percebida por temperatura">${g}</svg></div><p class="note">Faixa verde: doçura-alvo de ${esc(m.P.n.toLowerCase())}. Ponto azul: vitrine atual.</p></div></div>`;}
 
 /* ===================== PLANEJAMENTO ===================== */
@@ -2199,6 +2320,323 @@ function crNeutros(m){
    ${[['Índice',x=>x.sc,0],['Estabilizantes (%)',x=>x.m.hydro,2],['Congelada na vitrine (%)',x=>x.m.fzVit,0],['Cristalização',x=>x.m.ci,0],['Derretimento',x=>x.m.melt,0],['Overrun (%)',x=>x.m.ov,0],...(can.cost()?[['Custo (R$/kg)',x=>x.m.costKg,2]]:[])].map(([n,fn,d])=>`<tr><td>${n}</td><td class="r mono">${d===2?f2(fn(T.a)):f0(fn(T.a))}</td><td class="r mono c-ice">${d===2?f2(fn(T.b)):f0(fn(T.b))}</td></tr>`).join('')}</tbody></table></div>`:'<p class="note">Troca os estabilizantes da receita da bancada por este blend na dose indicada e compara.</p>'}</div>
  <div class="card flat"><p class="note" style="margin:0"><b style="color:var(--t2)">Como ler a simulação.</b> Cada goma aparece como cadeia com a forma real da molécula: jataí e guar longas e flexíveis (guar ramificada), xantana rígida, carragena em dupla hélice ligando caseínas, gelatina em tripla hélice, fibra de citros em feixes, inulina e acácia como glóbulos, lecitina e mono-diglicerídeos como tensoativos em gotas de gordura. A quantidade de cadeias segue a dose real na calda; abaixo da temperatura de hidratação elas ficam enoveladas. Os pontos azuis fortes são a água imobilizada pela rede; os fracos, água livre que vira gelo. Os cristais nos cantos crescem até o tamanho previsto.</p></div>`;}
 
+/* ==== 57-v13.js ==== */
+/* ===================== IL FREDOLIN · v13: COMPONENTES, DEGUSTAÇÃO, BIBLIOTECA, ESTAÇÃO ===================== */
+
+/* ---------- dados: frutas da estação (Sudeste, pico de oferta) e combinações clássicas ---------- */
+/* meses de maior oferta e menor preço no atacado de São Paulo (referência CEAGESP/Embrapa; variam por região e ano).
+   bx = Brix típico da fruta madura (°Bx); conferir sempre no refratômetro e lançar em "Calibração Brix". */
+const SAZON=[
+ ['morango',[6,7,8,9,10],'7–9'],['abacaxi',[11,12,1,2],'12–14'],['manga',[10,11,12,1],'14–18'],['maracuja',[12,1,2,3,4],'13–15'],
+ ['goiaba',[1,2,3,4],'9–11'],['caju',[9,10,11,12],'10–12'],['acerola',[11,12,1,2,3,4],'6–8'],['caja',[2,3,4,5],'9–11'],
+ ['umbu',[1,2,3],'9–11'],['pitanga',[10,11,12,1],'8–10'],['jabuticaba',[9,10,11],'14–16'],['graviola',[2,3,4,5],'13–15'],
+ ['cupuacu',[1,2,3,4],'11–13'],['acai',[8,9,10,11,12],'3–5'],['banana',[1,2,3,4,5,6,7,8,9,10,11,12],'20–23'],['mamao',[1,2,3,4,5,6,7,8,9,10,11,12],'10–12'],
+ ['limao',[1,2,3,4],'7–9'],['laranja',[6,7,8,9],'10–12'],['tangerina',[4,5,6,7],'10–12'],['caqui',[3,4,5],'16–20'],
+ ['uva',[12,1,2,3],'15–18'],['pessego',[10,11,12],'10–12'],['figo',[1,2,3,4],'16–20'],['melancia',[11,12,1,2,3],'8–10'],
+ ['melao',[8,9,10,11,12,1],'9–12'],['abacate',[2,3,4,5,6,7],'—'],['lichia',[11,12,1],'16–19'],['pitaya',[12,1,2,3,4],'11–14'],
+ ['carambola',[1,2,3,4,9,10],'6–8'],['mirtilo',[10,11,12,1],'11–14'],['framboesa',[11,12,1,2,3],'9–11'],['amora',[10,11,12,1],'8–10'],
+ ['cambuci',[1,2,3],'6–8'],['uvaia',[10,11,12,1],'8–10'],['butia',[1,2,3],'12–14'],['seriguela',[12,1,2,3],'16–20'],
+ ['mangaba',[11,12,1,2,3],'12–16'],['bacuri',[1,2,3,4],'15–17'],['cacaupolpa',[5,6,7,8,10,11],'15–18'],['maca',[2,3,4,5],'11–13'],
+ ['pera',[1,2,3],'12–14'],['cereja',[12,1],'16–20']];
+const MESES=['jan','fev','mar','abr','mai','jun','jul','ago','set','out','nov','dez'];
+/* combinações consagradas da gelateria e da confeitaria (tradição italiana e francesa; The Flavor Bible, Page & Dornenburg).
+   [id do ingrediente, rótulo] — sem id no banco aparece só como sugestão de texto */
+const PAIRS={
+ morango:[['balsamico','vinagre balsâmico'],['ervas','manjericão'],['fava','baunilha'],['iogurte','iogurte'],['especiaria','pimenta-do-reino'],['mascarpone','mascarpone'],['espumante','espumante']],
+ framboesa:[['choc70','chocolate amargo'],['chocbranco','chocolate branco'],['pistache','pistache'],['lichia','lichia'],['ervas','hortelã'],['amendoa','amêndoa']],
+ limao:[['ervas','manjericão'],['especiaria','gengibre'],['mirtilo','mirtilo'],['framboesa','framboesa'],['iogurte','iogurte'],['matcha','matcha']],
+ maracuja:[['choc70','chocolate amargo'],['chocbranco','chocolate branco'],['cocoralado','coco'],['manga','manga'],['fava','baunilha'],['especiaria','pimenta']],
+ manga:[['maracuja','maracujá'],['lima','limão'],['cocoralado','coco'],['especiaria','cardamomo'],['iogurte','iogurte'],['framboesa','framboesa']],
+ banana:[['doceleite','doce de leite'],['choc70','chocolate'],['rum','rum'],['espresso','café'],['amendoim','amendoim'],['especiaria','canela']],
+ abacaxi:[['ervas','hortelã'],['cocoralado','coco'],['especiaria','gengibre'],['rum','rum'],['limao','limão']],
+ goiaba:[['creamcheese','queijo (romeu e julieta)'],['ricota','ricota'],['especiaria','canela'],['limao','limão']],
+ caju:[[null,'castanha-de-caju'],['limao','limão'],['especiaria','pimenta'],['doceleite','doce de leite']],
+ acerola:[['laranja','laranja'],['morango','morango'],['ervas','hortelã'],['chocbranco','chocolate branco']],
+ cupuacu:[['choc70','chocolate'],['cocoralado','coco'],[null,'castanha-do-pará'],['doceleite','doce de leite'],['fava','baunilha']],
+ acai:[['banana','banana'],['morango','morango'],['cocoralado','coco'],[null,'guaraná']],
+ jabuticaba:[['vinho','vinho tinto'],['especiaria','cravo'],['chocbranco','chocolate branco'],['creme35','creme']],
+ graviola:[['cocoralado','coco'],['limao','limão'],['fava','baunilha'],['maracuja','maracujá']],
+ cambuci:[[null,'cachaça'],['chocbranco','chocolate branco'],['limao','limão']],
+ pistache:[['framboesa','framboesa'],['cereja','cereja'],['laranja','laranja'],['choc70','chocolate amargo'],['chocbranco','chocolate branco'],['fava','baunilha']],
+ avela:[['choc70','chocolate'],['espresso','café'],['laranja','laranja'],['doceleite','doce de leite'],['sal','flor de sal']],
+ amendoa:[['cereja','cereja'],['damasco','damasco'],['laranja','laranja'],['fava','baunilha'],['choc70','chocolate']],
+ amendoim:[['chocleite','chocolate ao leite'],['banana','banana'],['sal','sal'],['doceleite','doce de leite'],['morango','geleia de morango']],
+ choc70:[['laranja','laranja'],['framboesa','framboesa'],['espresso','café'],['avela','avelã'],['sal','flor de sal'],['especiaria','pimenta / canela'],['rum','rum'],['maracuja','maracujá']],
+ cacau:[['laranja','laranja'],['espresso','café'],['avela','avelã'],['sal','flor de sal'],['especiaria','canela']],
+ chocbranco:[['maracuja','maracujá'],['framboesa','framboesa'],['matcha','matcha'],['limao','limão'],['pistache','pistache'],['cocoralado','coco']],
+ espresso:[['choc70','chocolate'],['avela','avelã'],['doceleite','doce de leite'],['especiaria','cardamomo'],['mascarpone','mascarpone']],
+ matcha:[['chocbranco','chocolate branco'],['limao','limão'],['azuki','azuki'],['framboesa','framboesa'],['cocoralado','coco']],
+ fava:[['morango','morango'],['cereja','cereja'],['espresso','café'],['rum','rum'],['choc70','chocolate']],
+ mascarpone:[['espresso','café (tiramisù)'],['figo','figo'],['morango','morango'],['cereja','cereja'],['balsamico','balsâmico']],
+ ricota:[['figo','figo'],['laranja','laranja cristalizada'],['pistache','pistache'],['mel','mel']],
+ iogurte:[['mirtilo','mirtilo'],['morango','morango'],['figo','figo'],['limao','limão'],['mel','mel']],
+ gorgonzola:[['pera','pera'],['figo','figo'],[null,'nozes'],['mel','mel']],
+ figo:[['mascarpone','mascarpone'],['gorgonzola','gorgonzola'],['especiaria','canela'],['vinho','vinho'],['amendoa','amêndoa']],
+ cereja:[['choc70','chocolate'],['amendoa','amêndoa'],['pistache','pistache'],['fava','baunilha'],['ricota','ricota']],
+ mirtilo:[['limao','limão'],['iogurte','iogurte'],['ervas','lavanda'],['creamcheese','cream cheese']],
+ laranja:[['choc70','chocolate'],['amendoa','amêndoa'],['pistache','pistache'],['ricota','ricota'],['especiaria','canela']],
+ cocoralado:[['manga','manga'],['maracuja','maracujá'],['abacaxi','abacaxi'],['choc70','chocolate'],['limao','limão']],
+ doceleite:[['banana','banana'],['espresso','café'],['choc70','chocolate'],['amendoim','amendoim'],['sal','flor de sal']],
+ milho:[['cocoralado','coco'],['especiaria','canela'],['doceleite','doce de leite'],['parmigiano','queijo']],
+ pitaya:[['limao','limão'],['cocoralado','coco'],['framboesa','framboesa']],
+ lichia:[['framboesa','framboesa'],[null,'pétala de rosa'],['limao','limão'],['cocoralado','coco']],
+ melancia:[['ervas','hortelã'],['limao','limão'],['especiaria','pimenta']],
+ pessego:[['amendoa','amêndoa'],['fava','baunilha'],['espumante','espumante (Bellini)'],['framboesa','framboesa (Melba)']],
+ caqui:[['especiaria','canela'],['laranja','laranja'],['mascarpone','mascarpone']],
+ tomate:[['ervas','manjericão'],['azeite','azeite'],['morango','morango'],['sal','sal']],
+ azeite:[['limao','limão'],['laranja','laranja'],['choc70','chocolate'],['sal','flor de sal']]};
+PAIRS.choc55=PAIRS.choc64=PAIRS.choc80=PAIRS.choc70;PAIRS.cafesol=PAIRS.espresso;PAIRS.lima=PAIRS.limao;PAIRS.pistachea=PAIRS.pistache;PAIRS.cococreme=PAIRS.cocoralado;
+
+/* ingredientes "de sabor" da receita (fora a base: lácteos, açúcares, estabilizantes, água) */
+const BASE_CATS=new Set(['Lácteos','Açúcares','Polióis e fibras','Estabilizantes','Meus neutros','Ovos','Vegetais e gorduras']);
+function pairChips(){const ids=(S.recipe||[]).map(r=>r.id).filter(id=>PAIRS[id]);if(!ids.length)return'';const have=new Set(S.recipe.map(r=>r.id));
+ const seen=new Set();const out=[];ids.forEach(id=>PAIRS[id].forEach(([pid,lab])=>{const k=pid||lab;if(seen.has(k)||(pid&&have.has(pid)))return;seen.add(k);out.push([pid,lab,id]);}));
+ if(!out.length)return'';
+ return`<div style="margin-top:12px"><span class="lbl">Combina com</span><div class="chips" style="margin-top:6px">${out.slice(0,12).map(([pid,lab,src])=>pid&&ING_BY[pid]&&can.edit()?`<button data-a="crAdd" data-v="${pid}" title="Clássico com ${esc(ING_BY[src].n)} · toque para adicionar">+ ${esc(lab)}</button>`:`<span class="chip" title="Clássico com ${esc(ING_BY[src].n)}">${esc(lab)}</span>`).join('')}</div></div>`;}
+
+/* ingredientes que fazem sentido infusionar e coar, além dos que têm parâmetros próprios em INF */
+const INF_EXTRA=new Set(['alho','cogumelo','orapronobis','biscoito','alhonegro','cacau10']);
+
+/* ---------- COMPONENTES: variegato, crocante, pedaços de fruta ---------- */
+const COMP_KINDS={variegato:'Variegato / calda',crocante:'Crocante',fruta:'Pedaços de fruta'};
+const compSt=c=>({tipo:'sorbetto',vit:S.vit,recipe:(c.recipe||[]).filter(r=>ING_BY[r.id]),proc:Object.assign({},S.proc,{lossPct:+c.loss||0}),brix:S.brix,costs:S.costs});
+/* açúcar que a fruta precisa absorver (calda/confitagem) para não virar gelo dentro de uma base que congela fzBase% */
+function candySugar(c,fzBase){const base=compSt(c);let lo=0,hi=200;const fzAt=g=>analyze(Object.assign({},base,{recipe:[...base.recipe,{id:'sacarose',g}]})).fzVit;
+ const tot=base.recipe.reduce((s,r)=>s+(+r.g||0),0);if(!tot||fzAt(0)<=fzBase+5)return 0;if(fzAt(hi*tot/100)>fzBase+5)return null;
+ for(let i=0;i<14;i++){const mid=(lo+hi)/2;if(fzAt(mid*tot/100)>fzBase+5)lo=mid;else hi=mid;}return hi;}
+function compAnalysis(m){const comps=S.comps||[];const res=comps.map(c=>{const st=compSt(c);const cm=analyze(st);const out={c,m:cm,notes:[]};if(cm.empty)return out;
+  const add=(sev,t)=>out.notes.push([sev,t]);
+  if(c.kind==='variegato'){
+   if(cm.fzVit>35)add('warn','A '+fT(S.vit)+' °C '+f0(cm.fzVit)+'% da água do variegato congela: fica duro e "vítreo" no meio do gelato. Suba açúcares (dextrose ou xarope de glicose) até ficar abaixo de 35%.');
+   else add('ok','Fica macio na vitrine ('+f0(cm.fzVit)+'% da água congelada).');
+   if(cm.fzVit<12&&cm.stab<.3)add('info','Quase não congela: tende a escorrer e "sangrar" na cuba. Engrosse com 1–2% de amido ou 0,3% de pectina.');
+   if(cm.wat>52)add('warn','Água alta ('+f0(cm.wat)+'%): migra para a base e cria uma faixa de gelo ao redor do veio. Reduza (cozinhe até Brix ≥ 50) ou troque parte do líquido por gordura (pasta, chocolate).');}
+  else if(c.kind==='crocante'){
+   if(cm.wat>4)add('crit','Água '+f1(cm.wat)+'%: acima de 4% o crocante amolece em poucas horas no frio. Seque no forno ou troque por ingredientes secos.');
+   else add('ok','Água '+f1(cm.wat)+'% (crocante até 4%).');
+   /* barreira = gordura de cobertura (manteiga de cacau, coco) que forma película contínua; gordura dentro da massa do biscoito não protege */
+   const cocoaFat=(cm.fatTypes.cocoa||0)+(cm.fatTypes.coco||0);
+   if(cm.fat<25||cocoaFat<30)add('warn','Sem barreira de gordura sólida: a umidade da base ('+f0(m.wat)+'% de água) migra para o crocante em 1–3 dias. Banhe em chocolate ou manteiga de cacau (película fina) antes de incorporar.');
+   else add('ok','Gordura sólida protege da umidade ('+f0(cm.fat)+'% de gordura, '+f0(cocoaFat)+'% dela dura).');}
+  else{
+   const d=cm.fzVit-m.fzVit;
+   if(d>12){const sg=candySugar(c,m.fzVit);add('warn','Os pedaços congelam bem mais que a base ('+f0(cm.fzVit)+'% contra '+f0(m.fzVit)+'%): ficam duros como gelo.'+(sg!=null?' Confite em calda até absorver ≈'+f0(sg)+' g de açúcar por 100 g de fruta (ou use dextrose para menos doçura).':' Mesmo confitando não iguala: use a fruta em variegato.'));}
+   else add('ok','Pedaços com dureza parecida com a da base ('+f0(cm.fzVit)+'% contra '+f0(m.fzVit)+'% de água congelada).');}
+  return out;});
+ /* produto final: base + componentes, por peso */
+ const pTot=comps.reduce((s,c)=>s+clamp(+c.pct||0,0,60),0);const fb=Math.max(0,1-pTot/100);
+ const mix=(fn)=>fb*fn(m)+res.reduce((s,r)=>s+(r.m.empty?0:clamp(+r.c.pct||0,0,60)/100*fn(r.m)),0);
+ const al=new Set(m.A.al);res.forEach(r=>{if(!r.m.empty)r.m.A.al.forEach(a=>al.add(a));});
+ return{res,pTot,fb,tot:{fat:mix(x=>x.fat),swt:mix(x=>x.swt),prot:mix(x=>x.prot),sol:mix(x=>x.sol),kcal:mix(x=>x.nut.kcal),sat:mix(x=>x.nut.sat),add:mix(x=>x.nut.add),costKg:mix(x=>x.costKg||0)},al};}
+function pgComponentes(m){
+ const C=S.comps||[];const R=m.empty?null:compAnalysis(m);
+ const sev=s=>({crit:'c-crit',warn:'c-warn',info:'c-ice',ok:'c-ok'})[s];
+ return`<div class="pg"><div><h1>Componentes</h1><p class="lead">Variegatos, crocantes e pedaços de fruta são balanceados à parte: cada um precisa ficar macio, seco ou na mesma dureza da base. Informe quanto cada um representa do produto final.</p></div>
+ ${C.map((c,k)=>{const r=R&&R.res[k];const cm=r&&r.m;return`<div class="card"><div class="row"><input type="text" id="cp-n${k}" data-i="comp" data-k="${k}" data-f="name" value="${esc(c.name)}" style="max-width:260px;font-weight:600" aria-label="Nome do componente">
+   <select id="cp-k${k}" data-c="comp" data-k="${k}" data-f="kind" style="max-width:200px" aria-label="Tipo">${Object.entries(COMP_KINDS).map(([v,n])=>`<option value="${v}"${v===c.kind?' selected':''}>${n}</option>`).join('')}</select>
+   <label class="row" style="gap:6px"><input type="number" id="cp-p${k}" data-i="comp" data-k="${k}" data-f="pct" value="${c.pct}" min="0" max="60" step="1" style="width:80px" aria-label="Porcentagem do produto final"><span class="muted">% do produto</span></label>
+   ${c.kind==='variegato'?`<label class="row" style="gap:6px"><input type="number" id="cp-l${k}" data-i="comp" data-k="${k}" data-f="loss" value="${c.loss||0}" min="0" max="60" step="1" style="width:70px" aria-label="Perda no cozimento"><span class="muted">% perda no cozimento</span></label>`:''}
+   <span class="sp"></span><button class="btn del" data-a="compRm" data-v="${k}" aria-label="Remover componente">✕</button></div>
+  <div style="margin-top:10px;display:flex;flex-direction:column;gap:8px">${(c.recipe||[]).map((x,j)=>`<div class="row"><select id="cp-i${k}-${j}" data-c="compIng" data-k="${k}" data-j="${j}" style="flex:1;min-width:180px" aria-label="Ingrediente">${ingOpts(x.id)}</select><input type="number" id="cp-g${k}-${j}" data-i="compG" data-k="${k}" data-j="${j}" value="${x.g}" min="0" step="1" style="width:100px" aria-label="Gramas"><span class="muted">g</span><button class="btn del" data-a="compIngRm" data-v="${k}|${j}" aria-label="Remover">✕</button></div>`).join('')}
+   <div><button class="btn sm" data-a="compIngAdd" data-v="${k}">+ Ingrediente</button></div></div>
+  ${cm&&!cm.empty?`<div class="row note" style="gap:14px;margin:12px 0 4px">${[['Água',f1(cm.wat)+'%'],['Gordura',f1(cm.fat)+'%'],['Açúcares',f1(cm.swt)+'%'],['Congelada a '+fT(S.vit)+'°',f0(cm.fzVit)+'%'],['Brix',f0(cm.brixMix)]].map(([a,b])=>`<span>${a} <b class="mono" style="color:var(--t1)">${b}</b></span>`).join('')}</div>${r.notes.map(([s,t])=>`<p class="${sev(s)}" style="margin:6px 0 0;font-size:13.5px">${esc(t)}</p>`).join('')}`:''}</div>`;}).join('')}
+ <div class="row"><button class="btn pri" data-a="compAdd" data-v="variegato">+ Variegato</button><button class="btn" data-a="compAdd" data-v="crocante">+ Crocante</button><button class="btn" data-a="compAdd" data-v="fruta">+ Pedaços de fruta</button></div>
+ ${R&&C.length?`<div class="card"><h2>Produto final (base ${f0(R.fb*100)}% + componentes ${f0(R.pTot)}%)</h2>
+  <div class="tw"><table class="tbl"><thead><tr><th>Por 100 g</th><th class="r">Base</th><th class="r">Produto final</th></tr></thead><tbody>
+  ${[['Gordura (g)',m.fat,R.tot.fat,1],['Gordura saturada (g)',m.nut.sat,R.tot.sat,1],['Açúcares e polióis (g)',m.swt,R.tot.swt,1],['Açúcares adicionados (g)',m.nut.add,R.tot.add,1],['Proteína (g)',m.prot,R.tot.prot,1],['Sólidos (g)',m.sol,R.tot.sol,1],['Energia (kcal)',m.nut.kcal,R.tot.kcal,0],...(can.cost()?[['Custo (R$/kg)',m.costKg||0,R.tot.costKg,2]]:[])].map(([n,a,b,d])=>`<tr><td>${n}</td><td class="r mono">${d===2?f2(a):d?f1(a):f0(a)}</td><td class="r mono c-ice">${d===2?f2(b):d?f1(b):f0(b)}</td></tr>`).join('')}</tbody></table></div>
+  <p class="note">Alérgenos do produto final: ${R.al.size?[...R.al].map(a=>BRAL[a]||a).join(', '):'nenhum da lista'}. ${R.pTot>35?'<span class="c-warn">Acima de 35% de componentes a base perde estrutura na cuba.</span>':''}</p></div>`:''}
+ ${C.length?'':'<div class="card flat"><p class="note" style="margin:0">Exemplos: stracciatella (crocante: chocolate 70% + 10% manteiga de cacau, 8–12%), variegato de frutas vermelhas (calda a Brix 60, 10–15%), pedaços de manga confitados (8–12%).</p></div>'}
+ </div>`;}
+
+/* ---------- GORDURA E AROMA (cartões da Química) ---------- */
+function fatCard(m){if(!(m.fat>.5))return'';
+ const T0=-20,T1=40,W=600,H=190,L=40,R=12,Tp=12,B=28,sx=t=>L+(t-T0)/(T1-T0)*(W-L-R),sy=v=>Tp+(100-v)/100*(H-Tp-B);let g='';
+ for(let p=0;p<=100;p+=25)g+=`<line x1="${L}" x2="${W-R}" y1="${sy(p)}" y2="${sy(p)}" stroke="var(--line)"/><text x="${L-6}" y="${sy(p)+4}" text-anchor="end" fill="var(--t3)" font-size="10">${p}%</text>`;
+ for(let t=T0;t<=T1;t+=10)g+=`<text x="${sx(t)}" y="${H-10}" text-anchor="middle" fill="var(--t3)" font-size="10">${t}°</text>`;
+ const pts=[];for(let t=T0;t<=T1;t+=1)pts.push(sx(t).toFixed(1)+','+sy(m.sfcAt(t)).toFixed(1));g+=`<path d="M${pts.join('L')}" fill="none" stroke="var(--gold)" stroke-width="2.4"/>`;
+ [[m.vit,'vitrine','var(--ice)'],[m.pr.drawT,'saída','var(--t2)'],[35,'boca','var(--crit)']].forEach(([t,n,c],i)=>{const r=sx(t)>W-110;g+=`<line x1="${sx(t)}" x2="${sx(t)}" y1="${Tp}" y2="${H-B}" stroke="${c}" stroke-dasharray="3 3"/><text x="${r?sx(t)-4:sx(t)+4}" y="${H-B-6-i*13}" text-anchor="${r?'end':'start'}" fill="${c}" font-size="10">${n} ${f0(m.sfcAt(t))}%</text>`;});
+ const ds=m.destab,dc=ds>55?'c-warn':ds<12?'c-ice':'c-ok';
+ return`<div class="card"><h2>Gordura: parte sólida e desestabilização</h2>
+  <div class="tw"><svg viewBox="0 0 ${W} ${H}" style="width:100%;min-width:460px;height:auto" role="img" aria-label="Gordura sólida por temperatura">${g}</svg></div>
+  <div class="g3" style="margin-top:8px;gap:12px">
+   <div><span class="lbl">Tipos de gordura</span><div class="note" style="margin-top:4px">${Object.entries(m.fatTypes).filter(([,v])=>v>=1).sort((a,b)=>b[1]-a[1]).map(([k,v])=>esc(SFC_N[k]||k)+' '+f0(v)+'%').join(' · ')}</div></div>
+   <div><span class="lbl">Desestabilização parcial</span><div class="big ${dc}">${f0(ds)}<small class="muted" style="font-size:14px">%</small></div>${rbar(ds,[12,55],0,90)}</div>
+   <div><span class="lbl">Sólida na boca (35 °C)</span><div class="big ${m.sfcMouth>9?'c-warn':''}">${f0(m.sfcMouth)}<small class="muted" style="font-size:14px">%</small></div><p class="note" style="margin:2px 0 0">Acima de ~9% a gordura dura deixa película cerosa.</p></div></div>
+  <p class="note">Curva de gordura sólida por tipo (leite, cacau, coco, oleaginosas, óleos, gordura dura) ponderada pela receita. Na saída da máquina, glóbulos parcialmente cristalizados se chocam e se unem (coalescência parcial) e formam a rede que segura o ar: 15–50% dá textura seca, cremosa e derretimento lento; acima de ~55% começa a amanteigar. Emulsificantes, gema e saída mais fria aumentam; proteína alta reduz.</p></div>`;}
+function aromaRows(m){return`<div class="kv"><span>Volatilidade do aroma a ${fT(m.vit)} °C</span><span class="${m.aromaTemp<.9?'c-warn':'c-ok'}">${f0(m.aromaTemp*100)}% de −12 °C</span></div>
+ <div class="kv"><span>Dose de sabor para igualar −12 °C</span><span>${m.flavorDose>1.02?'×'+f2(m.flavorDose):'igual'}</span></div>
+ <div class="kv"><span>Aroma efetivo na vitrine</span><span class="${m.aromaVit>=65?'c-ok':m.aromaVit>=45?'c-warn':'c-crit'}">${f0(m.aromaVit)}/100</span></div>
+ ${m.lipoShare>0?`<div class="kv"><span>Sabor lipossolúvel (cacau, oleaginosas)</span><span>${f0(m.lipoShare*100)}% do sabor</span></div>`:''}`;}
+function uncLine(m){const u=uncertainty(S);if(!u)return'';return`${f1(u.lo)} a ${f1(u.hi)} °C`;}
+function uncCard(m){const u=uncertainty(S);if(!u)return'';
+ return`<div class="kv"><span>Faixa provável (90%)</span><span>${f1(u.hi)} a ${f1(u.lo)} °C</span></div><div class="kv"><span>Água congelada na vitrine</span><span>${f0(u.fzHi)}–${f0(u.fzLo)}%</span></div>
+ <p class="note" style="margin:6px 0 0">Variação natural dos ingredientes: ${u.parts.length?u.parts.map(p=>esc(p.n)+' ±'+f1(Math.abs(p.d)*1.65)+' °C').join(' · '):'só a do modelo'}. ${u.parts.some(p=>p.n.startsWith('Frutas'))?'Medir o Brix da fruta estreita a faixa.':''}</p>`;}
+
+/* ---------- PROTOCOLO DE MEDIÇÃO DO LOTE ---------- */
+const MELT_MS=600000;let meltTick=null;
+function lotT0(L){const t=+String(L.id).slice(1);return isFinite(t)&&t>1e12?t:Date.now();}
+function protocol(L){const me=L.meas||{};const has=k=>me[k]!==''&&me[k]!=null;const days=(Date.now()-lotT0(L))/864e5;const pn=(L.panel||[]).length;
+ const ice=d=>has('ice'+d)?(+me['ice'+d]>0?'gelo':'ok'):days>=d?'pendente':'em '+f0(Math.ceil(d-days))+' d';
+ return[['Brix da mistura (após maturar)',has('brix')],['Overrun pelo copo',has('cupMix')&&has('cupGel')||has('ov')],['Núcleo após abatimento',has('coreT')],['Derretimento 10 min a 20 °C',has('melt10')],
+  ['Textura na vitrine',has('tex')&&has('texTemp')],['Gelo D+1 · D+3 · D+7',has('ice1')&&has('ice3')&&has('ice7'),[1,3,7].map(d=>'D+'+d+' '+ice(d)).join(' · ')],['Painel cego (3+ provadores)',pn>=3,pn+' avaliação(ões)']];}
+function protocolCard(L){const P=protocol(L);const ok=P.filter(p=>p[1]).length;const me=L.meas||{};const run=U.melt&&U.melt.lot===L.id;const left=run?Math.max(0,U.melt.end-Date.now()):0;
+ const iceSel=d=>`<label class="field"><span class="lbl">Gelo D+${d}</span><select id="lot-ice${d}" data-c="lot" data-k="meas.ice${d}"><option value=""${me['ice'+d]==null||me['ice'+d]===''?' selected':''}>—</option>${[[0,'sem gelo'],[1,'leve'],[2,'nítido']].map(([v,n])=>`<option value="${v}"${String(me['ice'+d])===String(v)?' selected':''}>${n}</option>`).join('')}</select></label>`;
+ return`<div class="card flat" style="margin:12px 0"><div class="row"><h3 style="margin:0">Protocolo de medição</h3><span class="sp"></span><span class="chip ${ok>=6?'ok':ok>=3?'warn':'info'}">${ok}/${P.length} · ${ok>=4?'pronto para calibrar':'faltam medições'}</span></div>
+  <div class="pills" style="margin:10px 0">${P.map(([n,d,x])=>`<div class="pill2 ${d?'ok':'info'}"><span class="dot"></span><span class="n">${n}</span><span class="v">${d?'feito':''}${x?(d?' · ':'')+esc(x):''}</span></div>`).join('')}</div>
+  <div class="row"><button class="btn sm ${run?'':'pri'}" data-a="meltTimer" data-v="${L.id}">${run?'Parar cronômetro':'Iniciar derretimento (10 min)'}</button>${run?`<span class="mono c-ice" style="font-size:18px">${String(Math.floor(left/60000)).padStart(2,'0')}:${String(Math.floor(left/1000)%60).padStart(2,'0')}</span><span class="note">pese o que escorreu quando zerar</span>`:''}</div>
+  <div class="form" style="margin-top:10px">${iceSel(1)}${iceSel(3)}${iceSel(7)}<label class="field"><span class="lbl">Núcleo após abatimento (°C)</span><input type="number" id="lot-meas-coreT" data-i="lot" data-k="meas.coreT" value="${has0(me.coreT)}" step=".5"><span class="hint">termômetro de espeto no centro da cuba</span></label></div></div>`;}
+const has0=v=>v!=null&&v!==''?esc(v):'';
+
+/* ---------- PAINEL CEGO ---------- */
+const PANELKEY='fredolin_v13_panel';
+const JAR=[[-2,'muito pouco'],[-1,'pouco'],[0,'ideal'],[1,'muito'],[2,'demais']];
+const PANEL_Q=[['jDoce','Doçura','jar'],['jDuro','Dureza na colher','jar'],['jCrem','Cremosidade','jar'],['hed','Gostei (1–9)','hed'],['int','Intensidade do sabor (1–5)','s5'],['pers','Persistência (1–5)','s5']];
+function panelState(){if(!U.panel)U.panel=LS.get(PANELKEY)||{lots:[],codes:{},order:[],taster:'',i:-1,cur:{},reveal:false};return U.panel;}
+const savePanel=()=>LS.set(PANELKEY,U.panel);
+function shuffle(a,seed){const r=[...a];let s=seed||1;for(let i=r.length-1;i>0;i--){s=(s*9301+49297)%233280;const j=Math.floor(s/233280*(i+1));[r[i],r[j]]=[r[j],r[i]];}return r;}
+function panelStats(L){const pn=(L.panel||[]);const st={};PANEL_Q.forEach(([k])=>{const v=pn.map(x=>x[k]).filter(v=>v!==''&&v!=null).map(Number);st[k]=v.length?{m:v.reduce((a,b)=>a+b,0)/v.length,sd:v.length>1?Math.sqrt(v.reduce((a,b)=>a+b*b,0)/v.length-Math.pow(v.reduce((a,b)=>a+b,0)/v.length,2)):0,n:v.length}:null;});return st;}
+function pgDegustacao(){const P=panelState();const lots=P.lots.map(id=>LOTS.find(l=>l.id===id)).filter(Boolean);
+ const pick=`<div class="card"><h2>1 · Amostras da sessão</h2><p class="note" style="margin-top:0">Escolha de 2 a 6 lotes. Cada um recebe um código de 3 dígitos e a ordem muda a cada provador, para que nome e posição não influenciem.</p>
+  ${LOTS.length?`<div style="display:flex;flex-direction:column;gap:6px">${LOTS.slice(0,24).map(L=>`<label class="row" style="gap:8px;font-size:13.5px"><input type="checkbox" data-c="panelLot" data-k="${L.id}" id="pl-${L.id}"${P.lots.includes(L.id)?' checked':''}${P.i>=0?' disabled':''}> <span class="mono">${esc(L.code)}</span> ${esc(L.name)} <span class="muted">${esc(L.date)}</span></label>`).join('')}</div>`:'<p class="muted">Registre lotes em "Lotes e calibração" primeiro.</p>'}</div>`;
+ if(P.i<0)return`<div class="pg"><div><h1>Painel cego</h1><p class="lead">Degustação às cegas por atributo, presa ao lote e à receita. As notas de doçura e dureza na escala do ponto ideal ensinam ao motor o gosto da casa.</p></div>${pick}
+  <div class="card"><h2>2 · Provador</h2><div class="row"><input type="text" id="panelTaster" data-i="panelTaster" value="${esc(P.taster)}" placeholder="Nome ou iniciais" style="max-width:240px" aria-label="Provador"><button class="btn pri" data-a="panelStart"${lots.length>=2?'':' disabled'}>Começar a provar</button></div><p class="note">Sirva todas as amostras na mesma temperatura (a da vitrine), 30 g por copo, com água entre elas.</p></div>
+  ${lots.length?panelResults(lots,P):''}</div>`;
+ const order=P.order;const L=LOTS.find(l=>l.id===order[P.i]);const code=P.codes[order[P.i]];const cur=P.cur;
+ const q=([k,n,t])=>`<div class="field"><span class="lbl">${n}</span><div class="chips" role="group" aria-label="${n}">${(t==='jar'?JAR:t==='hed'?[1,2,3,4,5,6,7,8,9].map(v=>[v,String(v)]):[1,2,3,4,5].map(v=>[v,String(v)])).map(([v,l])=>`<button data-a="panelSet" data-v="${k}|${v}" aria-pressed="${String(cur[k])===String(v)}">${t==='jar'?(v>0?'+':'')+v+' '+l:l}</button>`).join('')}</div></div>`;
+ return`<div class="pg"><div><h1>Painel cego</h1><p class="lead">Provador: <b>${esc(P.taster||'sem nome')}</b> · amostra ${P.i+1} de ${order.length}</p></div>
+  <div class="card"><div class="row"><h2 style="margin:0">Amostra <span class="mono c-ice" style="font-size:22px">${esc(code)}</span></h2><span class="sp"></span><button class="btn sm" data-a="panelCancel">Cancelar provador</button></div>
+  <div style="display:flex;flex-direction:column;gap:14px;margin-top:12px">${PANEL_Q.map(q).join('')}
+   <label class="field"><span class="lbl">Comentário</span><input type="text" id="panelNote" data-i="panelNote" value="${esc(cur.note||'')}" placeholder="gelado, arenoso, aroma fraco…"></label></div>
+  <div class="row" style="margin-top:14px"><span class="sp"></span><button class="btn pri" data-a="panelNext"${cur.hed?'':' disabled'}>${P.i+1<order.length?'Próxima amostra':'Concluir provador'}</button></div></div>
+  ${L?'':'<p class="c-warn">Lote não encontrado.</p>'}</div>`;}
+function panelResults(lots,P){const rows=lots.map(L=>({L,st:panelStats(L)}));const any=rows.some(r=>r.st.hed);if(!any)return'';
+ const fmt=s=>s?f1(s.m)+'<small class="muted"> ±'+f1(s.sd)+'</small>':'—';const best=rows.filter(r=>r.st.hed).sort((a,b)=>b.st.hed.m-a.st.hed.m)[0];
+ return`<div class="card"><div class="row"><h2 style="margin:0">Resultados</h2><span class="sp"></span><button class="btn sm" data-a="panelReveal">${P.reveal?'Ocultar nomes':'Revelar amostras'}</button><button class="btn sm" data-a="panelReset">Nova sessão</button></div>
+  <div class="tw" style="margin-top:10px"><table class="tbl"><thead><tr><th>Amostra</th><th class="r">Provadores</th><th class="r">Gostei (1–9)</th><th class="r">Doçura</th><th class="r">Dureza</th><th class="r">Cremosidade</th><th class="r">Intensidade</th><th class="r">Persistência</th></tr></thead><tbody>
+  ${rows.map(({L,st})=>`<tr${best&&best.L===L?' style="background:var(--ok-a)"':''}><td><span class="mono c-ice">${esc(P.codes[L.id]||'')}</span>${P.reveal?' · '+esc(L.name)+' <span class="muted">'+esc(L.code)+'</span>':''}</td><td class="r mono">${(L.panel||[]).length}</td>${['hed','jDoce','jDuro','jCrem','int','pers'].map(k=>`<td class="r mono">${fmt(st[k])}</td>`).join('')}</tr>`).join('')}</tbody></table></div>
+  <p class="note">Doçura, dureza e cremosidade: 0 é o ponto ideal; positivo = sobra, negativo = falta. ${CAL.pref&&CAL.pref.n?'Preferência da casa aprendida ('+CAL.pref.n+' lote(s)): doçura '+(CAL.pref.pod>0?'+':'')+f1(CAL.pref.pod)+' pp de POD, água congelada '+(CAL.pref.fz>0?'+':'')+f0(CAL.pref.fz)+' pp. Aplicada nas faixas do laudo com "Aplicar calibração" ligado.':'Com 3+ provadores por lote o motor começa a ajustar as faixas de doçura e dureza para o gosto da casa.'}</p></div>`;}
+
+/* ---------- BIBLIOTECA: índice dos mestres (Web Worker), busca por ingrediente, parecidas, comparação, versões ---------- */
+const MIDX={key:null,list:null,busy:false,worker:null,failed:false};
+const VIT_F=[['Todas',()=>true],['Vitrine −11 a −14 °C',v=>v>-14.5],['−15 a −17 °C',v=>v<=-14.5&&v>-17.5],['Freezer −18 °C ou menos',v=>v<=-17.5]];
+function masterSearchText(p){return norm(p.name+' '+p.a+' '+(p.src||'')+' '+p.recipe.map(([id])=>ING_BY[id]?ING_BY[id].n+' '+(ING_BY[id].lab||''):id).join(' '));}
+const _MST=new WeakMap();const mText=p=>{let t=_MST.get(p);if(!t){t=masterSearchText(p);_MST.set(p,t);}return t;};
+function idxKey(){return MASTERS.length+'|'+ING_VER+'|'+(CAL.on?CAL.ver:-1)+'|'+JSON.stringify(S.proc)+'|'+INVVER;}
+/* métricas de uma receita, iguais às do cartão: usada pelo worker e pela via síncrona */
+function recMetrics(p,proc){const st={tipo:p.tipo,vit:p.vit,recipe:p.recipe.map(([id,g])=>({id,g})),proc,brix:{},costs:{}};const mm=analyze(st);const F=diagnose(st,mm);
+ const tot=mm.tot||1;const ids={};p.recipe.forEach(([id,g])=>ids[id]=(ids[id]||0)+g/tot);
+ return{sol:mm.sol,fat:mm.fat,msnf:mm.msnf,pod:mm.pod,pac:mm.pacKg,swt:mm.swt,fruit:mm.fruit,serveT:mm.serveT,sc:score(st,mm,F).total,ids,cocoa:mm.A.cocoaG/tot*100,nut:mm.A.nutG/tot*100};}
+function workerSrc(){const sc=[...document.scripts].map(s=>s.textContent).find(t=>t.includes('/* ==== 01-util.js ==== */'));if(!sc)return null;
+ const a=sc.indexOf('/* ==== 01-util.js ==== */'),b=sc.indexOf('/* ==== 33-golden.js ==== */');if(a<0||b<0)return null;
+ return sc.slice(a,b)+'\n'+recMetrics.toString()+`
+self.onmessage=e=>{const d=e.data;try{
+ MASTERS.splice(0,MASTERS.length,...d.masters);(d.cust||[]).forEach(ci=>{const ing=I(ci.id,ci.n,'Meus ingredientes',ci.c,Object.assign({},ci.x||{},{custom:1}));ING.push(ing);ING_BY[ci.id]=ing;});
+ (d.nx||[]).forEach(n=>{try{registerNeutro(n);}catch(x){}});Object.assign(INVCOST,d.invcost||{});fitCalibration(d.lots||[]);CAL.on=d.calOn;
+ const out=[];for(let k=0;k<d.masters.length;k++){out.push(recMetrics(d.masters[k],d.proc));if(k%40===39)self.postMessage({progress:k+1});}
+ self.postMessage({key:d.key,list:out});}catch(err){self.postMessage({error:String(err&&err.message||err)});}};`;}
+function masterIndex(){const key=idxKey();if(MIDX.key===key&&MIDX.list)return MIDX.list;if(MIDX.busy===key)return null;
+ MIDX.busy=key;const proc=Object.assign({},S.proc);
+ const sync=()=>{/* sem worker: calcula em fatias para não travar a tela */let k=0;const out=[];const step=()=>{if(MIDX.busy!==key)return;const t0=Date.now();while(k<MASTERS.length&&Date.now()-t0<25){out.push(recMetrics(MASTERS[k],proc));k++;}
+  if(k<MASTERS.length){MIDX.prog=k;setTimeout(step,0);}else{MIDX.key=key;MIDX.list=out;MIDX.busy=false;render();}};
+  if(typeof requestAnimationFrame!=='function'||typeof setTimeout!=='function'){while(k<MASTERS.length){out.push(recMetrics(MASTERS[k],proc));k++;}MIDX.key=key;MIDX.list=out;MIDX.busy=false;return;}step();};
+ let w=null;if(!MIDX.failed&&typeof Worker==='function'&&typeof Blob==='function'){try{const src=workerSrc();if(src){if(MIDX.worker)MIDX.worker.terminate();w=new Worker(URL.createObjectURL(new Blob([src],{type:'text/javascript'})));MIDX.worker=w;}}catch(e){w=null;MIDX.failed=true;}}
+ if(!w){sync();return MIDX.list&&MIDX.key===key?MIDX.list:null;}
+ w.onmessage=e=>{const d=e.data;if(d.progress){MIDX.prog=d.progress;return;}if(d.error||d.key!==key){if(d.error){MIDX.failed=true;MIDX.busy=false;masterIndex();}return;}MIDX.key=key;MIDX.list=d.list;MIDX.busy=false;w.terminate();MIDX.worker=null;render();};
+ w.onerror=()=>{MIDX.failed=true;MIDX.busy=false;try{w.terminate();}catch(e){}masterIndex();};
+ w.postMessage({key,masters:MASTERS,proc,cust:CUST,nx:NXLIB,lots:LOTS,calOn:CAL.on,invcost:INVCOST});return null;}
+/* distância entre receitas: composição (peso 0,6) + ingredientes em comum (peso 0,4) */
+function recDist(a,b){const f=[['fat',8],['msnf',8],['swt',20],['sol',30],['pod',15],['fruit',40],['cocoa',8],['nut',8]];let d=0;f.forEach(([k,s])=>{const x=(a[k]-b[k])/s;d+=x*x;});d=Math.sqrt(d/f.length);
+ const ks=new Set([...Object.keys(a.ids),...Object.keys(b.ids)]);let mn=0,mx=0;ks.forEach(k=>{mn+=Math.min(a.ids[k]||0,b.ids[k]||0);mx+=Math.max(a.ids[k]||0,b.ids[k]||0);});const jac=mx?mn/mx:0;
+ return .6*Math.min(1,d)+.4*(1-jac);}
+function similarTo(ref,idx,n=6,skip){return idx.map((x,k)=>({k,d:recDist(ref,x)})).filter(x=>x.k!==skip).sort((a,b)=>a.d-b.d).slice(0,n);}
+function benchMetrics(){return recMetrics({tipo:S.tipo,vit:S.vit,recipe:S.recipe.map(r=>[r.id,+r.g])},S.proc);}
+/* receitas comparáveis: m:índice (mestres), l:id (minhas), b (bancada) */
+function cmpSrc(key){if(key==='b')return{name:'Bancada · '+(S.name||'atual'),tipo:S.tipo,vit:S.vit,recipe:S.recipe.map(r=>[r.id,+r.g])};const[t,v]=[key[0],key.slice(2)];
+ if(t==='m'){const p=MASTERS[+v];return p&&{name:p.name+' · '+p.a,tipo:p.tipo,vit:p.vit,recipe:p.recipe};}
+ const l=LIB.find(x=>String(x.id)===v);return l&&{name:l.name,tipo:l.st.tipo,vit:l.st.vit,recipe:l.st.recipe.map(r=>[r.id,+r.g])};}
+function compareCard(){const C=(U.cmp||[]).map(k=>({k,s:cmpSrc(k)})).filter(x=>x.s);if(!C.length)return'';
+ if(C.length<2)return`<div class="card flat"><div class="row"><span class="t2">Comparar: <b>${esc(C[0].s.name)}</b> · escolha a segunda receita (botão ⇄) ou</span><button class="btn sm" data-a="cmpToggle" data-v="b">usar a bancada</button><span class="sp"></span><button class="btn sm" data-a="cmpClear">Limpar</button></div></div>`;
+ const M=C.map(x=>{const st={tipo:x.s.tipo,vit:x.s.vit,recipe:x.s.recipe.map(([id,g])=>({id,g})),proc:S.proc,brix:{},costs:{}};const mm=analyze(st);return{mm,sc:score(st,mm,diagnose(st,mm)).total};});
+ const ids=[...new Set(C.flatMap(x=>x.s.recipe.map(r=>r[0])))];const per=(x,id,mm)=>{const g=x.s.recipe.filter(r=>r[0]===id).reduce((s,r)=>s+r[1],0);return g/(mm.tot||1)*1000;};
+ const met=[['Índice',x=>x.sc,0],['Serviço ideal (°C)',x=>x.mm.serveT,1],['Sólidos (%)',x=>x.mm.sol,1],['Gordura (%)',x=>x.mm.fat,1],['MSNF (%)',x=>x.mm.msnf,1],['Doçura POD (%)',x=>x.mm.pod,1],['PAC (/kg)',x=>x.mm.pacKg,0],['Overrun (%)',x=>x.mm.ov,0],['Desestabilização (%)',x=>x.mm.destab,0]];
+ return`<div class="card"><div class="row"><h2 style="margin:0">Lado a lado</h2><span class="sp"></span><button class="btn sm" data-a="cmpToLab">Levar ao Creator</button><button class="btn sm" data-a="cmpClear">Limpar</button></div>
+  <div class="tw" style="margin-top:10px"><table class="tbl"><thead><tr><th>g por kg de mistura</th>${C.map(x=>`<th class="r">${esc(x.s.name)}</th>`).join('')}<th class="r">Diferença</th></tr></thead><tbody>
+  ${ids.map(id=>{const a=per(C[0],id,M[0].mm),b=per(C[1],id,M[1].mm);return`<tr><td>${esc(ING_BY[id]?ING_BY[id].n:id)}</td><td class="r mono">${a?f0(a):'—'}</td><td class="r mono">${b?f0(b):'—'}</td><td class="r mono ${Math.abs(b-a)>=5?'c-ice':'muted'}">${b-a>=0?'+':''}${f0(b-a)}</td></tr>`;}).join('')}
+  ${met.map(([n,fn,d])=>{const a=fn(M[0]),b=fn(M[1]);return`<tr><td class="t2">${n}</td><td class="r mono">${d?f1(a):f0(a)}</td><td class="r mono">${d?f1(b):f0(b)}</td><td class="r mono muted">${b-a>=0?'+':''}${d?f1(b-a):f0(b-a)}</td></tr>`;}).join('')}</tbody></table></div></div>`;}
+function similarCard(idx){if(!U.simOf)return'';const ref=U.simOf==='b'?benchMetrics():idx&&idx[+U.simOf.slice(2)];if(!idx)return`<div class="card flat"><p class="note" style="margin:0">Calculando o índice dos ${MASTERS.length} mestres${MIDX.prog?' ('+MIDX.prog+')':''}…</p></div>`;if(!ref)return'';
+ const L=similarTo(ref,idx,6,U.simOf==='b'?-1:+U.simOf.slice(2));const nm=U.simOf==='b'?'a bancada':MASTERS[+U.simOf.slice(2)].name;
+ return`<div class="card"><div class="row"><h2 style="margin:0">Parecidas com ${esc(nm)}</h2><span class="sp"></span><button class="btn sm" data-a="simClose">Fechar</button></div>
+  ${L.map(({k,d})=>{const p=MASTERS[k],x=idx[k];return`<div class="kv" style="align-items:center"><span><b style="color:var(--t1)">${esc(p.name)}</b> <span class="muted" style="font-size:12px">${esc(p.a)} · ${f0((1-d)*100)}% parecida · gordura ${f1(x.fat)}% · POD ${f1(x.pod)}% · serviço ${f1(x.serveT)} °C</span></span><span class="row" style="justify-content:flex-end"><button class="btn sm pri" data-a="master" data-v="${k}">Carregar</button><button class="btn sm" data-a="cmpToggle" data-v="m:${k}">⇄</button></span></div>`;}).join('')}</div>`;}
+/* versões de uma receita salva */
+function recDiff(a,b){const by=r=>{const o={};(r||[]).forEach(x=>o[x.id]=(o[x.id]||0)+ +x.g);return o;};const A=by(a),B=by(b);const ks=new Set([...Object.keys(A),...Object.keys(B)]);const out=[];
+ ks.forEach(k=>{const d=(B[k]||0)-(A[k]||0);if(Math.abs(d)>=.05)out.push([k,A[k]||0,B[k]||0,d]);});return out;}
+function histHTML(l){const H=l.hist||[];if(!H.length)return'<p class="note" style="margin:6px 0">Sem versões anteriores. Cada "Salvar" guarda a versão anterior aqui (até 30).</p>';
+ return H.slice().reverse().map((h,ri)=>{const k=H.length-1-ri;const next=k+1<H.length?H[k+1].st:l.st;const df=recDiff(h.st.recipe,next.recipe);
+  return`<div class="card flat" style="margin:6px 0;padding:10px 12px"><div class="row"><span class="mono" style="font-size:12px">${esc(h.date||'')}</span>${h.note?`<span class="t2" style="font-size:13px">${esc(h.note)}</span>`:''}<span class="sp"></span><button class="btn sm" data-a="histLoad" data-v="${l.id}|${k}">Abrir na bancada</button></div>
+   <p class="note" style="margin:6px 0 0">${df.length?'Depois desta versão: '+df.map(([id,a,b,d])=>esc(ING_BY[id]?ING_BY[id].n:id)+' '+(a?f1(a):'0')+' → '+(b?f1(b):'0')+' g').join(' · '):'Nenhuma mudança de ingredientes (só processo ou nome).'}</p></div>`;}).join('');}
+
+/* ---------- conflito de edição (receita editada em dois aparelhos sem ver a versão do outro) ---------- */
+/* cur = cópia local; rd = registro remoto; ts = hora da edição remota. Conflito: a cópia local é uma edição feita aqui
+   (sem _by), o remoto não partiu dela (base diferente) e o conteúdo difere. */
+function libConflict(cur,rd,ts){if(!cur||cur._by||!(ts>(cur.updatedAt||0)))return false;if((rd.base||0)===(cur.updatedAt||0))return false;
+ try{return JSON.stringify(cur.st)!==JSON.stringify(rd.st);}catch(e){return false;}}
+function conflictCopy(cur){const d=new Date();const c=JSON.parse(JSON.stringify(cur));c.id=String(Date.now())+'c';c.name=cur.name+' (conflito '+d.toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit'})+' '+d.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'})+')';delete c._by;delete c.base;c.conflict=1;if(c.st)c.st.name=c.name;return c;}
+
+/* ---------- FRUTAS DA ESTAÇÃO ---------- */
+function pgSazonal(){const mo=new Date().getMonth()+1;const sel=+U.sazM||mo;const L=SAZON.filter(([id])=>ING_BY[id]);
+ const inS=L.filter(x=>x[1].includes(sel)),soon=L.filter(x=>!x[1].includes(sel)&&x[1].includes(sel%12+1));
+ const card=([id,ms,bx])=>{const i=ING_BY[id];return`<div class="card flat"><div class="row"><h3 style="margin:0">${esc(i.n.replace(/ \(polpa\)/,''))}</h3><span class="sp"></span>${$cost(`<span class="chip">R$ ${f0(INVCOST[id]!=null?INVCOST[id]:i.cost||0)}/kg</span>`)}</div>
+  <p class="note" style="margin:6px 0">Brix típico ${bx} °Bx${i.brix?' · banco usa '+i.brix:''} · safra ${ms.length===12?'o ano todo':ms.map(m=>MESES[m-1]).join(', ')}</p>
+  ${PAIRS[id]?`<p class="note" style="margin:0 0 8px">Combina com ${PAIRS[id].slice(0,5).map(p=>esc(p[1])).join(', ')}</p>`:''}
+  ${can.edit()?`<button class="btn sm" data-a="crAdd" data-v="${id}">Adicionar à bancada</button>`:''}</div>`;};
+ return`<div class="pg"><div><h1>Frutas da estação</h1><p class="lead">Na safra a fruta chega mais madura, com Brix mais alto e preço menor. Calendário de referência do atacado de São Paulo; confirme com seu fornecedor e meça o Brix de cada lote.</p></div>
+ <div class="chips">${MESES.map((n,k)=>`<button data-a="sazM" data-v="${k+1}" aria-pressed="${sel===k+1}">${n}${k+1===mo?' ·':''}</button>`).join('')}</div>
+ <div class="card"><h2>Em safra em ${MESES[sel-1]} (${inS.length})</h2><div class="g3">${inS.map(card).join('')||'<p class="muted">—</p>'}</div></div>
+ ${soon.length?`<div class="card"><h2>Chegando em ${MESES[sel%12]}</h2><div class="g3">${soon.map(card).join('')}</div></div>`:''}
+ <div class="card"><h2>Calendário</h2><div class="tw"><table class="tbl"><thead><tr><th>Fruta</th>${MESES.map((n,k)=>`<th class="r" style="padding:4px;${k+1===sel?'color:var(--ice)':''}">${n}</th>`).join('')}<th class="r">°Bx</th></tr></thead><tbody>
+  ${L.map(([id,ms,bx])=>`<tr><td>${esc(ING_BY[id].n.replace(/ \(polpa\)/,''))}</td>${MESES.map((n,k)=>`<td style="padding:3px"><div style="height:12px;border-radius:3px;background:${ms.includes(k+1)?'var(--ok)':'var(--line)'};opacity:${ms.includes(k+1)?(k+1===sel?1:.7):.5}"></div></td>`).join('')}<td class="r mono">${bx}</td></tr>`).join('')}</tbody></table></div>
+  <p class="note">Fora da safra o preço no atacado costuma subir de 40% a 100% e a fruta chega com Brix mais baixo: aumente a dextrose ou use polpa congelada da safra.</p></div></div>`;}
+
+/* ---------- AÇÕES, ENTRADAS E MUDANÇAS DESTE MÓDULO ---------- */
+const V13_ACT={
+ compAdd:v=>{(S.comps=S.comps||[]).push({name:COMP_KINDS[v]||'Componente',kind:v,pct:10,recipe:v==='crocante'?[{id:'choc70',g:90},{id:'mcacau',g:10}]:v==='fruta'?[{id:'manga',g:100}]:[{id:'framboesa',g:60},{id:'sacarose',g:30},{id:'dextrose',g:10}],loss:v==='variegato'?10:0});render();},
+ compRm:v=>{S.comps.splice(+v,1);render();},
+ compIngAdd:v=>{S.comps[+v].recipe.push({id:'sacarose',g:10});render();},
+ compIngRm:v=>{const[k,j]=v.split('|');S.comps[+k].recipe.splice(+j,1);render();},
+ infToggle:v=>{const r=S.recipe.find(x=>x.id===v);if(!r)return;if(r.inf)delete r.inf;else r.inf=1;U.bal=null;render();toast(r.inf?'Infusionado e coado: só o que ele solta entra na mistura':'Volta a entrar inteiro na mistura');},
+ meltTimer:v=>{if(U.melt&&U.melt.lot===v){U.melt=null;clearInterval(meltTick);render();return;}U.melt={lot:v,end:Date.now()+MELT_MS};clearInterval(meltTick);
+  meltTick=setInterval(()=>{if(!U.melt){clearInterval(meltTick);return;}if(Date.now()>=U.melt.end){clearInterval(meltTick);U.melt=null;toast('10 minutos: pese o derretido');try{navigator.vibrate&&navigator.vibrate([300,150,300]);}catch(e){}}render();},1000);render();},
+ panelStart:()=>{const P=panelState();if(P.lots.length<2)return;if(!Object.keys(P.codes).length||P.lots.some(id=>!P.codes[id])){const used=new Set();P.lots.forEach(id=>{let c;do{c=String(100+Math.floor(Math.random()*900));}while(used.has(c));used.add(c);P.codes[id]=c;});}
+  P.order=shuffle(P.lots,Date.now()%233280);P.i=0;P.cur={};savePanel();render();},
+ panelSet:v=>{const[k,x]=v.split('|');const P=panelState();P.cur[k]=+x;savePanel();render();},
+ panelNext:()=>{const P=panelState();const L=LOTS.find(l=>l.id===P.order[P.i]);if(L){(L.panel=L.panel||[]).push(Object.assign({t:P.taster||'',code:P.codes[L.id],date:today()},P.cur));saveLot(L);}
+  P.i++;P.cur={};if(P.i>=P.order.length){P.i=-1;P.taster='';toast('Avaliações salvas nos lotes');}savePanel();render();},
+ panelCancel:()=>{const P=panelState();P.i=-1;P.cur={};savePanel();render();},
+ panelReveal:()=>{const P=panelState();P.reveal=!P.reveal;savePanel();render();},
+ panelReset:()=>{U.panel={lots:[],codes:{},order:[],taster:'',i:-1,cur:{},reveal:false};savePanel();render();},
+ libTipo:v=>{U.libTipo=v;U.libN=0;render();},libVitF:v=>{U.libVitF=+v;U.libN=0;render();},
+ simOpen:v=>{U.simOf=v;masterIndex();render();},simClose:()=>{U.simOf=null;render();},
+ cmpToggle:v=>{const c=U.cmp=U.cmp||[];const i=c.indexOf(v);if(i>=0)c.splice(i,1);else{c.push(v);if(c.length>2)c.shift();}render();if(c.length===2)$('#main').scrollTop=0;},
+ cmpClear:()=>{U.cmp=[];render();},
+ cmpToLab:()=>{(U.cmp||[]).map(cmpSrc).filter(Boolean).forEach(s=>addVariant(s.name.slice(0,40),recFromPairs(s.recipe)));U.cmp=[];S.page='creator';S.creatorTab='gelato';S.crSub='comparar';render();},
+ histOpen:v=>{U.hist=U.hist===v?null:v;render();},
+ histLoad:v=>{const[id,k]=v.split('|');const l=LIB.find(x=>String(x.id)===id);const h=l&&l.hist&&l.hist[+k];if(!h)return;Object.assign(S,JSON.parse(JSON.stringify(h.st)));S.name=l.name;S.proc=Object.assign({},PROC0,S.proc);S.libId=String(l.id);S.execId=null;S.page='bancada';U.bal=null;render();toast('Versão de '+(h.date||'')+' na bancada · salve para restaurar');},
+ sazM:v=>{U.sazM=+v;render();}
+};
+const V13_INP={
+ comp:(v,t)=>{const c=S.comps[+t.dataset.k];if(!c)return;const f=t.dataset.f;c[f]=f==='name'?v:num(v,0,60,0);render();},
+ compG:(v,t)=>{const c=S.comps[+t.dataset.k];if(c&&c.recipe[+t.dataset.j]){c.recipe[+t.dataset.j].g=num(v,0,1e5,0);render();}},
+ panelTaster:v=>{panelState().taster=v;savePanel();},
+ panelNote:v=>{panelState().cur.note=v;savePanel();},
+ saveNote:v=>{U.saveNote=v;}
+};
+const V13_CHG={
+ comp:t=>{const c=S.comps[+t.dataset.k];if(c)c[t.dataset.f]=t.value;},
+ compIng:t=>{const c=S.comps[+t.dataset.k];if(c&&c.recipe[+t.dataset.j])c.recipe[+t.dataset.j].id=t.value;},
+ panelLot:t=>{const P=panelState();const id=t.dataset.k;P.lots=P.lots.filter(x=>x!==id);if(t.checked&&P.lots.length<6)P.lots.push(id);P.codes={};savePanel();},
+ libTipoSel:t=>{U.libTipo=t.value;U.libN=0;}
+};
+
 /* ==== 60-store.js ==== */
 /* ===================== IL FREDOLIN · ARMAZENAMENTO (aparelho + nuvem) =====================
    Cada coleção vive neste aparelho (localStorage) e, com a conta conectada, na nuvem.
@@ -2219,7 +2657,10 @@ const STORE={backend:null,status:'local',msg:'Salvando somente neste aparelho.',
  saveTomb(){LS.set(TOMBKEY,this.tomb);},
  after(c){if(c==='ings'||c==='nx')syncRegistry();if(c==='inv')invRecompute(INV);if(c==='lots')fitCalibration(LOTS);if(c==='vit'&&VITS[0])S.vitrine={temp:VITS[0].temp,items:VITS[0].items||[]};},
  setStatus(st,msg){this.status=st;this.msg=msg;render();},
- put(c,rec){rec.updatedAt=Date.now();const arr=COLS[c].get();const k=arr.findIndex(x=>String(x.id)===String(rec.id));if(k>=0)arr[k]=rec;else arr.unshift(rec);
+ put(c,rec){const arr=COLS[c].get();const k=arr.findIndex(x=>String(x.id)===String(rec.id));
+  /* receitas guardam de qual versão partiram (base): assim duas edições paralelas viram conflito, não perda */
+  if(c==='lib')rec.base=k>=0?(arr[k]===rec?rec.base||0:arr[k].updatedAt||0):0;
+  rec.updatedAt=Date.now();if(k>=0)arr[k]=rec;else arr.unshift(rec);
   if(this.tomb[c]&&this.tomb[c][rec.id]){delete this.tomb[c][rec.id];this.saveTomb();}
   this.saveLocal(c);this.after(c);if(this.backend)this.backend.push(c,rec);},
  del(c,id){const now=Date.now();COLS[c].set(COLS[c].get().filter(x=>String(x.id)!==String(id)));(this.tomb[c]=this.tomb[c]||{})[id]=now;this.saveTomb();this.saveLocal(c);this.after(c);
@@ -2227,8 +2668,10 @@ const STORE={backend:null,status:'local',msg:'Salvando somente neste aparelho.',
  /* aplica uma coleção vinda da nuvem (já sem lápides) */
  replace(c,list){COLS[c].set(list.filter(r=>!r.deleted).sort(byNewest));this.saveLocal(c);this.after(c);},
  /* junta o que está no aparelho com o que está na nuvem (função pura: testável sem rede) */
- merge(local,remote,tomb){const out=new Map(remote),push=[];
-  local.forEach(r=>{const id=String(r.id),rr=out.get(id);if(rr&&rr.deleted&&(rr.updatedAt||0)>=(r.updatedAt||0))return;if(!rr||(r.updatedAt||0)>(rr.updatedAt||0)){out.set(id,r);push.push(r);}});
+ merge(local,remote,tomb,col){const out=new Map(remote),push=[];
+  local.forEach(r=>{const id=String(r.id),rr=out.get(id);if(rr&&rr.deleted&&(rr.updatedAt||0)>=(r.updatedAt||0))return;if(!rr||(r.updatedAt||0)>(rr.updatedAt||0)){out.set(id,r);push.push(r);}
+   /* receita editada aqui e, em paralelo, em outro aparelho: guarda as duas */
+   else if(col==='lib'&&rr&&!rr.deleted&&(rr.updatedAt||0)>(r.updatedAt||0)&&libConflict(r,rr,rr.updatedAt||0)){const cp=conflictCopy(r);cp.updatedAt=Date.now();out.set(cp.id,cp);push.push(cp);}});
   for(const id in tomb||{}){const rr=out.get(String(id));if(!rr||(!rr.deleted&&(rr.updatedAt||0)<=tomb[id])){const t={id:String(id),deleted:true,updatedAt:tomb[id]};out.set(String(id),t);push.push(t);}}
   return{list:[...out.values()].filter(r=>!r.deleted).sort(byNewest),push};},
  /* apaga todos os dados deste aparelho (troca de usuário ou "Sair" num aparelho compartilhado) */
@@ -2244,7 +2687,7 @@ const CLAUDE_BACKEND={db:null,uid:null,
   if(!db||!user){st.setStatus('local','Sincronização indisponível nesta visualização; salvando neste aparelho.');return false;}
   const id=await user.id();if(!id){st.setStatus('local','Entre na sua conta para sincronizar.');return false;}this.db=db;this.uid=id;st.setStatus('syncing','Sincronizando…');
   for(const c in COLS){const col=db.collection(this.path(c));const snap=await col.get();
-   const r=st.merge(COLS[c].get(),new Map(snap.docs.map(d=>[d.id,d.data()])),st.tomb[c]);
+   const r=st.merge(COLS[c].get(),new Map(snap.docs.map(d=>[d.id,d.data()])),st.tomb[c],c);
    r.push.forEach(x=>col.doc(String(x.id)).set(plain(x)).catch(()=>{}));
    st.replace(c,r.list);
    col.onSnapshot(sn=>{if(sn.metadata&&sn.metadata.hasPendingWrites)return;st.replace(c,sn.docs.map(d=>d.data()));render();},()=>{});}
@@ -2338,10 +2781,12 @@ const SUPA_BACKEND={running:null,again:false,cursor:LS.get(CURKEY)||'1970-01-01T
   if(r.col==='fin'){if(r.deleted)delete FIN[r.id];else FIN[r.id]=r.data&&r.data.v;changed.add('fin');return;}
   const C=COLS[r.col];if(!C)return;const ts=+r.updated_at||0;
   if(this.outbox.some(o=>o.col===r.col&&o.id===r.id&&o.updated_at>ts))return;   /* a edição local ainda não enviada é mais nova */
-  const arr=C.get(),k=arr.findIndex(x=>String(x.id)===r.id),cur=k>=0?arr[k]:null;
+  const arr=C.get();let k=arr.findIndex(x=>String(x.id)===r.id);const cur=k>=0?arr[k]:null;
   if(cur&&(cur.updatedAt||0)>ts)return;
   if(r.deleted){if(k>=0){arr.splice(k,1);changed.add(r.col);}return;}
   if(cur&&(cur.updatedAt||0)===ts&&cur._by===r.updated_by)return;
+  /* receita editada aqui sem ver a versão do outro aparelho: a nossa vira uma cópia de conflito */
+  if(r.col==='lib'&&libConflict(cur,r.data||{},ts)){const cp=conflictCopy(cur);STORE.put('lib',cp);k=arr.findIndex(x=>String(x.id)===r.id);toast('Receita "'+cur.name+'" foi editada em outro aparelho: sua versão ficou como cópia.');}
   const rec=withFin(r.col,Object.assign({},r.data,{id:r.id,updatedAt:ts,_by:r.updated_by}));
   if(k>=0)arr[k]=rec;else arr.unshift(rec);changed.add(r.col);}
 };
@@ -2482,7 +2927,8 @@ if(APP_MODE==='app'&&'serviceWorker' in navigator&&(location.protocol==='https:'
 /* ===================== IL FREDOLIN · APLICAÇÃO (render, ações, eventos) ===================== */
 const VIEW={execucao:pgExecucao,equipe:pgEquipe,bancada:pgBancada,creator:pgCreator,laudo:pgLaudo,congelamento:pgCongel,quimica:pgQuimica,vitrine:pgVitrine,
  lotes:pgLotes,planejamento:pgPlanejamento,estoque:pgEstoque,processo:pgProcesso,brix:pgBrix,defeitos:pgDefeitos,producao:pgProducao,
- ingredientes:pgIngredientes,rotulo:pgRotulo,custos:pgCustos,biblioteca:pgBiblioteca,dados:pgDados};
+ ingredientes:pgIngredientes,rotulo:pgRotulo,custos:pgCustos,biblioteca:pgBiblioteca,dados:pgDados,
+ componentes:pgComponentes,degustacao:pgDegustacao,sazonal:pgSazonal};
 
 /* ---------- RENDER: um quadro por vez (várias mudanças no mesmo quadro geram um único desenho) ---------- */
 let GSIM=null,NSIM=null;
@@ -2532,7 +2978,10 @@ const ACT={
  copy:()=>{const m=analyze(S);const tgt=+U.prodG>0?+U.prodG:Math.round(m.tot);const t=fichaText(m,tgt);
   const done=()=>toast('Ficha copiada');const fail=()=>{U.copy=t;render();const a=$('#copyArea');a&&(a.focus(),a.select());};
   try{navigator.clipboard.writeText(t).then(done,fail);}catch(e){fail();}},
- save:()=>{const name=(S.name||'Receita').trim();const st=JSON.parse(JSON.stringify({name,tipo:S.tipo,vit:S.vit,recipe:S.recipe,proc:S.proc,brix:S.brix,costs:S.costs}));const ex=LIB.find(l=>l.name===name);const rec={id:ex?ex.id:String(Date.now()),name,date:new Date().toLocaleDateString('pt-BR'),st,author:ME.email||''};STORE.put('lib',rec);S.libId=String(rec.id);render();toast(ex?'Receita atualizada':'Receita salva');},
+ save:()=>{const name=(S.name||'Receita').trim();const st=JSON.parse(JSON.stringify({name,tipo:S.tipo,vit:S.vit,recipe:S.recipe,proc:S.proc,brix:S.brix,costs:S.costs}));const ex=LIB.find(l=>l.name===name);const rec={id:ex?ex.id:String(Date.now()),name,date:new Date().toLocaleDateString('pt-BR'),st,author:ME.email||'',note:(U.saveNote||'').trim()};
+  /* versão anterior vai para o histórico (até 30), com data e nota */
+  if(ex){const same=JSON.stringify(ex.st)===JSON.stringify(st);rec.hist=(ex.hist||[]).slice();if(!same)rec.hist.push({date:ex.date+(ex.updatedAt?' '+new Date(ex.updatedAt).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'}):''),note:ex.note||'',st:ex.st});rec.hist=rec.hist.slice(-30);}
+  STORE.put('lib',rec);S.libId=String(rec.id);U.saveNote='';render();toast(ex?'Receita atualizada · versão anterior guardada':'Receita salva');},
  delYes:v=>{STORE.del('lib',v);U.del=null;render();toast('Receita excluída');},
  /* bases: carregam a receita mantendo processo, freezer, vitrine, lab e custos do usuário */
  preset:v=>{const p=PRESETS[+v];loadRecipe(p.name,p.tipo,p.vit,recFromPairs(p.recipe));render();toast(p.name+' carregada');},
@@ -2598,7 +3047,8 @@ const ACT={
  pick:v=>{U.sel=v;U.q=ING_BY[v].n;renderNow();const g=$('#addG');g&&g.focus();g&&g.select();},
  testRun:()=>{U.test=runTests({ui:true});render();},
  ...EXEC_ACT,
- ...TEAM_ACT
+ ...TEAM_ACT,
+ ...V13_ACT
 };
 
 /* ---------- ENTRADAS (data-i, a cada tecla) ---------- */
@@ -2630,7 +3080,8 @@ const INP={
  ingName:v=>{if(U.ingEdit){U.ingEdit.n=v;render();}},
  planCap:v=>{S.planCap=v===''?'':num(v,100,1e5,'');render();},planKg:(v,t)=>{S.plan[+t.dataset.k].kg=num(v,0,1e4,0);render();},
  invNew:(v,t)=>{U.invNew=U.invNew||{ingId:'leite',kg:'',costKg:'',lot:'',exp:''};U.invNew[t.dataset.k]=v;},
- ...TEAM_INP
+ ...TEAM_INP,
+ ...V13_INP
 };
 
 /* ---------- MUDANÇAS (data-c, selects/checkboxes/arquivo) ---------- */
@@ -2644,14 +3095,18 @@ const CHG={
  nxDairy:t=>{S.nxEdit.dairy=t.value==='1';},
  nxAdd:t=>{if(!t.value)return false;S.nxEdit.parts[t.value]=10;U.nxTest=null;},
  calOn:t=>{CAL.on=t.checked;CAL.ver++;LS.set(K10.cal,{on:CAL.on});},
- lot:t=>{const L=LOTS.find(l=>l.id===U.lotOpen);if(L){setPath(L,t.dataset.k,t.value===''?'':+t.value);saveLotSoon(L);}},
+ lot:t=>{const L=LOTS.find(l=>l.id===U.lotOpen);if(L){setPath(L,t.dataset.k,t.value===''?'':+t.value);
+  /* gelo nas checagens D+1/3/7: o primeiro dia com gelo vira o "dia em que percebeu gelo" da calibração */
+  const mk=/^meas\.ice(\d)$/.exec(t.dataset.k);if(mk){const me=L.meas=L.meas||{};const first=[1,3,7].find(d=>+me['ice'+d]>0);if(first&&(me.icyDay==null||me.icyDay===''||me._icyAuto)){me.icyDay=first;me._icyAuto=1;}else if(!first&&me._icyAuto){me.icyDay='';delete me._icyAuto;}}
+  saveLotSoon(L);}},
  ingCat:t=>{U.ingCat=t.value;},
  ingAl:t=>{if(!U.ingEdit)return false;const a=U.ingEdit.x.al=U.ingEdit.x.al||[];const k=t.dataset.k;if(t.checked&&!a.includes(k))a.push(k);if(!t.checked)U.ingEdit.x.al=a.filter(x=>x!==k);},
  ingFlag:t=>{if(!U.ingEdit)return false;U.ingEdit.x[t.dataset.k]=t.checked?1:0;},
  vitAdd:t=>{if(!t.value)return false;const s=srcByKey(t.value);if(s){S.vitrine.items.push({name:s.name.replace(/^Receita da bancada · /,''),tipo:s.tipo,recipe:JSON.parse(JSON.stringify(s.recipe))});saveVit();}},
  planSrc:t=>{S.plan[+t.dataset.k].key=t.value;},
  invNew:t=>{U.invNew=U.invNew||{kg:'',costKg:'',lot:'',exp:''};U.invNew.ingId=t.value;},
- ...TEAM_CHG
+ ...TEAM_CHG,
+ ...V13_CHG
 };
 function importBackup(file){const fr=new FileReader();fr.onload=()=>{try{const d=JSON.parse(fr.result);[['lib',d.lib],['exec',d.exec],['lots',d.lots],['ings',d.ings],['nx',d.nx],['inv',d.inv]].forEach(([c2,arr])=>(arr||[]).forEach(r=>STORE.put(c2,r)));if(d.vitrine){S.vitrine=d.vitrine;saveVit();}render();toast('Backup importado');}catch(err){toast('Arquivo inválido');}};fr.readAsText(file);}
 
