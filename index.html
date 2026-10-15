@@ -692,7 +692,7 @@ const NCOMP={
  lbg:{n:'Goma jataí (LBG)',c:{stab:92,w:8},hyd:85,dose:[.1,.3],f:{visc:3,anti:5,corpo:4,derr:4,siner:-1,emul:0},cost:220},
  guar:{n:'Goma guar',c:{stab:90,w:10},hyd:20,dose:[.05,.2],f:{visc:5,anti:3,corpo:3,derr:3,siner:-1,emul:0},cost:90},
  tara:{n:'Goma tara',c:{stab:90,w:10},hyd:80,dose:[.05,.2],f:{visc:4,anti:4,corpo:4,derr:4,siner:-.5,emul:0},cost:200},
- xan:{n:'Goma xantana',c:{stab:92,w:8},hyd:20,dose:[.03,.15],f:{visc:5,anti:3,corpo:2,derr:4,siner:1,emul:0},cost:120},
+ xan:{n:'Goma xantana',c:{stab:92,w:8},hyd:20,dose:[.02,.1],f:{visc:5,anti:3,corpo:2,derr:4,siner:1,emul:0},cost:120},
  carr:{n:'Carragena kappa/iota',c:{stab:90,w:10},hyd:70,dose:[.01,.03],f:{visc:2,anti:2,corpo:2,derr:3,siner:5,emul:0},cost:180},
  cmc:{n:'CMC',c:{stab:92,w:8},hyd:20,dose:[.1,.3],f:{visc:4,anti:4,corpo:3,derr:3,siner:0,emul:0},cost:80},
  pect:{n:'Pectina',c:{stab:90,w:10},hyd:80,dose:[.05,.2],f:{visc:2,anti:2,corpo:2,derr:3,siner:1,emul:0},cost:180},
@@ -842,7 +842,7 @@ const A_EXTRA=['sat','tr','msnf','na','hfB','hfS','hfN','pac','pod','addSug','gs
 function scaleMix(A,f){A.tot*=f;MASS.forEach(k=>A[k]*=f);A_EXTRA.forEach(k=>A[k]*=f);for(const k in A.keys)A.keys[k]*=f;for(const k in A.fatT)A.fatT[k]*=f;}
 
 /* faixa para texto: 16–20 ou 17,9–23,8 (vírgula, sem casas inúteis) */
-const fRg=r=>fT(r[0])+'–'+fT(r[1]);
+const fRs=v=>v!==0&&Math.abs(v)<1?f2(v).replace(/0$/,''):fT(v);const fRg=r=>Math.max(Math.abs(r[0]),Math.abs(r[1]))<1?fRs(r[0])+'–'+fRs(r[1]):fT(r[0])+'–'+fT(r[1]);
 /* ---------- ANÁLISE ---------- */
 /* ===================== ANÁLISE ===================== */
 function analyzeRaw(st){
@@ -1216,6 +1216,7 @@ function diagnoseCore(st,m){
  if((m.A.inu+m.A.fos)/T*100>5)add('warn','Ingredientes','Fibras solúveis acima de 5%','Inulina/FOS em excesso causam desconforto intestinal e textura gomosa.','Reduza para 3–4%.');
  if(m.alc>3.5)add('crit','Ingredientes','Álcool acima de 3,5% ('+f1(m.alc)+'% etanol)','O etanol tem o PAC mais alto da receita (740): o gelato não firma na vitrine.','Reduza o destilado ou sirva como "affogato" sobre o gelato.');
  else if(m.alc>2)add('warn','Ingredientes','Álcool relevante ('+f1(m.alc)+'% etanol)','Cada 1% de etanol amolece muito; já está considerado no PAC.','Adicione após a pasteurização para não evaporar o aroma.');
+ if(m.salt>.9&&st.tipo==='gastro')add('warn','Sabor','Sal alto mesmo para salgado ('+f2(m.salt)+'%)','No frio o sal é menos percebido, mas acima de ~0,9% ele domina quando o gelato é servido como prato; gelatos salgados de alta cozinha ficam em 0,3–0,8%. Como guarnição em porção pequena, mais sal pode ser intencional.','Baixe o sal e use glicose ou trealose para o PAC.')
  if(m.salt>.4&&st.tipo!=='gastro')add('warn','Sabor','Sal alto para doce ('+f2(m.salt)+'%)','Acima de ~0,3% o sal aparece como salgado.','Use 0,05–0,15% para realçar sabor.');
  else if(m.salt<.02&&st.tipo!=='sorbetto'&&st.tipo!=='gastro')add('info','Sabor','Sem sal','Uma pitada de sal (0,05–0,1%) realça laticínios, chocolate, caramelo e oleaginosas sem ser percebida.','Adicione '+f1(.08/100*T)+' g de sal.');
  if(m.A.cocoaG/T*100>5.5)add('info','Ingredientes','Cacau intenso ('+f1(m.A.cocoaG/T*100)+'% de sólidos de cacau)','Muito cacau absorve água: textura seca e adstringente se não houver água e açúcar suficientes.','Hidrate o cacau em água/leite quente e mantenha os sólidos totais dentro da faixa.');
@@ -1828,7 +1829,7 @@ const isMac=()=>{try{return /Mac|iPhone|iPad/.test(navigator.platform||navigator
 const kbd=k=>`<kbd>${isMac()?'⌘':'Ctrl '}${k}</kbd>`;
 
 /* ---------- marca ---------- */
-const VERSION='v17';
+const VERSION='v17.1';
 const brandHTML=()=>`<div class="brand"><div class="hex"></div><div><b>Il <span>Fredolin</span></b><small>Gelato Lab ${VERSION}${APP_MODE==='app'&&ME.email?' · '+ROLE_N[ROLE]:''}</small></div></div>`;
 
 /* ---------- termômetro da receita: vitrine, serviço ideal (com faixa de incerteza) e freezer numa régua só ---------- */
@@ -2022,9 +2023,9 @@ function pgLaudo(m,F,sc){
  ${approveCard(m,F,sc)}
  ${groups.map(g=>{const L=F.filter(f=>f.sev===g);return L.length?`<div class="card"><h2>${{crit:'Erros críticos',warn:'Atenção',info:'Observações',ok:'Acertos'}[g]}</h2>${L.map(findHTML).join('')}</div>`:'';}).join('')}
  <div class="card"><h2>Balanceador de açúcares</h2>
-  <p class="t2" style="margin:0 0 10px;max-width:80ch">Recalcula sacarose, dextrose e maltodextrina DE 19 (e os outros açúcares estruturais da receita) para atingir ao mesmo tempo ${fT(P.fz[0])}–${fT(P.fz[1])}% de água congelada ${S.proc.serveFrom==='pote'?'na camada de servir depois de '+f0(+S.proc.waitMin)+' min fora do freezer a '+fT(S.proc.storeT)+' °C':'a '+f1(S.vit)+' °C'}, a doçura central da faixa e os sólidos dentro do alvo. O restante da receita não muda.</p>
+  <p class="t2" style="margin:0 0 10px;max-width:80ch">Recalcula sacarose, dextrose e maltodextrina DE 19 (e os outros açúcares estruturais da receita) para atingir ao mesmo tempo ${fT(P.fz[0])}–${fT(P.fz[1])}% de água congelada ${S.proc.serveFrom==='pote'?'na camada de servir depois de '+f0(+S.proc.waitMin)+' min fora do freezer a '+fT(S.proc.storeT)+' °C':'a '+f1(S.vit)+' °C'}, a doçura central da faixa e os sólidos dentro do alvo. O restante da receita não muda. Quando o clássico não resolve (salgados, sem açúcar, álcool alto, sólidos fora da faixa), o balanceador do laboratório também ajusta sal, sólidos, polióis, o líquido da base ou o álcool, sempre com a menor mudança possível.</p>
   <button class="btn pri" data-a="bal">Calcular proposta</button>
-  ${bal?(bal.ok?`<div class="tw" style="margin-top:12px"><table class="tbl"><thead><tr><th>Açúcar</th><th class="r">Atual</th><th class="r">Proposto</th><th class="r">Diferença</th></tr></thead><tbody>${bal.prop.map((p,k)=>`<tr><td>${esc(ING_BY[p.id].n)}</td><td class="r mono">${f0(bal.cur[k])} g</td><td class="r mono c-ice">${f0(p.g)} g</td><td class="r mono">${p.g-bal.cur[k]>=0?'+':''}${f0(p.g-bal.cur[k])} g</td></tr>`).join('')}</tbody></table></div>
+  ${bal?(bal.ok?`<div class="tw" style="margin-top:12px"><table class="tbl"><thead><tr><th>Ingrediente</th><th class="r">Atual</th><th class="r">Proposto</th><th class="r">Diferença</th></tr></thead><tbody>${bal.prop.map((p,k)=>`<tr><td>${esc(ING_BY[p.id].n)}</td><td class="r mono">${f0(bal.cur[k])} g</td><td class="r mono c-ice">${f0(p.g)} g</td><td class="r mono">${p.g-bal.cur[k]>=0?'+':''}${f0(p.g-bal.cur[k])} g</td></tr>`).join('')}</tbody></table></div>
    <p class="t2" style="margin:10px 0">Resultado: ${f0(bal.m1.fzVit)}% congelada · POD ${f1(bal.m1.pod)}% · sólidos ${f1(bal.m1.sol)}% · lote ${f0(bal.m1.tot)} g${bal.note?'<br><span class="c-warn">'+esc(bal.note)+'</span>':bal.mode!=='3'?' · <span class="c-warn">sólidos ficaram livres para atingir congelamento e doçura</span>':''}${bal.poteVit!=null?'<br><span class="c-ice">Depois de '+f0(+S.proc.waitMin)+' min fora do freezer a camada de servir fica a '+f1(bal.poteVit)+' °C: no ponto.</span>':''}</p>
    <div class="row"><button class="btn okb" data-a="balApply">Aplicar na receita</button><button class="btn sm" data-a="balClose">Descartar</button></div>`:`<p class="c-warn" style="margin:10px 0 0">${esc(bal.msg)}</p>`):''}</div>
  <div class="card"><h2>Parâmetros</h2><div class="tw"><table class="tbl"><thead><tr><th>Parâmetro</th><th class="r">Valor</th><th class="r">Alvo</th><th style="width:30%">Posição</th></tr></thead><tbody>
@@ -2537,7 +2538,7 @@ function microModel(st,m,F,sc,days){
  o.nProt=Math.round(clamp(m.prot*9,0,50));
  o.nLac=m.lacW>9?Math.round((m.lacW-9)*5*(1+days/6)):(m.lacW>8.3&&days>6?Math.round((days-6)*.6):0);
  /* rede de estabilizante */
- o.net=m.hydro<.02?0:clamp(m.hydro/((lo+hiS)/2),0,2.2);o.netExcess=m.hydro>hiS*1.25||(m.keyPct.xan||0)>.18;
+ o.net=m.hydro<.02?0:clamp(m.hydro/((lo+hiS)/2),0,2.2);o.netExcess=m.hydro>hiS*1.25||(m.keyPct.xan||0)>.12;
  /* estados */
  o.soft=m.fzVit<P.fz[0]-1;o.hard=m.fzVit>P.fz[1]+1;o.big=o.d>45;
  o.serumConc=m.SE/(1-fz||1);
@@ -2984,30 +2985,136 @@ const ADOSE_ID={baunilhaext:4,fava:1.5,especiaria:1.5,ervas:6,matcha:12,sal:2,al
 const ADOSE_CAT={'Frutas':150,'Oleaginosas':70,'Cacau':45,'Lácteos':80,'Açúcares':40,'Bebidas e aromas':30,'Gastronômicos':40,'Vegetais e gorduras':40,'Ovos':40};
 const aDose=i=>ADOSE_ID[i.id]||ADOSE_CAT[i.cat]||30;
 /* perfil aromático da receita: soma ponderada por massa × impacto, com compressão psicofísica (log) */
-function aromaProfile(recipe){const raw=AFAM.map(()=>0);let any=0;
- (recipe||[]).forEach(r=>{const i=ING_BY[r.id],v=AROMA[r.id];if(!i||!v||!(+r.g>0))return;const w=+r.g*aImp(i);v.forEach((x,k)=>{raw[k]+=x*w;});any+=w;});
- if(!any)return null;const tot=(recipe||[]).reduce((a,r)=>a+(+r.g||0),0)||1;const p=raw.map(x=>Math.log1p(x/tot*40));const mx=Math.max(...p)||1;return p.map(x=>x/mx);}
+function aromaProfile(recipe,flavorOnly){const raw=AFAM.map(()=>0);let any=0;
+ const use=(recipe||[]).filter(r=>!flavorOnly||!ABASE.has(r.id));const L=use.some(r=>AROMA[r.id]&&aImp(ING_BY[r.id]||{})>0)?use:(recipe||[]);
+ L.forEach(r=>{const i=ING_BY[r.id],v=AROMA[r.id];if(!i||!v||!(+r.g>0))return;const w=+r.g*aImp(i);v.forEach((x,k)=>{raw[k]+=x*w;});any+=w;});
+ if(!any)return null;const tot=(recipe||[]).reduce((a,r)=>a+(+r.g||0),0)||1;const p=raw.map(x=>Math.pow(x/tot,.6)); /* lei de Stevens (expoente ≈ 0,6 para odor) */const mx=Math.max(...p)||1;return p.map(x=>x/mx);}
 const vNorm=v=>{const n=Math.hypot(...v)||1;return v.map(x=>x/n);};
 const vCos=(a,b)=>{const x=vNorm(a),y=vNorm(b);return x.reduce((s,v,k)=>s+v*y[k],0);};
-/* pontes (compostos em comum) e contrastes com ponte (família nova + ao menos uma família em comum) */
-function aromaPairs(recipe,limit){const R=aromaProfile(recipe);if(!R)return null;const inRec=new Set((recipe||[]).map(r=>r.id));const lim=limit||6;
- const fam=v=>v.map((x,k)=>[x,k]);const out=[];
- for(const id in AROMA){if(inRec.has(id)||!ING_BY[id]||ABASE.has(id)||(id==='gema'&&inRec.has('gemap')))continue;const v=AROMA[id];const c=v.map(x=>x/3);const sim=vCos(R,c);
-  const shared=fam(c).filter(([x,k])=>x>=.33&&R[k]>=.35).sort((a,b)=>b[0]*R[b[1]]-a[0]*R[a[1]]).map(([,k])=>k);
-  const fresh=fam(c).filter(([x,k])=>x>=.66&&R[k]<.25).map(([,k])=>k);
-  const bridge=shared.length?Math.max(...shared.map(k=>Math.min(c[k],R[k]))):0;
-  out.push({id,sim,shared,fresh,bridge,contrast:fresh.length&&shared.length?(1-sim)*.6+bridge*.4+fresh.length*.05:0});}
- /* no máximo 2 por categoria em cada lista (variedade de caminhos) */
- const div=L=>{const c={},r=[];for(const x of L){const k=ING_BY[x.id].cat;if((c[k]||0)>=2)continue;c[k]=(c[k]||0)+1;r.push(x);if(r.length>=lim)break;}return r;};
- const harm=div(out.filter(x=>x.shared.length).sort((a,b)=>b.sim-a.sim));
- const cont=div(out.filter(x=>x.contrast>0&&!harm.includes(x)).sort((a,b)=>b.contrast-a.contrast));
- return{R,harm,cont};}
+/* gosto básico (não aroma): ácido, amargo, salgado, gordura, doce — o equilíbrio que o chef busca */
+const ABITTER={cacau:1,cacau10:.8,massacacau:1,choc80:.9,choc70:.75,choc64:.6,choc55:.45,espresso:1,cafesol:1,extratocafe:1,matcha:.8,pompelmo:.7,tonica:.8,cerveja:.7,alhonegro:.3,balsamico:.2,azeite:.3,ervas:.3,especiaria:.4,cristal:.3};
+function tasteOf(i){const c=i.c||{};const sug=(c.suc||0)+(c.glu||0)+(c.fru||0)+(c.lac||0)+(c.gs||0)*.5;return[clamp((c.acd||0)/3,0,1),ABITTER[i.id]||0,clamp((c.salt||0)/1.5,0,1),clamp((c.fat||0)/40,0,1),clamp(sug/60,0,1)];}
+function recipeTaste(recipe){const tot=(recipe||[]).reduce((a,r)=>a+(+r.g||0),0)||1;const t=[0,0,0,0,0];
+ (recipe||[]).forEach(r=>{const i=ING_BY[r.id];if(!i)return;const c=i.c||{},g=+r.g/tot;t[0]+=g*(c.acd||0);t[1]+=g*(ABITTER[r.id]||0);t[2]+=g*(c.salt||0);t[3]+=g*(c.fat||0);t[4]+=g*((c.suc||0)+(c.glu||0)+(c.fru||0)+(c.lac||0)+(c.gs||0)*.5+(c.alu||0)*.7+(c.ery||0)*.7);});
+ return[clamp(t[0]/.8,0,1),clamp(t[1]/.06,0,1),clamp(t[2]/.3,0,1),clamp(t[3]/12,0,1),clamp(t[4]/20,0,1)];}
+/* complemento de gosto: ácido corta gordura e doce, gordura arredonda ácido e amargo, sal levanta doce e gordura */
+function tasteComp(c,R){return clamp(Math.max(c[0]*((R[3]+R[4])/2)*(1-R[0]),c[3]*Math.max(R[0],R[1]),c[2]*((R[4]+R[3])/2)*(1-R[2])*1.2,c[1]*R[4]*(1-R[1])*.9,c[4]*Math.max(R[0],R[1])*.6),0,1);}
+/* ingredientes quase iguais contam uma vez por lista (o chef quer caminhos diferentes, não 4 chocolates) */
+const AGRP={};[['cacau','cacau10','massacacau','choc80','choc70','choc64','choc55'],['espresso','cafesol','extratocafe'],['limao','lima'],['tangerina','tangerinaconc'],['laranja','sanguinea'],['pistache','pistachea'],['iogurte','grego','iogurte0'],['cococreme','cocoleite','cocopure','cocoralado'],['vinhodoce','eiswein','vinsanto'],['gorgonzola','roquefort'],['maca','macasuco'],['mascavo','demerara','garapa'],['amendoim','tahine'],['gema','gemap'],['creamcheese','cremefr','mascarpone'],['frutaliof','framboesa']].forEach(g=>g.forEach(id=>AGRP[id]=g[0]));
+const ACAT_W={'Açúcares':.8,'Bebidas e aromas':.95};
+/* acentos de gosto: entram pelo gosto básico, mesmo sem ponte aromática (sal no caramelo, ácido no creme) */
+const AACC=['sal','citrico','balsamico','limao','especiaria','ervas','cacau','espresso','pompelmo','cristal','iogurte','tonica'];
+/* ---------- TRADIÇÃO + ANALOGIA ----------
+   Grafo de combinações consagradas (PAIRS, simétrico). Ingrediente fora do grafo herda as combinações do
+   vizinho aromático mais parecido (analogia: tangerina ≈ laranja → combina com chocolate). */
+let _PG=null;
+function pairGraph(){if(_PG)return _PG;const G={};const add=(a,b,lab)=>{if(!a||!b||a===b)return;(G[a]=G[a]||{})[b]=1;};
+ for(const a in PAIRS)PAIRS[a].forEach(([b])=>{if(b){add(a,b);add(b,a);}});
+ for(const id in AGRP){const g=AGRP[id];if(G[g]&&!G[id])G[id]=Object.assign({},G[g]);if(G[id]&&!G[g])G[g]=Object.assign({},G[id]);}
+ _PG=G;return G;}
+function tradScores(recipe){const G=pairGraph();const flav=(recipe||[]).filter(r=>AROMA[r.id]&&!ABASE.has(r.id)&&ING_BY[r.id]&&aImp(ING_BY[r.id])>=.5);const out={};
+ flav.forEach(r=>{const x=r.id;let srcs=[];if(G[x])srcs.push([x,1]);
+  else{const vx=AROMA[x];const cand=Object.keys(G).filter(a=>AROMA[a]&&a!==x).map(a=>[a,vCos(vx,AROMA[a])*(ING_BY[a]&&ING_BY[x]&&ING_BY[a].cat===ING_BY[x].cat?1:.85)]).sort((p,q)=>q[1]-p[1]).slice(0,2).filter(p=>p[1]>=.75);srcs=cand;}
+  srcs.forEach(([a,w])=>{for(const c in G[a]){const sc=w;if(!out[c]||out[c].s<sc)out[c]={s:sc,from:x,via:a===x?null:a};}});});
+ return out;}
+function aromaPairs(recipe,limit){const R=aromaProfile(recipe,true);if(!R)return null;const inRec=new Set((recipe||[]).map(r=>r.id));const lim=limit||6;const RT=recipeTaste(recipe);
+ const fam=v=>v.map((x,k)=>[x,k]);const out=[];const grpIn=new Set([...inRec].map(id=>AGRP[id]).filter(Boolean));
+ for(const id in AROMA){if(inRec.has(id)||!ING_BY[id]||ABASE.has(id)||(AGRP[id]&&grpIn.has(AGRP[id])))continue;const v=AROMA[id];const c=v.map(x=>x/3);const cs=c.reduce((a,b)=>a+b,0)||1;
+  const cos=vCos(R,c),ov=c.reduce((a,x,k)=>a+Math.min(x,R[k]),0)/cs;const w=ACAT_W[ING_BY[id].cat]||1;const sim=(.55*cos+.45*ov)*w;
+  const shared=fam(c).filter(([x,k])=>x>=.33&&R[k]>=.3).sort((a,b)=>b[0]*R[b[1]]-a[0]*R[a[1]]).map(([,k])=>k);
+  const fresh=fam(c).filter(([x,k])=>x>=.6&&R[k]<.5).sort((a,b)=>(b[0]-R[b[1]])-(a[0]-R[a[1]])).map(([,k])=>k);
+  const lift=c.reduce((a,x,k)=>a+Math.max(0,x-R[k]),0)/cs;
+  const bridge=shared.length?Math.max(...shared.map(k=>Math.min(c[k],R[k]))):0;const comp=tasteComp(tasteOf(ING_BY[id]),RT);
+  const contrast=bridge>=.25&&fresh.length?(bridge*.45+lift*.35+comp*.2)*w:0;
+  out.push({id,sim,shared,fresh,bridge,comp,contrast});}
+ const div=(L,cap)=>{const c={},g=new Set(),r=[];for(const x of L){const k=ING_BY[x.id].cat,gr=AGRP[x.id]||x.id;if((c[k]||0)>=(cap||3)||g.has(gr))continue;c[k]=(c[k]||0)+1;g.add(gr);r.push(x);if(r.length>=lim)break;}return r;};
+ const T=tradScores(recipe);const trad=div(Object.keys(T).filter(id=>ING_BY[id]&&!inRec.has(id)&&!ABASE.has(id)&&!(AGRP[id]&&grpIn.has(AGRP[id]))).map(id=>({id,...T[id]})).sort((a,b)=>b.s-a.s),5).map(x=>({...x,sim:x.s}));
+ const inT=new Set(trad.map(x=>AGRP[x.id]||x.id));
+ const harm=div(out.filter(x=>x.shared.length&&!inT.has(AGRP[x.id]||x.id)).sort((a,b)=>b.sim-a.sim));
+ const cont=div(out.filter(x=>x.contrast>0&&!harm.includes(x)&&!inT.has(AGRP[x.id]||x.id)).sort((a,b)=>b.contrast-a.contrast));
+ const acc=AACC.filter(id=>ING_BY[id]&&!inRec.has(id)&&!(AGRP[id]&&grpIn.has(AGRP[id]))).map(id=>({id,comp:tasteComp(tasteOf(ING_BY[id]),RT),taste:tasteOf(ING_BY[id])})).filter(x=>x.comp>=.3).sort((a,b)=>b.comp-a.comp).slice(0,4);
+ return{R,RT,harm,cont,acc,trad};}
 function aromaWheel(R,C){const S0=220,c=S0/2,r0=78;const n=AFAM.length;const pt=(k,v)=>{const a=-Math.PI/2+k/n*2*Math.PI;return[c+Math.cos(a)*r0*v,c+Math.sin(a)*r0*v];};
  let g='';[.33,.66,1].forEach(v=>{g+=`<polygon points="${AFAM.map((_,k)=>pt(k,v).map(x=>x.toFixed(1)).join(',')).join(' ')}" fill="none" stroke="var(--line)" stroke-width="1"/>`;});
  AFAM.forEach((f,k)=>{const[x,y]=pt(k,1.18);const[x2,y2]=pt(k,1);g+=`<line x1="${c}" y1="${c}" x2="${x2}" y2="${y2}" stroke="var(--line)"/><text x="${x}" y="${y+3}" text-anchor="middle" font-size="8.6" fill="${R&&R[k]>.5?'var(--t1)':'var(--t3)'}">${f[1].split(' · ')[0]}</text>`;});
  if(R)g+=`<polygon points="${R.map((v,k)=>pt(k,Math.max(.03,v)).map(x=>x.toFixed(1)).join(',')).join(' ')}" fill="rgba(125,211,252,.22)" stroke="var(--ice)" stroke-width="1.6"/>`;
  if(C)g+=`<polygon points="${C.map((v,k)=>pt(k,Math.max(.03,v)).map(x=>x.toFixed(1)).join(',')).join(' ')}" fill="rgba(251,146,60,.12)" stroke="#fb923c" stroke-width="1.6" stroke-dasharray="4 3"/>`;
  return`<svg viewBox="-14 -6 ${S0+28} ${S0+12}" style="width:100%;max-width:300px;height:auto;display:block;margin:auto" role="img" aria-label="Roda aromática da receita">${g}</svg>`;}
+
+
+/* ---------- BALANCEADOR DO LABORATÓRIO ----------
+   Para o que o balanceador clássico não cobre (gastronômico salgado, sem açúcar, álcool alto, sólidos fora
+   da faixa): escolhe as alavancas pelo tipo da receita e minimiza, no motor completo, o desvio de
+   congelamento, doçura e sólidos + alertas estruturais, com a menor mudança possível na receita.
+   Busca por padrões com passo adaptativo (movimentos simples e trocas entre pares). */
+const LAB_POLY=['eritritol','alulose','xilitol','maltitol','sorbitol','inulina','fibramilho','fos'];
+function labLevers(st){const rec=st.recipe||[];const has=id=>rec.some(r=>r.id===id);const tot=rec.reduce((a,r)=>a+(+r.g||0),0)||1;const L=[];
+ const add=(id,kind,lo,hi,sc)=>{if(ING_BY[id]&&!L.some(l=>l.id===id))L.push({id,kind,lo:lo||0,hi:hi!=null?hi:tot*.45,sc:sc||1});};
+ const dairy=rec.some(r=>ING_BY[r.id]&&ING_BY[r.id].cat==='Lácteos');
+ if(st.tipo==='semacucar'){['eritritol','alulose','fibramilho'].forEach(id=>add(id,'sug'));rec.forEach(r=>{if(LAB_POLY.includes(r.id))add(r.id,'sug');});add(has('stevia')?'stevia':'sucralose','hi',0,tot*.0006,.004);}
+ else if(st.tipo==='gastro'){['dextrose','trealose','glicose38'].forEach(id=>add(id,'sug'));if(has('sacarose'))add('sacarose','sug');add('sal','salt',0,tot*.008,.08);}
+ else{add('sacarose','sug');add(has('dextrosem')?'dextrosem':'dextrose','sug');add('glicose38','sug');}
+ rec.forEach(r=>{if(BAL_SUG.has(r.id)&&st.tipo!=='semacucar')add(r.id,'sug');});
+ if(dairy&&st.tipo!=='vegan')add('lpd','sol',0,tot*.08);else if(st.tipo!=='semacucar')add('malto','sol',0,tot*.12);
+ rec.forEach(r=>{const i=ING_BY[r.id];if(i&&(i.c.alc||0)>0)add(r.id,'alc',+r.g*.55,+r.g);});
+ const BASEL=['agua','leite','leite15','leite0','aveia','amendoab','soja','arrozb','cocoleite','aguacoco'];const liq=rec.filter(r=>{const i=ING_BY[r.id];return i&&!L.some(l=>l.id===r.id)&&(i.c.w||0)>=85&&!(i.c.alc>0);}).sort((a,b)=>(BASEL.includes(b.id)-BASEL.includes(a.id))||b.g-a.g)[0];
+ const lid=liq?liq.id:(dairy?'leite':'agua');const lg=liq?+liq.g:0;add(lid,'liq',lg*.6,lg+tot*.3);
+ return L.slice(0,8);}
+function labLoss(m,F,x0,x,tot,L){const P=m.P;const d=(v,r)=>v<r[0]?r[0]-v:v>r[1]?v-r[1]:0;const mid=r=>(r[0]+r[1])/2;
+ let l=Math.pow((m.fzVit-m.fzMid)/1.2,2)+1.6*Math.pow(d(m.pod,P.pod),2)+.25*Math.pow((m.pod-mid(P.pod))/(P.pod[1]-P.pod[0]||1),2)+Math.pow(d(m.sol,P.sol)/1.2,2);
+ F.forEach(f=>{if(f.sev==='crit')l+=25;else if(f.sev==='warn'&&['Térmico','Doçura','Sólidos','Lactose'].includes(f.area))l+=2.5;});
+ L.forEach((v,i)=>{const dx=Math.abs(x[i]-x0[i])/tot*100;l+=dx*(v.kind==='liq'?.35:v.kind==='alc'?.6:v.kind==='sol'?.25:v.kind==='salt'?1.5:v.kind==='hi'?40:.08);if(x0[i]>0&&x[i]<.3&&v.kind!=='liq')l+=4;});
+ return l;}
+function balanceLab(st,maxE){maxE=maxE||900;const rec=(st.recipe||[]).filter(r=>ING_BY[r.id]&&+r.g>0);if(rec.length<2)return{ok:false,msg:'Monte a receita primeiro.'};
+ const L=labLevers(st);const tot=rec.reduce((a,r)=>a+ +r.g,0);const ids=new Set(L.map(l=>l.id));const base=rec.filter(r=>!ids.has(r.id));
+ const x0=L.map(l=>{const r=rec.find(q=>q.id===l.id);return r?+r.g:0;});
+ const build=x=>base.concat(L.map((l,i)=>({id:l.id,g:l.sc<.05?Math.round(x[i]*1000)/1000:Math.round(x[i]*10)/10})).filter((r,i)=>r.g>=(L[i]&&L[i].sc<1?.001:.3)));
+ let evals=0;const f=x=>{evals++;const s2={...st,recipe:build(x)};const m=analyze(s2);if(m.empty)return 1e9;return labLoss(m,diagnose(s2,m),x0,x,tot,L);};
+ let x=x0.slice(),best=f(x);const l0=best;let step=tot*.04;
+ while(step>tot*.0006&&evals<maxE){let imp=false;
+  for(let i=0;i<L.length;i++)for(const dir of[1,-1]){const y=x.slice();y[i]=clamp(y[i]+dir*step*L[i].sc,L[i].lo,L[i].hi);if(y[i]===x[i])continue;const v=f(y);if(v<best-1e-6){best=v;x=y;imp=true;}}
+  if(!imp)for(let i=0;i<L.length;i++)for(let j=0;j<L.length;j++){if(i===j)continue;const y=x.slice();y[i]=clamp(y[i]+step*L[i].sc,L[i].lo,L[i].hi);y[j]=clamp(y[j]-step*L[j].sc,L[j].lo,L[j].hi);const v=f(y);if(v<best-1e-6){best=v;x=y;imp=true;}}
+  if(!imp)step/=2;}
+ /* limpeza: resíduos de alavanca (< 0,3% do lote) somem se não pioram a receita */
+ L.forEach((l,i)=>{if(x[i]>0&&x[i]<tot*.003&&l.lo===0&&l.sc>=.05){const y=x.slice();y[i]=0;const v=f(y);if(v<=best+.3){x=y;best=Math.min(best,v);}}});
+ const newRecipe=build(x);const m1=analyze({...st,recipe:newRecipe});const F1=diagnose({...st,recipe:newRecipe},m1);
+ const prop=L.map((l,i)=>({id:l.id,g:x[i]})).filter((p,i)=>Math.abs(x[i]-x0[i])>=.3);const cur=prop.map(p=>x0[L.findIndex(l=>l.id===p.id)]);
+ if(!prop.length)return{ok:false,msg:'A receita já está no melhor ponto que as alavancas disponíveis alcançam.',lab:1};
+ return{ok:best<l0-.05,mode:'lab',lab:1,prop,cur,newRecipe,m1,loss:best,loss0:l0,evals,crit:F1.filter(q=>q.sev==='crit').length,msg:best<l0-.05?'':'Nenhuma combinação melhora a receita.'};}
+/* índice contínuo para comparar criações finas (o índice oficial satura em 100) */
+function fineScore(st,m,F){if(m.empty)return 0;const sc=score(st,m,F);let q=sc.parts.reduce((s,p)=>s+p[1]*p[2],0);const crit=F.filter(f=>f.sev==='crit').length;if(crit)q=Math.min(q,62-crit*4);
+ q-=Math.abs(m.fzVit-m.fzMid)*.25+Math.max(0,m.crystal-30)*.12+Math.max(0,7-Math.min(m.shelfVit,30))*.25+F.filter(f=>f.sev==='warn').length*.6;return Math.round(q*10)/10;}
+/* o melhor entre o balanceador clássico e o do laboratório (pelo índice contínuo) */
+function balanceBest(st,maxE){const pote=st.proc&&st.proc.serveFrom==='pote';let a=null;try{a=pote?balancePote(st):balance(st);}catch(e){a=null;}
+ const ev=r=>{const s2=stReal({...st,recipe:r});const m=analyze(s2);return fineScore(s2,m,diagnose(s2,m));};
+ const qa=a&&a.ok?ev(a.newRecipe):-1e9;
+ if(a&&a.ok&&qa>=90)return a;
+ let b=balanceLab(pote?{...st,vit:poteServeTemp(st)}:st,maxE);
+ if(pote&&b.ok){const v=poteServeTemp({...st,recipe:b.newRecipe});const b2=balanceLab({...st,vit:v,recipe:b.newRecipe},maxE);if(b2.ok)b=b2;b.ok=true;}
+ if(b.ok){const g=(R,id)=>{const r=(R||[]).find(q=>q.id===id);return r?+r.g:0;};const ids=[...new Set([...(st.recipe||[]),...b.newRecipe].map(r=>r.id))].filter(id=>Math.abs(g(st.recipe,id)-g(b.newRecipe,id))>=.3);
+  b.prop=ids.map(id=>({id,g:g(b.newRecipe,id)}));b.cur=ids.map(id=>g(st.recipe,id));}
+ if(b.ok){b.m1=analyze(stReal({...st,recipe:b.newRecipe}));const qb=ev(b.newRecipe);b.q=qb;
+  const F1=diagnose(stReal({...st,recipe:b.newRecipe}),b.m1);const cr=F1.filter(f=>f.sev==='crit').length;
+  b.note='Balanceador do laboratório'+(a&&!a.ok?' (o clássico não cobre este caso)':'')+': ajustou '+b.prop.map(p=>ING_BY[p.id].n.split(' (')[0].toLowerCase()).join(', ')+'.'+(cr?' Melhor compromisso possível; ainda resta '+cr+' alerta crítico — veja o laudo.':'');
+  if(pote)b.poteVit=poteServeTemp({...st,recipe:b.newRecipe});
+  if(qb>qa+.3)return b;}
+ return a&&a.ok?a:b.ok?b:(a||b);}
+
+
+/* ---------- PERFIL SENSORIAL PREVISTO (0–100) ----------
+   Traduz o motor em eixos de prova: doçura percebida na temperatura de serviço (a percepção cai ~1,5% por °C
+   abaixo de −12), firmeza à colher (água congelada), cremosidade (gordura, sólidos e cristal), resistência ao
+   derretimento, aroma liberado (volatilidade na temperatura), acidez e sal. É previsão: valide no Painel cego. */
+const SENS_AX=[['doce','Doçura','Doçura percebida'],['firme','Firmeza','Firmeza à colher'],['creme','Cremosidade','Cremosidade'],['derr','Derretimento','Resistência ao derretimento'],['aroma','Aroma','Aroma liberado no frio'],['acido','Acidez','Acidez'],['sal','Salgado','Salgado']];
+function sensProfile(m){if(!m||m.empty)return null;const v=+m.vit;
+ return{doce:clamp(m.pod*(1+.015*(v+12))/30*100,0,100),firme:clamp((m.fzVit-58)/24*100,0,100),creme:clamp(m.fat*3.2+(m.sol-26)*2.6+(45-m.crystal)*1.3,0,100),
+  derr:clamp(m.melt||0,0,100),aroma:clamp((m.aromaTemp||0)*100-(m.fzVit-70)*1.5,0,100),acido:clamp((m.acd||0)/1.4*100,0,100),sal:clamp((m.salt||0)/.8*100,0,100)};}
+function sensRadar(a,b){const S0=230,c=S0/2,r0=80,n=SENS_AX.length;const pt=(k,v)=>{const g=-Math.PI/2+k/n*2*Math.PI;return[c+Math.cos(g)*r0*v,c+Math.sin(g)*r0*v];};
+ let g='';[.25,.5,.75,1].forEach(v=>{g+=`<polygon points="${SENS_AX.map((_,k)=>pt(k,v).map(x=>x.toFixed(1)).join(',')).join(' ')}" fill="none" stroke="var(--line)"/>`;});
+ SENS_AX.forEach(([k,n2],i)=>{const[x,y]=pt(i,1.2);g+=`<text x="${x}" y="${y+3}" text-anchor="middle" font-size="9" fill="var(--t2)">${n2}</text>`;});
+ const poly=(p,st)=>`<polygon points="${SENS_AX.map(([k],i)=>pt(i,Math.max(.02,p[k]/100)).map(x=>x.toFixed(1)).join(',')).join(' ')}" ${st}/>`;
+ if(a)g+=poly(a,'fill="rgba(125,211,252,.2)" stroke="var(--ice)" stroke-width="1.6"');if(b)g+=poly(b,'fill="rgba(251,146,60,.12)" stroke="#fb923c" stroke-width="1.6" stroke-dasharray="4 3"');
+ return`<svg viewBox="-24 -8 ${S0+48} ${S0+16}" style="width:100%;max-width:300px;height:auto;display:block;margin:auto" role="img" aria-label="Perfil sensorial previsto">${g}</svg>`;}
 
 /* ---------- 4. EXPLORADOR DE VARIAÇÕES ----------
    Gera variações por operadores de criação (troca de açúcares, gordura, proteína, laticínio fermentado,
@@ -3018,9 +3125,9 @@ function recShares(rec){const t=rec.reduce((a,r)=>a+(+r.g||0),0)||1;const o={};r
 function novelty(a,b){const x=recShares(a),y=recShares(b);let d=0;new Set([...Object.keys(x),...Object.keys(y)]).forEach(k=>d+=Math.abs((x[k]||0)-(y[k]||0)));return d/2;}
 function exploreGelato(st,n,seed){
  const R=(st.recipe||[]).filter(r=>ING_BY[r.id]&&+r.g>0).map(r=>({id:r.id,g:+r.g}));if(R.length<2)return null;
- const tot=R.reduce((a,r)=>a+r.g,0);const pote=st.proc&&st.proc.serveFrom==='pote';const vit=pote?poteServeTemp(st):+st.vit;
+ const tot=R.reduce((a,r)=>a+r.g,0);const s0=stReal(st),m0=analyze(s0),F0=diagnose(s0,m0);const base0={sol:m0.sol,P:m0.P};
  const rnd=atRng(seed);const pick=a=>a[Math.floor(rnd()*a.length)];const nm=id=>ING_BY[id]?ING_BY[id].n.split(' (')[0]:id;
- const AP=aromaPairs(R,8);const accents=AP?[...AP.harm.slice(0,5).map(x=>[x.id,'ponte']),...AP.cont.slice(0,5).map(x=>[x.id,'contraste'])]:[];
+ const AP=aromaPairs(R,8);const accents=AP?[...AP.trad.slice(0,4).map(x=>[x.id,'consagrada']),...AP.harm.slice(0,3).map(x=>[x.id,'ponte']),...AP.cont.slice(0,3).map(x=>[x.id,'contraste']),...AP.acc.slice(0,2).map(x=>[x.id,'acento'])]:[];
  const find=(rec,f)=>rec.filter(r=>ING_BY[r.id]&&f(ING_BY[r.id],r));
  const ops=[
   rec=>{const s=find(rec,(i,r)=>r.id==='sacarose')[0]||find(rec,i=>i.cat==='Açúcares').sort((a,b)=>b.g-a.g)[0];if(!s)return null;const to=pick(SUG_SWAP.filter(x=>x!==s.id&&ING_BY[x]));const p=.25+rnd()*.25;const g=s.g*p;s.g-=g;const ex=rec.find(r=>r.id===to);if(ex)ex.g+=g;else rec.push({id:to,g});return f0(p*100)+'% da '+nm(s.id).toLowerCase()+' → '+nm(to).toLowerCase();},
@@ -3029,25 +3136,38 @@ function exploreGelato(st,n,seed){
   rec=>{const c=find(rec,i=>/^creme/.test(i.id))[0];if(!c)return null;const to=pick(['mascarpone','cremefr','grego','ricota','iogurte']);if(!ING_BY[to])return null;const g=c.g*.4;c.g-=g;const ex=rec.find(r=>r.id===to);if(ex)ex.g+=g;else rec.push({id:to,g});return'40% do creme → '+nm(to).toLowerCase();},
   rec=>{if(!accents.length)return null;const[id,kind]=pick(accents);if(rec.some(r=>r.id===id))return null;rec.push({id,g:aDose(ING_BY[id])*tot/1000});return'+ '+nm(id).toLowerCase()+' ('+kind+')';},
   rec=>{if(rec.length<=4)return null;const c=rec.filter(r=>{const i=ING_BY[r.id];return i&&!['Estabilizantes','Açúcares','Meus neutros'].includes(i.cat)&&!/^leite$|^agua$/.test(r.id)&&r.g<tot*.04;}).sort((a,b)=>a.g-b.g)[0];if(!c)return null;rec.splice(rec.indexOf(c),1);return'− '+nm(c.id).toLowerCase()+' (minimalismo)';},
-  rec=>{if(rec.some(r=>r.id==='sal')||!ING_BY.sal)return null;rec.push({id:'sal',g:tot*.0015});return'+ sal 0,15% (realça doçura e aroma)';}];
+  rec=>{if(rec.some(r=>r.id==='sal')||!ING_BY.sal)return null;rec.push({id:'sal',g:tot*.0015});return'+ sal 0,15% (realça o sabor)';},
+  rec=>{const a=find(rec,i=>(i.c.alc||0)>0)[0];if(!a)return null;a.g*=.7;return nm(a.id).toLowerCase()+' −30% (álcool)';},
+  rec=>{if(base0.sol<=base0.P.sol[1])return null;const w=find(rec,i=>(i.c.w||0)>=85&&!(i.c.alc>0)).sort((a,b)=>b.g-a.g)[0];if(!w)return null;w.g+=tot*.08;return nm(w.id).toLowerCase()+' +8% (sólidos altos)';},
+  rec=>{if(base0.sol>=base0.P.sol[0])return null;const id=find(rec,i=>i.cat==='Lácteos').length&&st.tipo!=='vegan'?'lpd':'fibramilho';if(!ING_BY[id])return null;const ex=rec.find(r=>r.id===id);if(ex)ex.g+=tot*.03;else rec.push({id,g:tot*.03});return'+ '+nm(id).toLowerCase()+' 3% (sólidos baixos)';},
+  rec=>{if(st.tipo==='sorbetto'||st.tipo==='vegan')return null;const id=pick(['gema','mascarpone','creamcheese']);if(!ING_BY[id]||rec.some(r=>r.id===id))return null;rec.push({id,g:tot*(id==='gema'?.04:.06)});return'+ '+nm(id).toLowerCase()+' (corpo e emulsão)';}];
  const out=[],seen=new Set();
  for(let tries=0;tries<n*5&&out.length<n;tries++){
   const rec=R.map(r=>({...r}));const labs=[];const k=rnd()<.45?2:1;
   for(let j=0;j<k;j++){const l=pick(ops)(rec);if(l&&!labs.includes(l))labs.push(l);}
   if(!labs.length)continue;const key=labs.slice().sort().join('|');if(seen.has(key))continue;seen.add(key);
   rec.forEach(r=>r.g=Math.round(r.g*10)/10);const rc=rec.filter(r=>r.g>0);
-  let fin=rc,ok=false;try{const b=balance({...st,recipe:rc,vit});if(b&&b.ok){fin=b.newRecipe;ok=true;}}catch(e){}
+  let fin=rc,ok=false,how='';try{const b=balanceBest({...st,recipe:rc},260);if(b&&b.ok){fin=b.newRecipe;ok=true;how=b.lab?'lab':'clássico';}}catch(e){}
   const s3=stReal({...st,recipe:fin});const m=analyze(s3);if(m.empty)continue;const F=diagnose(s3,m),sc=score(s3,m,F).total;
-  out.push({labs,recipe:fin,ok,sc,pod:m.pod,sol:m.sol,fat:m.fat,fz:m.fzVit,d:m.crystal,shelf:m.shelfVit,melt:m.melt,cost:m.costKg,nov:novelty(R,fin),prof:aromaProfile(fin)});}
- const s0=stReal(st),m0=analyze(s0),F0=diagnose(s0,m0);
- return{seed,base:{sc:score(s0,m0,F0).total,pod:m0.pod,sol:m0.sol,fat:m0.fat,fz:m0.fzVit,d:m0.crystal,shelf:m0.shelfVit,melt:m0.melt,cost:m0.costKg},list:out.sort((a,b)=>b.sc-a.sc||b.nov-a.nov)};}
+  out.push({labs,recipe:fin,ok,how,sc,sens:sensProfile(m),q:fineScore(s3,m,F),crit:F.filter(f=>f.sev==='crit').map(f=>f.title),pod:m.pod,sol:m.sol,fat:m.fat,fz:m.fzVit,d:m.crystal,shelf:m.shelfVit,melt:m.melt,cost:m.costKg,nov:novelty(R,fin),prof:aromaProfile(fin)});}
+ const base={sc:score(s0,m0,F0).total,q:fineScore(s0,m0,F0),pod:m0.pod,sol:m0.sol,fat:m0.fat,fz:m0.fzVit,d:m0.crystal,shelf:m0.shelfVit,melt:m0.melt,cost:m0.costKg};
+ const goal=EXP_GOALS[st._goal]?st._goal:'equil';out.forEach(x=>x.rank=EXP_GOALS[goal].f(x,base));
+ return{seed,goal,base,list:out.sort((a,b)=>b.rank-a.rank)};}
+/* objetivo da rodada: muda só a ordem (todas as variações continuam balanceadas e avaliadas) */
+const EXP_GOALS={
+ equil:{n:'Equilíbrio',f:(x,b)=>x.q+x.nov*4},
+ doce:{n:'Menos doce',f:(x,b)=>x.q*.6-(x.pod-b.pod)*4},
+ creme:{n:'Mais cremoso',f:(x,b)=>x.q*.6+(x.fat-b.fat)*2.5+(x.sol-b.sol)*1.2-Math.max(0,x.d-30)},
+ vida:{n:'Vida longa',f:(x,b)=>x.q*.6+(Math.min(x.shelf,30)-Math.min(b.shelf,30))*1.5-x.d*.3},
+ custo:{n:'Menor custo',cost:1,f:(x,b)=>x.q*.6+(b.cost-x.cost)*6},
+ ousado:{n:'Ousadia',f:(x,b)=>x.q*.5+x.nov*60}};
 function exploreMap(E,sel){const W=360,H=236,L=36,R=10,T=22,B=30;const all=[E.base,...E.list];
  const xs=all.map(x=>x.fat),ys=all.map(x=>x.sol);let x0=Math.min(...xs)-.8,x1=Math.max(...xs)+.8,y0=Math.min(...ys)-.8,y1=Math.max(...ys)+.8;
  const sx=v=>L+(v-x0)/(x1-x0)*(W-L-R),sy=v=>T+(1-(v-y0)/(y1-y0))*(H-T-B);
  let g='';for(let k=0;k<=4;k++){const v=x0+(x1-x0)*k/4,w=y0+(y1-y0)*k/4;g+=`<text x="${sx(v)}" y="${H-12}" text-anchor="middle" font-size="9" fill="var(--t3)">${f1(v)}</text><text x="${L-4}" y="${sy(w)+3}" text-anchor="end" font-size="9" fill="var(--t3)">${f1(w)}</text><line x1="${L}" x2="${W-R}" y1="${sy(w)}" y2="${sy(w)}" stroke="var(--line)" stroke-dasharray="2 4"/>`;}
  g+=`<text x="${W-R}" y="${H-1}" text-anchor="end" font-size="9" fill="var(--t3)">gordura % →</text><text x="4" y="10" font-size="9" fill="var(--t3)">sólidos % ↑</text>`;
- E.list.forEach((x,i)=>{const col=x.sc>=90?'var(--ok)':x.sc>=75?'var(--warn)':'var(--crit)';const r=4+x.nov*28;
-  g+=`<circle cx="${sx(x.fat).toFixed(1)}" cy="${sy(x.sol).toFixed(1)}" r="${clamp(r,4,12).toFixed(1)}" fill="${col}" fill-opacity="${i===sel?.9:.35}" stroke="${col}" stroke-width="${i===sel?2.5:1}" data-a="atPick" data-v="${i}" style="cursor:pointer"><title>${esc(x.labs.join(' · '))} · índice ${x.sc}</title></circle>`;});
+ E.list.forEach((x,i)=>{const col=x.q>=93?'var(--ok)':x.q>=80?'var(--warn)':'var(--crit)';const r=4+x.nov*28;
+  g+=`<circle cx="${sx(x.fat).toFixed(1)}" cy="${sy(x.sol).toFixed(1)}" r="${clamp(r,4,12).toFixed(1)}" fill="${col}" fill-opacity="${i===sel?.9:.35}" stroke="${col}" stroke-width="${i===sel?2.5:1}" data-a="atPick" data-v="${i}" style="cursor:pointer"><title>${esc(x.labs.join(' · '))} · índice ${x.sc} (fino ${f1(x.q)})</title></circle>`;});
  g+=`<circle cx="${sx(E.base.fat)}" cy="${sy(E.base.sol)}" r="7" fill="none" stroke="var(--t1)" stroke-width="2"/><text x="${sx(E.base.fat)+10}" y="${sy(E.base.sol)+3}" font-size="9.5" fill="var(--t1)">atual</text>`;
  return`<svg viewBox="0 0 ${W} ${H}" style="width:100%;height:auto;display:block" role="img" aria-label="Mapa das variações: gordura × sólidos; cor = índice, tamanho = ousadia">${g}</svg>`;}
 
@@ -3081,13 +3201,15 @@ const NX_GOALS={
  vegano:{n:'Vegano / sorbetto',dairy:0,noAnimal:1,tgt:{anti:[65,92],corpo:[55,85],derr:[50,85]}}};
 function nxDesign(goal,dairy,prIn){const G=NX_GOALS[goal];if(!G)return null;const pr=Object.assign({},PROC0,prIn||{});if(G.cold)pr.pastT=20;
  const dy=G.dairy!=null?!!G.dairy:!!dairy;
- const pool=(G.pool||Object.keys(NCOMP).filter(k=>NCOMP[k].dose&&!['mono','inu'].includes(k))).filter(k=>NCOMP[k]&&!(G.noAnimal&&NCOMP[k].animal)&&!(!dy&&k==='carr'));
+ const pool=(G.pool||Object.keys(NCOMP).filter(k=>NCOMP[k].dose&&!['mono','inu'].includes(k)&&(k!=='konj'||goal==='empratado'))).filter(k=>NCOMP[k]&&!(G.noAnimal&&NCOMP[k].animal)&&!(!dy&&k==='carr'));
  const rnd=atRng([...goal].reduce((a,c)=>a*31+c.charCodeAt(0),7)+(dy?1:0)+(+pr.pastT));
  const evalB=(parts,dose)=>{const b=analyzeBlend({parts,dose},dy);let pen=0;
   for(const f in G.tgt){const[a,z]=G.tgt[f],v=b.P[f];if(v<a)pen+=(a-v)*(a-v)/40;else if(v>z)pen+=(v-z)*(v-z)/40;}
-  pen+=b.notes.filter(x=>x.sev==='warn').length*8;if(b.hydro<.2)pen+=(.2-b.hydro)*400;if(b.hydro>.5)pen+=(b.hydro-.5)*400;
+  const nw=b.notes.filter(x=>x.sev==='warn').length;pen+=nw*8;if(b.hydro<.2)pen+=(.2-b.hydro)*400;if(b.hydro>.4)pen+=(b.hydro-.4)*200;
+  if(dy&&!G.tgt.siner&&b.P.siner<35)pen+=(35-b.P.siner)*(35-b.P.siner)/40;
+  for(const k in b.eff){const r=NCOMP[k]&&NCOMP[k].dose;if(!r)continue;const mid=(r[0]+r[1])/2;if(b.eff[k]>mid)pen+=Math.pow((b.eff[k]-mid)/(r[1]-r[0]),2)*4;}
   const keys={};for(const k in parts)if(k!=='dex'&&NCOMP[k].dose)keys[k]=+parts[k];const hy=hydRun(keys,pr);Object.values(hy.h).forEach(h=>{if(h<.9)pen+=(.9-h)*120;});
-  pen+=Object.keys(keys).length*3+Math.max(0,dose-8)*2;return{pen,b,hy};};
+  pen+=Object.keys(keys).length*3+Math.max(0,dose-8)*2;return{pen,b,hy,nw};};
  const rand=()=>{const n=2+Math.floor(rnd()*3);const ks=[];while(ks.length<n&&ks.length<pool.length){const k=pool[Math.floor(rnd()*pool.length)];if(!ks.includes(k))ks.push(k);}
   const parts={};let A=0;ks.forEach(k=>{const g=Math.round(5+rnd()*(k==='starch'?300:k==='citf'||k==='acacia'?120:70));parts[k]=g;A+=g;});parts.dex=Math.max(0,500-A);return{parts,dose:Math.round((3+rnd()*6)*2)/2};};
  let pop=[];for(let i=0;i<900;i++){const c=rand();pop.push({...c,...evalB(c.parts,c.dose)});}
@@ -3096,8 +3218,8 @@ function nxDesign(goal,dairy,prIn){const G=NX_GOALS[goal];if(!G)return null;cons
  pop=pop.slice(0,12).map(c=>{let best=c;for(let it=0;it<70;it++){const p={...best.parts};const ks=Object.keys(p).filter(k=>k!=='dex');const k=ks[Math.floor(rnd()*ks.length)];
    p[k]=Math.max(1,Math.round(p[k]*(.75+rnd()*.5)));let A=0;ks.forEach(x=>A+=p[x]);p.dex=Math.max(0,500-A);const dose=clamp(Math.round((best.dose+(rnd()-.5))*2)/2,2,12);
    const e=evalB(p,dose);if(e.pen<best.pen)best={parts:p,dose,...e};}return best;}).sort((a,b)=>a.pen-b.pen);
- const res=[],sigs=new Set();for(const c of pop){const sig=Object.keys(c.parts).filter(k=>k!=='dex').sort().join('+');if(sigs.has(sig))continue;sigs.add(sig);res.push(c);if(res.length>=3)break;}
- return{goal,dairy:dy,pastT:pr.pastT,list:res.map(c=>({parts:c.parts,dose:c.dose,P:c.b.P,hydro:c.b.hydro,pen:c.pen,h:c.hy.h}))};}
+ const res=[],sigs=new Set();for(const c of [...pop.filter(c=>!c.nw),...pop.filter(c=>c.nw)]){const sig=Object.keys(c.parts).filter(k=>k!=='dex').sort().join('+');if(sigs.has(sig))continue;sigs.add(sig);res.push(c);if(res.length>=3)break;}
+ return{goal,dairy:dy,pastT:pr.pastT,list:res.map(c=>({parts:c.parts,dose:c.dose,P:c.b.P,hydro:c.b.hydro,pen:c.pen,h:c.hy.h,warns:c.b.notes.filter(n=>n.sev==='warn').map(n=>n.t)}))};}
 
 /* ===================== INTERFACE ===================== */
 function crProcess(st,m,u,C){const s=procSnap(st,m,u,C);
@@ -3107,29 +3229,37 @@ function crProcess(st,m,u,C){const s=procSnap(st,m,u,C);
   <p class="note" id="procTxt" style="margin:6px 0 0">${esc(procDesc(st,m,s,C))}</p></div>`;}
 function labAtelie(m,F,sc){
  if(m.empty)return'<div class="card"><p class="muted">Monte uma receita para abrir o ateliê.</p></div>';
- const AP=aromaPairs(S.recipe,6);const selV=U.atSel&&AROMA[U.atSel]?AROMA[U.atSel].map(x=>x/3):null;const nm=id=>esc(ING_BY[id].n);
+ const AP=aromaPairs(S.recipe,5);const selV=U.atSel&&AROMA[U.atSel]?AROMA[U.atSel].map(x=>x/3):null;const nm=id=>esc(ING_BY[id].n);
  const fams=ks=>ks.map(k=>AFAM[k][1].split(' · ')[0].toLowerCase()).join(', ');
- const item=(x,kind)=>`<div class="atitem${U.atSel===x.id?' on':''}"><button class="atname" data-a="atSel" data-v="${x.id}"><b>${nm(x.id)}</b><small>${kind==='h'?'partilham '+fams(x.shared.slice(0,3)):'ponte: '+fams(x.shared.slice(0,2))+' · traz '+fams(x.fresh.slice(0,2))}</small></button><span class="mono atpct">${f0((kind==='h'?x.sim:x.contrast)*100)}</span><button class="btn sm" data-a="atTry" data-v="${x.id}" title="Adiciona ${f0(aDose(ING_BY[x.id]))} g/kg e rebalanceia os açúcares">Testar</button></div>`;
+ const TST=['ácido corta gordura e doce','amargo equilibra o doce','sal levanta doce e gordura','gordura arredonda ácido e amargo','doce suaviza ácido e amargo'];
+ const why=(x,kind)=>kind==='h'?'partilham '+fams(x.shared.slice(0,3)):kind==='c'?'ponte: '+fams(x.shared.slice(0,2))+' · traz '+fams(x.fresh.slice(0,2)):kind==='t'?(x.via?'por analogia: '+nm(x.from).toLowerCase()+' ≈ '+nm(x.via).toLowerCase():'clássico com '+nm(x.from).toLowerCase()):TST[x.taste.indexOf(Math.max(...x.taste))];
+ const item=(x,kind)=>`<div class="atitem${U.atSel===x.id?' on':''}"><button class="atname" data-a="atSel" data-v="${x.id}"><b>${nm(x.id)}</b><small>${why(x,kind)}</small></button><span class="mono atpct">${f0((kind==='h'?x.sim:kind==='c'?x.contrast:kind==='t'?x.sim:x.comp)*100)}</span><button class="btn sm" data-a="atTry" data-v="${x.id}" title="Adiciona ${f0(aDose(ING_BY[x.id]))} g/kg e rebalanceia">Testar</button></div>`;
  const top=AP?AP.R.map((v,k)=>[v,k]).sort((a,b)=>b[0]-a[0]).slice(0,3).map(([,k])=>AFAM[k]):[];
  const E=U.atEx&&U.atEx.sig===JSON.stringify(S.recipe)+S.tipo+S.vit?U.atEx:null;const pk=E&&E.list[U.atPick]?E.list[U.atPick]:null;
  const card=ACARDS[(+U.atCard||0)%ACARDS.length];
  const dl=(a,b,d,inv)=>{const x=b-a;const good=inv?x<0:x>0;return Math.abs(x)<(d?.05:.5)?'':`<span class="${good?'c-ok':'c-warn'}" style="font-size:11px"> ${x>0?'+':''}${d?f2(x):f1(x)}</span>`;};
  return`<div class="g2 atgrid">
-  <div class="card"><h2>Mapa aromático</h2><p class="note" style="margin-top:0">Harmonização por compostos compartilhados: ingredientes que têm as mesmas famílias aromáticas tendem a combinar (pontes). Contrastes trazem uma família nova, mas mantêm uma ponte com a receita.</p>
+  <div class="card"><h2>Mapa aromático</h2><p class="note" style="margin-top:0">Quatro caminhos: combinações consagradas pela tradição (e, para o que a tradição não cobre, por analogia com o ingrediente aromaticamente mais parecido), pontes por compostos compartilhados, contrastes que trazem uma família nova mantendo uma ponte, e acentos de gosto (ácido, amargo, sal, gordura) que equilibram a receita.</p>
    ${AP?`<div class="atwheel">${aromaWheel(AP.R,selV)}<div class="atleg"><span class="lbl">Assinatura da receita</span>${top.map(f=>`<div class="kv"><span>${f[1]}</span><span class="muted" style="font-size:11px">${f[2]}</span></div>`).join('')}${U.atSel&&ING_BY[U.atSel]?`<p class="note" style="margin:8px 0 0"><span style="color:#fb923c">- - -</span> ${nm(U.atSel)}</p>`:''}</div></div>
-   <div class="g2" style="gap:14px;margin-top:10px"><div><span class="lbl">Pontes (harmonia)</span>${AP.harm.map(x=>item(x,'h')).join('')}</div><div><span class="lbl">Contrastes com ponte</span>${AP.cont.length?AP.cont.map(x=>item(x,'c')).join(''):'<p class="muted" style="font-size:12.5px">Sem contraste com ponte para esta receita.</p>'}</div></div>`
+   <div class="g2" style="gap:14px;margin-top:10px"><div><span class="lbl">Consagradas e por analogia</span>${AP.trad.length?AP.trad.slice(0,6).map(x=>item(x,'t')).join(''):'<p class="muted" style="font-size:12.5px">Sem referência na tradição para estes sabores.</p>'}
+    ${AP.acc.length?`<span class="lbl" style="display:block;margin-top:12px">Acentos de gosto</span>${AP.acc.map(x=>item(x,'a')).join('')}`:''}</div>
+    <div><span class="lbl">Pontes aromáticas</span>${AP.harm.map(x=>item(x,'h')).join('')}<span class="lbl" style="display:block;margin-top:12px">Contrastes com ponte</span>${AP.cont.length?AP.cont.map(x=>item(x,'c')).join(''):'<p class="muted" style="font-size:12.5px">Sem contraste com ponte para esta receita.</p>'}</div></div>`
    :'<p class="muted">A receita ainda não tem ingredientes de sabor com perfil aromático. Adicione uma fruta, um cacau, uma oleaginosa ou um aroma.</p>'}
    <p class="note" style="margin-bottom:0">Perfil por famílias de compostos de impacto descritas na literatura de química do sabor (intensidade 0–3, ponderada pela dose). Não substitui a prova: use como bússola, não como veredito.</p></div>
   <div class="card"><div class="row"><h2 style="margin:0">Explorador de variações</h2><span class="sp"></span><button class="btn sm pri" data-a="atExplore">${E?'Nova rodada':'Explorar 24 variações'}</button></div>
-   <p class="note">Cada ponto é uma receita nova criada por operadores de criação (açúcares, gordura, proteína, laticínio fermentado, acento aromático, minimalismo, sal), <b>balanceada pelo motor</b> e avaliada com o índice completo${S.proc.serveFrom==='pote'?' no modo pote':''}. O mapa mostra a textura (gordura × sólidos; a doçura fica no alvo porque cada variação é rebalanceada). Cor: índice. Tamanho: ousadia (distância da receita atual).</p>
+   <p class="note">Cada ponto é uma receita nova criada por operadores de criação (açúcares, gordura, proteína, laticínio fermentado, acento aromático, minimalismo, sal), <b>balanceada pelo motor</b> (clássico ou, quando ele não cobre o caso, o balanceador do laboratório) e avaliada com o índice completo${S.proc.serveFrom==='pote'?' no modo pote':''}. O mapa mostra a textura (gordura × sólidos; a doçura fica no alvo porque cada variação é rebalanceada). Cor: índice fino (contínuo, não satura em 100). Tamanho: ousadia (distância da receita atual).</p>
+   <div class="chips" style="margin:2px 0 8px" role="group" aria-label="Objetivo da rodada">${Object.entries(EXP_GOALS).filter(([k,g])=>!g.cost||can.cost()).map(([k,g])=>`<button data-a="atGoal" data-v="${k}" aria-pressed="${(U.atGoal||'equil')===k}">${g.n}</button>`).join('')}</div>
    ${E?`${E.list.length?exploreMap(E,+U.atPick):'<p class="muted">Nenhuma variação viável nesta rodada.</p>'}
-    ${pk?`<div class="card flat" style="margin-top:10px"><b style="color:var(--t1)">${esc(pk.labs.join(' · '))}</b>${pk.ok?'':' <span class="c-warn" style="font-size:12px">(não balanceou por completo)</span>'}
-     <div class="kv"><span>Índice</span><span class="mono">${pk.sc}${dl(E.base.sc,pk.sc)}</span></div><div class="kv"><span>Doçura POD</span><span class="mono">${f1(pk.pod)}%${dl(E.base.pod,pk.pod)}</span></div>
+    ${pk?`<div class="card flat" style="margin-top:10px"><b style="color:var(--t1)">${esc(pk.labs.join(' · '))}</b>${pk.ok?` <span class="muted" style="font-size:11.5px">· balanceador ${pk.how}</span>`:' <span class="c-warn" style="font-size:12px">(não balanceou por completo)</span>'}
+     <div class="kv"><span>Índice · fino</span><span class="mono">${pk.sc} · ${f1(pk.q)}${dl(E.base.q,pk.q)}</span></div>${pk.crit.length?`<div class="kv"><span class="c-crit">Crítico</span><span style="font-size:12px">${esc(pk.crit.join(' · '))}</span></div>`:''}<div class="kv"><span>Doçura POD</span><span class="mono">${f1(pk.pod)}%${dl(E.base.pod,pk.pod)}</span></div>
      <div class="kv"><span>Sólidos · gordura</span><span class="mono">${f1(pk.sol)} · ${f1(pk.fat)}%</span></div><div class="kv"><span>Cristal · vida na vitrine</span><span class="mono">${f0(pk.d)} µm · ${pk.shelf>30?'30+':f0(pk.shelf)} d</span></div>
      <div class="kv"><span>Ousadia</span><span class="mono">${f0(pk.nov*100)}%</span></div>${$cost(`<div class="kv"><span>Custo</span><span class="mono">R$ ${f2(pk.cost)}/kg${dl(E.base.cost,pk.cost,1,1)}</span></div>`)}
      <div class="row" style="margin-top:8px"><button class="btn sm okb" data-a="atAdopt" data-v="${U.atPick}">Levar para a bancada</button><button class="btn sm" data-a="atToLab" data-v="${U.atPick}">Comparar</button></div></div>`:''}
-    <div class="atlist">${E.list.slice(0,8).map((x,i)=>`<button data-a="atPick" data-v="${i}" aria-pressed="${+U.atPick===i}"><span class="mono ${x.sc>=90?'c-ok':x.sc>=75?'c-warn':'c-crit'}">${x.sc}</span> ${esc(x.labs.join(' · '))}</button>`).join('')}</div>`
+    <div class="atlist">${E.list.slice(0,8).map((x,i)=>`<button data-a="atPick" data-v="${i}" aria-pressed="${+U.atPick===i}"><span class="mono ${x.q>=93?'c-ok':x.q>=80?'c-warn':'c-crit'}">${f1(x.q)}</span> ${esc(x.labs.join(' · '))}</button>`).join('')}</div>`
    :'<p class="muted" style="font-size:12.5px">Toque em Explorar para gerar as variações da receita atual.</p>'}</div></div>
+ ${(()=>{const sA=sensProfile(analyze(stReal(S)));const sB=pk&&pk.sens;if(!sA)return'';
+  return`<div class="card"><h2>Perfil sensorial previsto</h2><div class="atwheel">${sensRadar(sA,sB)}<div>${SENS_AX.map(([k,n0,n])=>`<div class="kv"><span>${n}</span><span class="mono">${f0(sA[k])}${sB?` <span style="color:#fb923c">→ ${f0(sB[k])}</span>`:''}</span></div>`).join('')}
+   <p class="note" style="margin:8px 0 0">Azul: receita atual a ${fT(S.proc.serveFrom==='pote'?poteServeTemp(S):S.vit)} °C${sB?'. Laranja: variação selecionada no explorador':''}. Previsão a partir do motor (doçura corrigida pela temperatura, firmeza pela água congelada, cremosidade por gordura, sólidos e cristal, aroma pela volatilidade no frio). Confirme no Painel cego.</p></div></div></div>`;})()}
  <div class="card atcard"><div class="row"><span class="lbl" style="margin:0">Carta de método · ${esc(card[2])}</span><span class="sp"></span><button class="btn sm" data-a="atCard">Tirar outra carta</button></div><h3>${esc(card[0])}</h3><p>${esc(card[1])}</p></div>`;}
 function hydCard(E,pr){const keys={};const sh=blendShares(E.parts);for(const k in sh)if(NCOMP[k]&&NCOMP[k].dose)keys[k]=sh[k];if(!Object.keys(keys).length)return'';
  const hy=hydRun(keys,pr);const W=600,H=170,L=32,R=8,T=14,B=34;const n=4,sw=(W-L-R)/n;const sx=(i,f)=>L+(i+f)*sw,sy=v=>T+(1-v)*(H-T-B);
@@ -3147,7 +3277,7 @@ function nxDesignCard(E){const D=U.nxDes;
   ${D?`<div class="g3" style="margin-top:10px">${D.list.map((c,i)=>`<div class="card flat"><b style="color:var(--t1)">Proposta ${i+1}</b><div class="muted" style="font-size:12px">${f1(c.dose)} g/kg · ${f2(c.hydro)}% de hidrocoloides</div>
     <p class="note" style="margin:6px 0">${Object.keys(c.parts).filter(k=>k!=='dex'&&c.parts[k]>0).map(k=>`<span style="color:${NSTYLE[k]?NSTYLE[k].col:'var(--t2)'}">■</span> ${esc(NCOMP[k].n)} ${c.parts[k]} g`).join('<br>')}${c.parts.dex?'<br>Dextrose (veículo) '+c.parts.dex+' g':''}</p>
     ${NFUN.filter(([k])=>k!=='emul').map(([k,n])=>`<div class="row" style="justify-content:space-between;font-size:11.5px"><span class="t2">${n}</span><span class="mono">${c.P[k]}</span></div>`).join('')}
-    <button class="btn sm" style="margin-top:8px" data-a="nxDesUse" data-v="${i}">Abrir no editor</button></div>`).join('')}</div>`:''}</div>`;}
+    ${c.warns.length?`<p class="c-warn" style="font-size:11.5px;margin:6px 0 0">${esc(c.warns.join(' · '))}</p>`:''}<button class="btn sm" style="margin-top:8px" data-a="nxDesUse" data-v="${i}">Abrir no editor</button></div>`).join('')}</div>`:''}</div>`;}
 
 /* ---------- reprodução do processo sem redesenhar a página ---------- */
 let procT=null;
@@ -3166,9 +3296,10 @@ const AT_ACT={
  atSel:v=>{U.atSel=U.atSel===v?null:v;render();},
  atTry:v=>{const i=ING_BY[v];if(!i)return;const tot=S.recipe.reduce((a,r)=>a+(+r.g||0),0)||1000;const g=Math.round(aDose(i)*tot/1000*10)/10;
   const ex=S.recipe.find(r=>r.id===v);if(ex)ex.g=Math.round((+ex.g+g)*10)/10;else S.recipe.push({id:v,g});
-  let msg=i.n+' +'+fT(g)+' g';try{const b=S.proc.serveFrom==='pote'?balancePote(S):balance(S);if(b&&b.ok){S.recipe=b.newRecipe;msg+=' · açúcares rebalanceados';}}catch(e){}
+  let msg=i.n+' +'+fT(g)+' g';try{const b=balanceBest(S);if(b&&b.ok){S.recipe=b.newRecipe;msg+=' · açúcares rebalanceados';}}catch(e){}
   U.atSel=v;U.bal=null;render();toast(msg);},
- atExplore:()=>{const seed=((U.atEx&&U.atEx.seed)||0)+1;const r=exploreGelato(S,24,seed);U.atEx=r?{...r,sig:JSON.stringify(S.recipe)+S.tipo+S.vit}:null;U.atPick=0;render();if(!r)toast('Monte uma receita com ao menos 2 ingredientes');},
+ atExplore:()=>{const seed=((U.atEx&&U.atEx.seed)||0)+1;const r=exploreGelato({...S,_goal:U.atGoal||'equil'},24,seed);U.atEx=r?{...r,sig:JSON.stringify(S.recipe)+S.tipo+S.vit}:null;U.atPick=0;render();if(!r)toast('Monte uma receita com ao menos 2 ingredientes');},
+ atGoal:v=>{if(!EXP_GOALS[v])return;U.atGoal=v;const E=U.atEx;if(E&&E.list.length){const g=EXP_GOALS[v];E.list.forEach(x=>x.rank=g.f(x,E.base));E.list.sort((a,b)=>b.rank-a.rank);E.goal=v;}U.atPick=0;render();},
  atPick:v=>{U.atPick=+v||0;render();},
  atAdopt:v=>{const x=U.atEx&&U.atEx.list[+v];if(!x)return;S.recipe=JSON.parse(JSON.stringify(x.recipe));U.atEx=null;U.bal=null;render();toast('Variação na bancada: '+x.labs.join(' · '));},
  atToLab:v=>{const x=U.atEx&&U.atEx.list[+v];if(!x)return;addVariant(x.labs.join(' · ').slice(0,30),x.recipe);S.crSub='comparar';render();},
@@ -3242,7 +3373,30 @@ const PAIRS={
  pessego:[['amendoa','amêndoa'],['fava','baunilha'],['espumante','espumante (Bellini)'],['framboesa','framboesa (Melba)']],
  caqui:[['especiaria','canela'],['laranja','laranja'],['mascarpone','mascarpone']],
  tomate:[['ervas','manjericão'],['azeite','azeite'],['morango','morango'],['sal','sal']],
- azeite:[['limao','limão'],['laranja','laranja'],['choc70','chocolate'],['sal','flor de sal']]};
+ azeite:[['limao','limão'],['laranja','laranja'],['choc70','chocolate'],['sal','flor de sal']],
+ pera:[['gorgonzola','gorgonzola'],['choc70','chocolate (belle Hélène)'],['especiaria','gengibre / canela'],['vinho','vinho tinto'],['parmigiano','parmigiano'],['fava','baunilha']],
+ maca:[['especiaria','canela'],['caramelo','caramelo'],['ervas','sálvia'],['creamcheese','cream cheese'],['amendoa','amêndoa']],
+ abacate:[['limao','limão'],['choc70','chocolate'],['cocoralado','coco'],['mel','mel'],['lima','lima']],
+ cenoura:[['laranja','laranja'],['especiaria','gengibre / cardamomo'],['creamcheese','cream cheese'],['cocoralado','coco']],
+ tahine:[['mel','mel'],['choc70','chocolate'],['tamara','tâmara'],['banana','banana'],['sal','sal']],
+ mel:[['ricota','ricota'],['gorgonzola','gorgonzola'],['figo','figo'],['iogurte','iogurte'],['pistache','pistache'],['ervas','lavanda / tomilho']],
+ parmigiano:[['pera','pera'],['balsamico','balsâmico'],['figo','figo'],['mel','mel'],['tomate','tomate']],
+ cogumelo:[['mascavo','açúcar mascavo'],['choc70','chocolate'],['parmigiano','parmigiano'],['avela','avelã'],['ervas','tomilho']],
+ alhonegro:[['choc70','chocolate'],['balsamico','balsâmico'],['espresso','café'],['caramelo','caramelo']],
+ ostra:[['pepino','pepino'],['lima','limão'],['espumante','espumante'],['ervas','endro'],['maca','maçã verde']],
+ queijoovelha:[['mel','mel'],['figo','figo'],['marmelo','marmelo'],['pera','pera']],
+ foiegras:[['figo','figo'],['vinhodoce','vinho doce'],['marmelo','marmelo'],['especiaria','pimenta']],
+ cassis:[['choc70','chocolate'],['chocbranco','chocolate branco'],['iogurte','iogurte'],['ervas','folha de cassis / menta']],
+ damasco:[['amendoa','amêndoa'],['pistache','pistache'],['fava','baunilha'],['mel','mel'],['especiaria','cardamomo']],
+ butia:[['cocoralado','coco'],['chocbranco','chocolate branco'],['limao','limão']],
+ uvaia:[['limao','limão'],['chocbranco','chocolate branco'],['ervas','hortelã']],
+ cacaupolpa:[['choc70','chocolate'],['maracuja','maracujá'],['cocoralado','coco'],['lima','lima']],
+ caramelo:[['sal','flor de sal'],['maca','maçã'],['banana','banana'],['espresso','café'],['amendoim','amendoim']],
+ cerveja:[['choc70','chocolate'],['espresso','café'],['caramelo','caramelo'],['fava','baunilha']],
+ balsamico:[['morango','morango'],['parmigiano','parmigiano'],['figo','figo'],['mascarpone','mascarpone']],
+ espumante:[['pessego','pêssego (Bellini)'],['morango','morango'],['framboesa','framboesa'],['limao','limão']],
+ rum:[['banana','banana'],['fava','baunilha'],['abacaxi','abacaxi'],['choc70','chocolate'],[null,'passas']],
+ vinho:[['pera','pera'],['figo','figo'],['jabuticaba','jabuticaba'],['especiaria','canela / cravo'],['cereja','cereja']]};
 PAIRS.choc55=PAIRS.choc64=PAIRS.choc80=PAIRS.choc70;PAIRS.cafesol=PAIRS.espresso;PAIRS.lima=PAIRS.limao;PAIRS.pistachea=PAIRS.pistache;PAIRS.cococreme=PAIRS.cocoralado;
 
 /* ingredientes "de sabor" da receita (fora a base: lácteos, açúcares, estabilizantes, água) */
@@ -3550,8 +3704,8 @@ function equipCard(m){const cur=S.proc.equip||'';const E=EQUIP[cur];
    vitrine, freezer ou em casa (espera no pote). */
 const LIVE={key:null,res:null,pending:null,t:0};
 function liveKey(){try{return JSON.stringify([S.tipo,S.vit,S.recipe,S.proc,S.brix,CAL.on?CAL.ver:-1,ING_VER]);}catch(e){return null;}}
-function liveRun(){try{return S.proc.serveFrom==='pote'?balancePote(S):balance(S);}catch(e){return{ok:false,msg:'Não foi possível calcular agora.'};}}
-function liveBalance(){if(S.tipo==='gastro'||S.tipo==='semacucar'||!(S.recipe||[]).length)return null;const key=liveKey();if(!key)return null;
+function liveRun(){try{return balanceBest(S);}catch(e){return{ok:false,msg:'Não foi possível calcular agora.'};}}
+function liveBalance(){if(!(S.recipe||[]).length)return null;const key=liveKey();if(!key)return null;
  if(LIVE.key===key)return LIVE.res;
  if(typeof requestAnimationFrame!=='function'){LIVE.res=liveRun();LIVE.key=key;return LIVE.res;}
  if(LIVE.pending!==key){LIVE.pending=key;clearTimeout(LIVE.t);LIVE.t=setTimeout(()=>{if(LIVE.pending!==key||liveKey()!==key)return;LIVE.res=liveRun();LIVE.key=key;LIVE.pending=null;render();},450);}
@@ -3903,7 +4057,7 @@ const ACT={
  rm:v=>{S.recipe=S.recipe.filter(r=>r.id!==v);U.bal=null;render();},
  norm:()=>{const t=S.recipe.reduce((s,r)=>s+(+r.g||0),0);if(!t)return;S.recipe.forEach(r=>r.g=Math.round(r.g*1000/t*10)/10);render();toast('Receita normalizada para 1000 g');},
  scale:()=>{const t=S.recipe.reduce((s,r)=>s+(+r.g||0),0),n=+U.scaleG;if(!t||!(n>0))return;S.recipe.forEach(r=>r.g=Math.round(r.g*n/t*10)/10);U.scaleG='';render();toast('Lote escalado para '+f0(n)+' g');},
- bal:()=>{U.bal=S.proc.serveFrom==='pote'?balancePote(S):balance(S);render();},
+ bal:()=>{U.bal=balanceBest(S);render();},
  balApply:()=>{if(U.bal&&U.bal.ok){S.recipe=U.bal.newRecipe;U.bal=null;render();toast(S.proc.serveFrom==='pote'?'Açúcares rebalanceados para '+f0(+S.proc.waitMin)+' min de espera':'Açúcares rebalanceados');}},
  balClose:()=>{U.bal=null;render();},
  defect:v=>{S.defect=v;render();},
@@ -4057,7 +4211,7 @@ function importBackup(file){const fr=new FileReader();fr.onload=()=>{try{const d
 /* toda ação passa pela checagem do perfil (o servidor também recusa o que o perfil não pode) */
 const denied=()=>toast('Seu perfil não tem acesso a esta função.');
 /* ações que não mexem na receita não entram no desfazer */
-const NO_UNDO=new Set(['go','fam','palOpen','palClose','palRun','undo','copy','chk','unchk','libTab','libAuthor','libMore','libTipo','libVitF','simOpen','simClose','cmpToggle','cmpClear','histOpen','lotOpen','crTab','crSub','procGo','procPlay','atSel','atPick','atCard','atExplore','nxGoal','sazM','del','delNo','meltTimer','panelSet','panelStart','panelNext','panelCancel','panelReveal','panelReset','testRun','syncNow','age','pick']);
+const NO_UNDO=new Set(['go','fam','palOpen','palClose','palRun','undo','copy','chk','unchk','libTab','libAuthor','libMore','libTipo','libVitF','simOpen','simClose','cmpToggle','cmpClear','histOpen','lotOpen','crTab','crSub','atGoal','procGo','procPlay','atSel','atPick','atCard','atExplore','nxGoal','sazM','del','delNo','meltTimer','panelSet','panelStart','panelNext','panelCancel','panelReveal','panelReset','testRun','syncNow','age','pick']);
 function runAct(k,v,t){if(NO_UNDO.has(k))return ACT[k](v,t);const before=undoSnap();undoMark();const r=ACT[k](v,t);
  if(r&&typeof r.then==='function')return r;if(undoSnap()===before)undoSettle();else if(UNDO_TOAST.has(k))toastUndo();return r;}
 document.addEventListener('click',e=>{const t=e.target.closest('[data-a]');if(!t)return;e.preventDefault();const k=t.dataset.a;if(!ACT[k])return;if(!can.act(k))return denied();runAct(k,t.dataset.v,t);});
