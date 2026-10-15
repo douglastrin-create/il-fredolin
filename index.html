@@ -30,6 +30,12 @@
 }
 *{box-sizing:border-box}
 html,body{height:100%}
+/* a página inteira não rola nem "quica" (Safari no Mac/iPad): só as áreas internas rolam */
+html,body{overflow:hidden;overscroll-behavior:none}
+main,nav,.pal-l,.crlist,.res{overscroll-behavior:contain}
+/* campos numéricos sem as setinhas do navegador: os números ficam limpos e alinhados */
+input[type=number]{-moz-appearance:textfield;appearance:textfield}
+input[type=number]::-webkit-inner-spin-button,input[type=number]::-webkit-outer-spin-button{-webkit-appearance:none;margin:0}
 body{margin:0;background:var(--bg);color:var(--t1);font:14px/1.5 var(--fb);-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}
 button,input,select,textarea{font:inherit;color:inherit}
 :focus-visible{outline:2px solid var(--ice);outline-offset:2px;border-radius:6px}
@@ -645,10 +651,17 @@ const STAB_RNG={konj:[.1,.5],tara:[.05,.2],pect:[.05,.2],citf:[.15,.6],gel:[.1,.
 const STAB_N={konj:'Glucomanano',tara:'Goma tara',pect:'Pectina',citf:'Fibra de citros',gel:'Gelatina',acacia:'Goma acácia',neutro:'Neutro',lbg:'Goma jataí (LBG)',guar:'Goma guar',xan:'Goma xantana',carr:'Carragena',cmc:'CMC',starch:'Amido',lec:'Lecitina',mono:'Mono e diglicerídeos'};
 
 /* ---------- PROCESSO PADRÃO ---------- */
-const PROC0={pastT:85,pastHold:30,pastHoldU:'s',coolMin:60,matH:8,matT:4,machine:'horiz',drawT:-9,drawMin:10,blastT:-35,hardMin:40,storeT:-20,storeFluct:1,serveFrom:'vitrine',poteMl:500,ambT:23,waitMin:10,lossPct:0,fruitStage:'depois',alcStage:'depois',portion:90,labelPortion:60,markup:3.5};
+const PROC0={pastT:85,pastHold:30,pastHoldU:'s',coolMin:60,matH:8,matT:4,machine:'horiz',drawT:-9,drawMin:10,blastT:-35,hardMin:40,storeT:-20,storeFluct:1,serveFrom:'vitrine',poteMl:500,ambT:23,waitMin:10,hardAuto:0,turboMin:0,equip:'',lossPct:0,fruitStage:'depois',alcStage:'depois',portion:90,labelPortion:60,markup:3.5};
 /* limites físicos/práticos de cada campo numérico do processo (entrada fora disso é trazida para o limite) */
-const PROC_LIM={lossPct:[0,60],poteMl:[100,5000],ambT:[5,40],waitMin:[0,60],pastT:[60,95],pastHold:[0,3600],coolMin:[5,480],matH:[0,96],matT:[0,10],drawT:[-16,-3],drawMin:[2,40],blastT:[-45,-10],hardMin:[5,480],storeT:[-35,-8],storeFluct:[0,10],portion:[20,500],labelPortion:[10,500],markup:[1,15]};
-const MACH={maqp1:{n:'Maqp1 350 W (compressor)',ov:22,max:35,batch:850},horiz:{n:'Mantecadora horizontal (batch, tipo Labo)',ov:26,max:42},vert:{n:'Mantecadora vertical (Bravo / Trittico)',ov:20,max:32},dom:{n:'Sorveteira doméstica',ov:15,max:25},paco:{n:'Pacojet (pacotização)',ov:10,max:20}};
+/* conjuntos de equipamentos: um toque aplica todo o processo (fontes: manual Maqp1 Maestro Gelatiere 2025;
+   Panasonic NR-BB53GV3WB, etiqueta e SAC Panasonic: freezer em Médio entre −17 e −22 °C, Turbo por até 150 min) */
+const EQUIP={casa_mg_pan:{n:'Casa · Maestro Gelatiere + Panasonic NR-BB53',
+ machine:'Maqp1 Maestro Gelatiere: cuba 3 L (encher de ¼ a ⅔), retirada de 1 L por ciclo de ~15 min, saída a −4 °C no centro da massa',
+ fridge:'Panasonic NR-BB53GV3WB frost free: 305 L de refrigerador (Mín/Méd/Máx) e 120 L de freezer embaixo (Mín/Méd/Máx, Médio entre −17 e −22 °C, Turbo até 150 min), degelo automático',
+ proc:{machine:'maqp1',drawT:-4,drawMin:15,matT:4,matH:12,coolMin:45,serveFrom:'pote',storeT:-19.5,storeFluct:2,blastT:-24,hardAuto:1,turboMin:120,poteMl:250,ambT:24,waitMin:10,equip:'casa_mg_pan'},
+ batch:800}};
+const PROC_LIM={turboMin:[0,150],lossPct:[0,60],poteMl:[100,5000],ambT:[5,40],waitMin:[0,60],pastT:[60,95],pastHold:[0,3600],coolMin:[5,480],matH:[0,96],matT:[0,10],drawT:[-16,-3],drawMin:[2,40],blastT:[-45,-10],hardMin:[5,480],storeT:[-35,-8],storeFluct:[0,10],portion:[20,500],labelPortion:[10,500],markup:[1,15]};
+const MACH={maqp1:{n:'Maqp1 Maestro Gelatiere (350 W, cuba 3 L)',ov:25,max:35,batch:800,drawT:-4,drawMin:15},horiz:{n:'Mantecadora horizontal (batch, tipo Labo)',ov:26,max:42},vert:{n:'Mantecadora vertical (Bravo / Trittico)',ov:20,max:32},dom:{n:'Sorveteira doméstica',ov:15,max:25},paco:{n:'Pacojet (pacotização)',ov:10,max:20}};
 /* Fator de dureza: forma de Corvitto (manteiga de cacau, sólidos de cacau, gordura de oleaginosas),
    coeficientes recalibrados para que o Helado de chocolate e o Helado de nata do Recetario de Corvitto
    sirvam à mesma temperatura (−18 °C), como no livro. */
@@ -914,6 +927,14 @@ function analyzeRaw(st){
  if(m.sol<P.sol[0]){ci-=Math.min(15,(P.sol[0]-m.sol)*3);cn.push('sólidos baixos');}
  const shock=Math.abs(pr.storeT-vit);if(shock>6){ci-=Math.min(12,(shock-6)*2);cn.push('choque térmico armazenamento↔vitrine');}
  m.ci=Math.round(clamp(ci,0,100));m.ciNotes=cn;m.crystal=Math.round(28+(100-m.ci)*.6);
+ /* em casa, com o endurecimento calculado (conjunto de equipamentos): o cristal médio vem do quanto da água ainda congela
+    fora da máquina e do tempo real até o centro chegar a −18 °C (crescimento ~logarítmico no tempo; 60 min = abatedor) */
+ if(pr.hardAuto){let d=24+clamp((45-m.fzDraw)*.3,0,10)+clamp(6*Math.log2(Math.max(1,+pr.hardMin)/60),0,18)+(pr.drawMin>15?2:0);const cn2=[];
+  if(m.fzDraw<35)cn2.push('só '+f0(m.fzDraw)+'% da água congela na mantecadora');if(+pr.hardMin>90)cn2.push('endurecimento de '+f1(+pr.hardMin/60)+' h no freezer');
+  if(m.hydro<P.stab[0]*.6&&!(m.sol>=P.sol[1])){d+=6;cn2.push('pouco estabilizante');}
+  if(m.sol<P.sol[0]){d+=Math.min(9,(P.sol[0]-m.sol)*1.8);cn2.push('sólidos baixos');}
+  if(pr.serveFrom!=='pote'&&shock>6){d+=Math.min(7,(shock-6)*1.2);cn2.push('choque térmico armazenamento↔vitrine');}
+  m.crystal=Math.round(d);m.ci=Math.round(clamp(100-(d-28)/.6,0,100));m.ciNotes=cn2;}
  /* derretimento */
  let mr=50;mr+=m.hydro>=P.stab[0]?15:-10;mr+=m.hasEmul?8:0;mr+=clamp((m.ov-20)*.6,-8,10);mr+=clamp((m.sol-34)*1.5,-10,10);mr-=clamp((m.fzMid-m.fzVit)*1.5,-10,15);
  m.melt=clamp(mr,0,100);
@@ -957,20 +978,17 @@ function uncertainty(st){const m0=analyze(st);if(m0.empty||!(m0.wat>0))return nu
    convecção natural + radiação). "Ponto de servir" = camada de onde a colher tira (1,5 cm externos) na temperatura
    de serviço ideal da receita. */
 const POTE_SCOOP=.015;
-function poteModel(m,prIn){if(m.empty||!(m.wat>0))return null;const pr=Object.assign({},PROC0,prIn||m.pr);
- const key=[pr.poteMl,pr.ambT,pr.storeT,pr.waitMin].join('|');if(m._pote&&m._pote.key===key)return m._pote;
- const V=clamp(+pr.poteMl||500,100,5000)/1e6,r=Math.cbrt(V/(2*Math.PI)),rho=clamp(m.gPerL||800,350,1150),w=m.wat/100,eps=clamp(m.ov/(100+m.ov),0,.6);
- const Tamb=+pr.ambT||23,T0=Math.min(+pr.storeT,-1),h=10;
- /* tabela de propriedades por temperatura */
+/* simulação de condução 1-D (esfera equivalente ao pote) com capacidade térmica aparente; serve para aquecer
+   (pote saindo do freezer) e para esfriar (gelato recém-mantecado endurecendo no freezer) */
+function heatSim(m,o){const V=clamp(+o.ml||500,100,5000)/1e6,r=Math.cbrt(V/(2*Math.PI)),rho=clamp(m.gPerL||800,350,1150),w=m.wat/100,eps=clamp(m.ov/(100+m.ov),0,.6);
  const TL=-45,TS=.25,NT=Math.round((10-TL)/TS)+1,cap=new Float64Array(NT),kk=new Float64Array(NT);const phiAt=T=>T>=m.fp?0:m.fz(T)/100;
  for(let j=0;j<NT;j++){const T=TL+j*TS,ph=phiAt(T),dph=(phiAt(T-.1)-phiAt(T+.1))/.2;cap[j]=1000*(1.75+2.4*w*(1-ph))+334000*w*Math.max(0,dph);const km=.45+1.7*ph*w;kk[j]=km*(1-eps)/(1+eps/2);}
  const ix=T=>clamp(Math.round((T-TL)/TS),0,NT-1);
- const N=16,dr=r/N,Tn=new Float64Array(N).fill(T0),vol=[],area=[];for(let i=0;i<N;i++){vol.push(4/3*Math.PI*(Math.pow((i+1)*dr,3)-Math.pow(i*dr,3)));area.push(4*Math.PI*Math.pow((i+1)*dr,2));}
+ const N=16,dr=r/N,Tn=new Float64Array(N).fill(o.T0),vol=[],area=[];for(let i=0;i<N;i++){vol.push(4/3*Math.PI*(Math.pow((i+1)*dr,3)-Math.pow(i*dr,3)));area.push(4*Math.PI*Math.pow((i+1)*dr,2));}
  const scoopIdx=[];let scoopV=0;for(let i=0;i<N;i++)if((i+1)*dr>r-POTE_SCOOP+1e-9){scoopIdx.push(i);scoopV+=vol[i];}
- const scoopT=()=>scoopIdx.reduce((a,i)=>a+Tn[i]*vol[i],0)/scoopV;
- const curve=[{t:0,scoop:T0,core:T0,surf:T0}];let t=0,next=15,tReady=scoopT()>=m.serveT?0:null;const tMax=60*Math.max(30,Math.min(90,(+pr.waitMin||0)+40));
- const q=new Float64Array(N);
- while(t<tMax){let dtMax=6;
+ const scoopT=()=>scoopIdx.reduce((a,i)=>a+Tn[i]*vol[i],0)/scoopV;const h=o.h,q=new Float64Array(N);
+ const curve=[{t:0,scoop:o.T0,core:o.T0,surf:o.T0}];let t=0,next=o.step||15;const tMax=o.tMax;
+ while(t<tMax){const Ta=o.Tamb(t);let dtMax=o.dtMax||6;
   for(let i=0;i<N;i++){const kc=kk[ix(Tn[i])];const C=rho*cap[ix(Tn[i])]*vol[i];let G=0;
    if(i<N-1){const k2=(kc+kk[ix(Tn[i+1])])/2;G+=k2*area[i]/dr;}if(i>0){const k1=(kc+kk[ix(Tn[i-1])])/2;G+=k1*area[i-1]/dr;}
    if(i===N-1)G+=1/(dr/2/(kc*area[i])+1/(h*area[i]));dtMax=Math.min(dtMax,.45*C/G);}
@@ -978,13 +996,30 @@ function poteModel(m,prIn){if(m.empty||!(m.wat>0))return null;const pr=Object.as
   for(let i=0;i<N;i++){let f=0;const kc=kk[ix(Tn[i])];
    if(i<N-1){const k2=(kc+kk[ix(Tn[i+1])])/2;f+=k2*area[i]/dr*(Tn[i+1]-Tn[i]);}
    if(i>0){const k1=(kc+kk[ix(Tn[i-1])])/2;f+=k1*area[i-1]/dr*(Tn[i-1]-Tn[i]);}
-   if(i===N-1)f+=(Tamb-Tn[i])/(dr/2/(kc*area[i])+1/(h*area[i]));q[i]=f;}
+   if(i===N-1)f+=(Ta-Tn[i])/(dr/2/(kc*area[i])+1/(h*area[i]));q[i]=f;}
   for(let i=0;i<N;i++)Tn[i]+=q[i]*dt/(rho*cap[ix(Tn[i])]*vol[i]);t+=dt;
-  const sc=scoopT();if(tReady==null&&sc>=m.serveT)tReady=t/60;
-  if(t>=next){curve.push({t:t/60,scoop:sc,core:Tn[0],surf:Tn[N-1]});next+=15;}}
+  const st={t:t/60,scoop:scoopT(),core:Tn[0],surf:Tn[N-1]};if(o.watch&&o.watch(st))break;
+  if(t>=next){curve.push(st);next+=o.step||15;}}
+ return{r,massG:rho*V*1000,curve};}
+function poteModel(m,prIn){if(m.empty||!(m.wat>0))return null;const pr=Object.assign({},PROC0,prIn||m.pr);
+ const key=[pr.poteMl,pr.ambT,pr.storeT,pr.waitMin].join('|');if(m._pote&&m._pote.key===key)return m._pote;
+ const Tamb=+pr.ambT||23,T0=Math.min(+pr.storeT,-1);let tReady=T0>=m.serveT?0:null;
+ const sim=heatSim(m,{ml:pr.poteMl,T0,Tamb:()=>Tamb,h:10,tMax:60*Math.max(30,Math.min(90,(+pr.waitMin||0)+40)),watch:s=>{if(tReady==null&&s.scoop>=m.serveT)tReady=s.t;return false;}});
+ const curve=sim.curve;
  const at=min=>{if(min<=0)return curve[0];for(let j=1;j<curve.length;j++)if(curve[j].t>=min){const a=curve[j-1],b=curve[j],f=(min-a.t)/((b.t-a.t)||1);return{t:min,scoop:a.scoop+(b.scoop-a.scoop)*f,core:a.core+(b.core-a.core)*f,surf:a.surf+(b.surf-a.surf)*f};}return curve[curve.length-1];};
  const timeTo=T=>{if(curve[0].scoop>=T)return 0;for(let j=1;j<curve.length;j++)if(curve[j].scoop>=T){const a=curve[j-1],b=curve[j];return a.t+(b.t-a.t)*(T-a.scoop)/((b.scoop-a.scoop)||1);}return null;};
- const wait=clamp(+pr.waitMin||0,0,60);const res={key,r,massG:rho*V*1000,T0,Tamb,tReady,wait,atWait:at(wait),curve,at,timeTo};m._pote=res;return res;}
+ const wait=clamp(+pr.waitMin||0,0,60);const res={key,r:sim.r,massG:sim.massG,T0,Tamb,tReady,wait,atWait:at(wait),curve,at,timeTo};m._pote=res;return res;}
+/* ---------- ENDURECIMENTO NO FREEZER ----------
+   O gelato sai da mantecadora (drawT) e endurece no freezer: ar forçado do frost free (h ≈ 14 W/m²K), com o Turbo
+   (blastT) nos primeiros turboMin minutos e depois a temperatura normal do freezer. Pronto = centro a −18 °C
+   (ou 1,5 °C acima do freezer, se ele for mais quente). Pote pré-resfriado não aquece o gelato na entrada. */
+function hardenModel(m,prIn,ml){if(m.empty||!(m.wat>0))return null;const pr=Object.assign({},PROC0,prIn||m.pr);ml=ml||pr.poteMl;
+ const key=['h',ml,pr.drawT,pr.storeT,pr.blastT,pr.turboMin].join('|');m._hard=m._hard||{};if(m._hard[key])return m._hard[key];
+ const store=+pr.storeT,turbo=Math.min(+pr.blastT,store),tb=clamp(+pr.turboMin||0,0,150)*60;const target=Math.max(-18,store+1.5);
+ let tDone=null,tFirm=null;const firmT=Math.max(-12,store+3);
+ const sim=heatSim(m,{ml,T0:Math.min(+pr.drawT,m.fp-.2),Tamb:t=>t<tb?turbo:store,h:14,tMax:12*3600,step:60,dtMax:20,
+  watch:s=>{if(tFirm==null&&s.scoop<=firmT)tFirm=s.t;if(tDone==null&&s.core<=target){tDone=s.t;return true;}return false;}});
+ const res={ml,target,tDone,tFirm,massG:sim.massG,curve:sim.curve};m._hard[key]=res;return res;}
 /* temperatura em que a camada de servir estará após a espera: é a "vitrine" efetiva no modo pote */
 function poteServeTemp(st){const m=analyze(st);const P=poteModel(m,st.proc);return P?Math.round(P.atWait.scoop*10)/10:+st.vit;}
 /* balanceia para servir no ponto depois da espera escolhida (a própria receita muda a curva: itera) */
@@ -1171,11 +1206,14 @@ function diagnoseCore(st,m){
  if(m.A.acidFruitG>0&&m.A.dairyG>0&&pr.fruitStage==='antes')add('crit','Processo','Fruta ácida pasteurizada com leite','O ácido coagula a caseína no calor (talha) e o aroma fresco da fruta se perde.','Adicione a fruta à mistura fria, após a maturação, antes de mantecar.');
  if(m.A.alc>0&&pr.alcStage==='antes')add('warn','Processo','Álcool adicionado antes do calor','O álcool evapora com o aroma; o PAC calculado deixa de corresponder ao real.','Adicione o destilado na mistura fria.');
  const dr=P.draw;
- if(pr.drawT>dr[1])add('warn','Processo','Saída da mantecadora quente ('+fT(pr.drawT)+' °C)','Só '+f0(m.fzDraw)+'% da água congela na máquina; o resto congela devagar no freezer formando cristais grandes.','Mantecar até '+dr[1]+' a '+fT(dr[0])+' °C.');
+ if(pr.drawT>dr[1]&&pr.machine==='maqp1')add('info','Processo','Saída da Maestro Gelatiere a '+fT(pr.drawT)+' °C','O manual da Maqp1 pede retirar a −4 °C no centro da massa: só '+f0(m.fzDraw)+'% da água sai congelada e o resto congela no freezer. Quanto mais rápido o endurecimento, menores os cristais.','Gele os potes antes, use potes de até 500 mL, ligue o Turbo do freezer 30 min antes e não empilhe os potes.');
+ else if(pr.drawT>dr[1])add('warn','Processo','Saída da mantecadora quente ('+fT(pr.drawT)+' °C)','Só '+f0(m.fzDraw)+'% da água congela na máquina; o resto congela devagar no freezer formando cristais grandes.','Mantecar até '+dr[1]+' a '+fT(dr[0])+' °C.');
  else if(pr.drawT<dr[0]-1)add('info','Processo','Saída muito fria ('+fT(pr.drawT)+' °C)','Difícil de extrair, risco de amanteigar.','Saia entre '+dr[0]+' e '+fT(dr[1])+' °C.');
  else add('ok','Processo','Saída da mantecadora ideal ('+fT(pr.drawT)+' °C)',f0(m.fzDraw)+'% da água sai congelada em cristais pequenos.','');
  if(m.fat>11&&pr.drawMin>12)add('warn','Processo','Risco de amanteigar','Gordura alta com mantecação longa forma grumos de manteiga.','Reduza o tempo ou a gordura.');
- if(pr.blastT>-25||pr.hardMin>90)add('warn','Processo','Abatimento lento','O gelato deve chegar a −18 °C no núcleo em até 60–90 min para fixar cristais pequenos.','Abatedor a −35/−40 °C, cubas rasas.');
+ if(pr.hardAuto&&pr.serveFrom==='pote'){const hm=hardenModel(m,pr);if(hm&&hm.tDone!=null){const h5=f1(hm.tDone/60),big=+pr.poteMl>500;
+  add(hm.tDone>300?'warn':'info','Processo','Endurecimento no freezer: centro a '+fT(hm.target)+' °C em '+h5+' h','Pote de '+f0(+pr.poteMl)+' mL saindo a '+fT(pr.drawT)+' °C'+(+pr.turboMin>0?', com Turbo ('+fT(pr.blastT)+' °C) por '+f0(+pr.turboMin)+' min':'')+' e freezer a '+fT(pr.storeT)+' °C. A camada de servir firma em '+f0(hm.tFirm||0)+' min. Sem abatedor, o endurecimento lento faz cristais maiores que no profissional (60–90 min).',big?'Divida em potes de 500 mL ou menos: o centro chega a −18 °C bem antes.':'Para provar no mesmo dia, espere ao menos '+h5+' h; o ideal é servir no dia seguinte.');}}
+ else if(pr.blastT>-25||pr.hardMin>90)add('warn','Processo','Abatimento lento','O gelato deve chegar a −18 °C no núcleo em até 60–90 min para fixar cristais pequenos.','Abatedor a −35/−40 °C, cubas rasas.');
  if(m.mach.batch&&T>m.mach.batch)add('warn','Processo','Lote acima da capacidade da máquina','A '+m.mach.n+' processa até '+m.mach.batch+' g por ciclo; o lote tem '+f0(T)+' g.','Divida em '+Math.ceil(T/m.mach.batch)+' ciclos ou escale o lote para '+m.mach.batch+' g.');
  const shock=Math.abs(pr.storeT-m.vit);
  if(pr.storeT>-15)add('crit','Processo','Freezer quente ('+fT(pr.storeT)+' °C)','Acima de −15 °C só '+f0(m.fzStore)+'% da água fica congelada: os cristais crescem rápido e a lactose cristaliza. É comum em freezers domésticos cheios ou com porta muito aberta.','Regule para −18/−22 °C e confira com termômetro no centro de uma cuba.');
@@ -1663,6 +1701,8 @@ function normalizeState(){
  if(S.page==='lab'){S.page='creator';S.creatorTab='gelato';}if(S.page==='neutros'){S.page='creator';S.creatorTab='neutros';}
  if(S.proc.serveFrom==='freezer')S.vit=+S.proc.storeT;
  /* em casa (freezer → pote): a temperatura de servir é a da camada da colher depois da espera */
+ /* conjunto com endurecimento calculado: o tempo até −18 °C no centro vem da simulação do pote no freezer */
+ if(S.proc.hardAuto&&Array.isArray(S.recipe)&&S.recipe.length){try{const hm=hardenModel(analyze(S),S.proc);if(hm&&hm.tDone!=null){const v=clamp(Math.round(hm.tDone/5)*5,5,480);if(v!==S.proc.hardMin)S.proc.hardMin=v;}}catch(e){}}
  if(S.proc.serveFrom==='pote'&&Array.isArray(S.recipe)&&S.recipe.length){try{S.vit=poteServeTemp(S);}catch(e){}}
 }
 {const v=VITS[0]||LS.get(K10.vit);if(v)S.vitrine={temp:v.temp,items:v.items||[]};}
@@ -1751,7 +1791,7 @@ const isMac=()=>{try{return /Mac|iPhone|iPad/.test(navigator.platform||navigator
 const kbd=k=>`<kbd>${isMac()?'⌘':'Ctrl '}${k}</kbd>`;
 
 /* ---------- marca ---------- */
-const VERSION='v15.1';
+const VERSION='v16';
 const brandHTML=()=>`<div class="brand"><div class="hex"></div><div><b>Il <span>Fredolin</span></b><small>Gelato Lab ${VERSION}${APP_MODE==='app'&&ME.email?' · '+ROLE_N[ROLE]:''}</small></div></div>`;
 
 /* ---------- termômetro da receita: vitrine, serviço ideal (com faixa de incerteza) e freezer numa régua só ---------- */
@@ -1853,7 +1893,8 @@ const PAL_ACTS=[
  ['varAdd','Copiar a bancada como variação',null,['comparar','creator']],
  ['compAdd:variegato','Adicionar variegato',null,['componente','calda']],
  ['compAdd:crocante','Adicionar crocante',null,['componente','stracciatella']],
- ['simOpen:b','Receitas dos mestres parecidas com a bancada',null,['similar','parecida']]
+ ['simOpen:b','Receitas dos mestres parecidas com a bancada',null,['similar','parecida']],
+ ['applyEquip:casa_mg_pan','Usar o conjunto de casa: Maestro Gelatiere + freezer Panasonic',null,['maqp1','maestro','panasonic','casa','equipamento']]
 ];
 function palItems(q){const nq=norm(q.trim());const words=nq.split(/\s+/).filter(Boolean);const out=[];
  const sc=(title,alias)=>{if(!words.length)return 1;const t=norm(title),a=norm((alias||[]).join(' '));let s=0;
@@ -2004,6 +2045,7 @@ function pgProcesso(m,F){
  const p=S.proc,PF=F.filter(f=>f.area==='Processo'||f.area==='Segurança');
  const sel=(id,label,opts,val,hint)=>`<label class="field"><span class="lbl">${label}</span><select id="p-${id}" data-c="proc" data-k="${id}">${opts.map(([v,n])=>`<option value="${v}"${String(v)===String(val)?' selected':''}>${n}</option>`).join('')}</select>${hint?`<span class="hint">${hint}</span>`:''}</label>`;
  return`<div class="pg"><div><h1>Processo</h1><p class="lead">Pasteurização, maturação, mantecação e abatimento mudam o resultado tanto quanto a fórmula. Ajuste os valores reais da sua produção.</p></div>
+ ${equipCard(m)}
  <div class="card"><h2>Pasteurização e resfriamento</h2><div class="form">
   ${fieldNum('p-pastT','Temperatura (°C)',p.pastT,1,'Alta 85 °C · baixa 65 °C')}
   ${fieldNum('p-pastHold','Retenção',p.pastHold,1,'')}
@@ -2021,8 +2063,8 @@ function pgProcesso(m,F){
   ${sel('machine','Equipamento',Object.entries(MACH).map(([k,v])=>[k,v.n]),p.machine)}
   ${fieldNum('p-drawT','Temperatura de saída (°C)',p.drawT,.5,'Ideal '+fT(m.P.draw[1])+' a '+fT(m.P.draw[0])+' °C')}
   ${fieldNum('p-drawMin','Tempo de mantecação (min)',p.drawMin,1,'Batch: 8–12 min')}
-  ${fieldNum('p-blastT','Abatedor (°C)',p.blastT,1,'−35 a −40 °C')}
-  ${fieldNum('p-hardMin','Até −18 °C no núcleo (min)',p.hardMin,5,'Ideal até 60 min')}
+  ${fieldNum('p-blastT',p.hardAuto?'Freezer no Turbo (°C)':'Abatedor (°C)',p.blastT,1,p.hardAuto?'Ar do freezer com Turbo ligado; meça se puder':'−35 a −40 °C')}${p.hardAuto?fieldNum('p-turboMin','Turbo durante o endurecimento (min)',p.turboMin,10,'O Turbo dura 150 min; ligado 30 min antes, sobram 120'):''}
+  ${fieldNum('p-hardMin','Até −18 °C no núcleo (min)',p.hardMin,5,p.hardAuto?'Calculado pelo conjunto (tamanho do pote, saída e freezer)':'Ideal até 60 min',p.hardAuto?'readonly':'')}
   ${fieldNum('p-storeT','Freezer de armazenamento (°C)',p.storeT,.5,'Meça no centro de uma cuba · ideal −18 a −22 °C')}
   ${fieldNum('p-storeFluct','Oscilação do freezer (± °C)',p.storeFluct,.5,'Diferença entre a máxima e a mínima do dia ÷ 2')}
   ${sel('serveFrom','Serviço',[['vitrine','Vitrine (sai do freezer para a vitrine)'],['pote','Em casa: do freezer para o pote, espera e serve'],['freezer','Na temperatura do freezer (sem espera)']],p.serveFrom)}
@@ -2117,7 +2159,7 @@ function fichaText(m,target){
   `Sólidos ${f1(m.sol)}% · gordura ${f1(m.fat)}% · MSNF ${f1(m.msnf)}% · POD ${f1(m.pod)}% · PAC ${f0(m.pacKg)}/kg · HF ${f0(m.hfKg)}/kg · overrun ${f0(m.ov)}%`];
  return L.join('\n');}
 function pgProducao(m){
- const target=+U.prodG>0?+U.prodG:Math.round(m.tot),f=m.tot?target/m.tot:1,p=m.pr;
+ const target=+U.prodG>0?+U.prodG:Math.round(m.tot),f=m.tot?target/m.tot:1,p=m.pr;const eqs=m.empty?null:equipSteps(m);
  const powders=(S.recipe||[]).filter(r=>{const i=ING_BY[r.id];return i&&(i.c.w||0)<15;}).map(r=>ING_BY[r.id].n);
  const steps=[
   `Pese os líquidos no pasteurizador e comece a aquecer. Misture a seco os pós (${esc(powders.slice(0,5).join(', ')||'açúcares e estabilizante')}) para o estabilizante não empelotar; adicione em chuva a 40 °C.`,
@@ -2133,7 +2175,7 @@ function pgProducao(m){
  <div class="card"><div class="row"><label class="field" style="width:170px"><span class="lbl">Peso do lote (g)</span><input type="number" id="prodG" data-i="prodG" value="${U.prodG||Math.round(m.tot)}" min="0" step="100"></label><span class="sp"></span><button class="btn sm" data-a="unchk">Limpar marcações</button><button class="btn pri" data-a="copy">Copiar ficha</button></div>
  ${U.copy?`<textarea id="copyArea" rows="10" style="margin-top:10px;font-family:var(--fm);font-size:12px" readonly>${esc(U.copy)}</textarea><p class="note">Selecione e copie o texto acima.</p>`:''}</div>
  <div class="card"><h2>Pesagem</h2><div style="display:flex;flex-direction:column;gap:8px">${(S.recipe||[]).map(r=>{const i=ING_BY[r.id];if(!i)return'';const on=!!U.checks[r.id];return`<button class="check" data-a="chk" data-v="${r.id}" aria-pressed="${on}"><span class="box">${on?'✓':''}</span><span><b>${esc(i.n)}</b><br><span class="muted" style="font-size:12px">${esc(i.cat)}</span></span><span class="w">${(r.g*f)<10?f1(r.g*f):f0(r.g*f)} g</span></button>`;}).join('')}</div></div>
- <div class="card"><h2>Processo</h2><ol class="steps">${steps.map(s=>`<li><span>${s}</span></li>`).join('')}</ol></div></div>`;}
+ <div class="card"><h2>${eqs?'Roteiro · '+esc(EQUIP[S.proc.equip].n):'Processo'}</h2><ol class="steps">${eqs?eqs.map(([t,x])=>`<li><span><b style="color:var(--t1)">${t}.</b> ${x}</span></li>`).join(''):steps.map(s=>`<li><span>${s}</span></li>`).join('')}</ol></div></div>`;}
 
 
 /* ---------- LAB DE P&D (dentro do Creator) ---------- */
@@ -3025,6 +3067,7 @@ function pgSazonal(){const mo=new Date().getMonth()+1;const sel=+U.sazM||mo;cons
 
 /* ---------- AÇÕES, ENTRADAS E MUDANÇAS DESTE MÓDULO ---------- */
 const V13_ACT={
+ applyEquip:v=>{const E=EQUIP[v];if(!E)return;Object.assign(S.proc,E.proc);U.bal=null;render();toast('Conjunto aplicado: '+E.n);},
  compAdd:v=>{(S.comps=S.comps||[]).push({name:COMP_KINDS[v]||'Componente',kind:v,pct:10,recipe:v==='crocante'?[{id:'choc70',g:90},{id:'mcacau',g:10}]:v==='fruta'?[{id:'manga',g:100}]:[{id:'framboesa',g:60},{id:'sacarose',g:30},{id:'dextrose',g:10}],loss:v==='variegato'?10:0});render();},
  compRm:v=>{S.comps.splice(+v,1);render();},
  compIngAdd:v=>{S.comps[+v].recipe.push({id:'sacarose',g:10});render();},
@@ -3057,6 +3100,7 @@ const V13_INP={
  saveNote:v=>{U.saveNote=v;}
 };
 const V13_CHG={
+ equipSel:t=>{const E=EQUIP[t.value];if(E){Object.assign(S.proc,E.proc);U.bal=null;toast('Conjunto aplicado: '+E.n);}else S.proc.equip='';},
  comp:t=>{const c=S.comps[+t.dataset.k];if(c)c[t.dataset.f]=t.value;},
  compIng:t=>{const c=S.comps[+t.dataset.k];if(c&&c.recipe[+t.dataset.j])c.recipe[+t.dataset.j].id=t.value;},
  panelLot:t=>{const P=panelState();const id=t.dataset.k;P.lots=P.lots.filter(x=>x!==id);if(t.checked&&P.lots.length<6)P.lots.push(id);P.codes={};savePanel();},
@@ -3085,6 +3129,29 @@ function poteCard(m,compact){if(m.empty)return'';const P=poteModel(m,S.proc);if(
   <div class="tw"><svg viewBox="0 0 ${W} ${H}" style="width:100%;min-width:420px;height:auto" role="img" aria-label="Aquecimento do pote fora do freezer">${g}</svg></div>
   <div class="row note" style="gap:14px;margin-top:4px"><span><span class="c-ice">━</span> camada de servir</span><span><span class="c-info">┅</span> centro</span><span><span class="c-gold">┄</span> superfície</span><span><span class="c-ok">■</span> faixa de serviço</span></div>
   ${compact?'':`<p class="note">Calor entra pela superfície e o gelo absorve 334 J/g ao amolecer, por isso o centro demora muito mais. Pote maior, freezer mais frio ou cozinha fria aumentam a espera. Para servir em menos tempo sem mudar o freezer, balanceie para a espera desejada: o motor sobe a dextrose e ajusta a sacarose para manter a doçura.</p>`}</div>`;}
+
+/* ---------- CONJUNTO DE EQUIPAMENTOS: roteiro calculado para casa (Maestro Gelatiere + freezer Panasonic) ---------- */
+function equipYield(m,batch){const ml=batch/(m.gPerL||800)*1000;return Math.round(ml/10)*10;}
+function equipSteps(m){const E=EQUIP[S.proc.equip];if(!E||m.empty)return null;const p=m.pr,batch=E.batch||800;
+ const P=poteModel(m,p),H=hardenModel(m,p),H1=hardenModel(m,p,1000),Hs=hardenModel(m,p,250);const hr=x=>x==null?'—':f1(x/60)+' h';
+ const yl=equipYield(m,batch),npot=Math.max(1,Math.round(yl/(+p.poteMl||500)));
+ return[
+  ['Aquecer e pasteurizar',`Misture os pós a seco e adicione aos líquidos a 40 °C. Leve a ${fT(p.pastT)} °C por ${fT(p.pastHold)} ${p.pastHoldU==='min'?'min':'s'}${m.A.eggFresh>0?' (gema fresca: 82–85 °C, ponto de nappe)':''}.`],
+  ['Esfriar rápido',`Panela em banho de água com gelo, mexendo, até ficar abaixo de 10 °C (meta: 4 °C em até ${fT(p.coolMin)} min). Calda quente na geladeira esquenta tudo à volta e demora horas para esfriar.`],
+  ['Maturar na geladeira Panasonic',`Pote fechado, ao fundo e longe da porta, com o refrigerador em <b>Máx</b> durante a maturação. Confira com termômetro: a calda deve ficar entre 2 e 4 °C (alvo ${fT(p.matT)} °C). Tempo: <b>${fT(p.matH)} h</b> (mínimo 6 h; até 72 h). Volte o refrigerador para Méd depois.`],
+  ['Preparar o freezer',`30 min antes de mantecar, ative o <b>Turbo</b> do freezer (aperte o botão do freezer até acenderem os três indicadores; ele dura 150 min e volta sozinho ao normal). Ponha ${npot>1?npot+' potes':'o pote'} de ${f0(+p.poteMl)} mL vazio${npot>1?'s':''} para gelar.`],
+  ['Mantecar na Maestro Gelatiere',`Ligue o batedor <b>antes</b> de pôr a calda e só depois a refrigeração. Coloque <b>${f0(batch)} g</b> de calda (entre ¼ e ⅔ da cuba de 3 L), tampa fechada, por cerca de <b>${fT(p.drawMin)} min</b>, até <b>${fT(p.drawT)} °C no centro da massa</b> (termômetro culinário, não o da máquina). Rende cerca de ${f0(yl)} mL com ${f0(m.ov)}% de ar.${m.ov>30?' Com mais de 30% de ar o manual pede menos calda: use '+f0(Math.round(batch*1.30/(1+m.ov/100)/10)*10)+' g.':''} Não desligue o batedor com produto na cuba; se desligar, espere 10 min para religar.`],
+  ['Envasar',`Rápido, nos potes gelados, sem bolhas; filme encostado na superfície e tampa. ${+p.poteMl>500?'Potes menores endurecem bem mais rápido.':''}`],
+  ['Endurecer no freezer',`Na parte de baixo, sem empilhar e longe da porta. A camada de servir firma em ${H&&H.tFirm!=null?f0(H.tFirm)+' min':'—'}; o centro chega a ${fT(H?H.target:-18)} °C em <b>${hr(H&&H.tDone)}</b> (pote de 250 mL: ${hr(Hs&&Hs.tDone)}; de 1 L: ${hr(H1&&H1.tDone)}). Depois do Turbo, freezer em <b>Médio</b> (−17 a −22 °C).`],
+  ['Servir',P?`Tire o pote e espere <b>${f0(+p.waitMin)} min</b> numa cozinha a ${fT(+p.ambT)} °C: a camada da colher chega a ${f1(P.atWait.scoop)} °C (ideal desta receita: ${f1(m.serveT)} °C${P.tReady!=null?'; no ponto em '+f0(P.tReady)+' min':''}). Volte o pote ao freezer logo depois.`:'—']];}
+function equipCard(m){const cur=S.proc.equip||'';const E=EQUIP[cur];
+ return`<div class="card"><div class="row"><h2 style="margin:0">Conjunto de equipamentos</h2><span class="sp"></span>
+  <select id="equipSel" data-c="equipSel" style="max-width:340px" aria-label="Conjunto de equipamentos"><option value=""${cur?'':' selected'}>Personalizado (ajuste cada campo)</option>${Object.entries(EQUIP).map(([k,e])=>`<option value="${k}"${k===cur?' selected':''}>${esc(e.n)}</option>`).join('')}</select></div>
+  ${E?`<p class="note" style="margin:10px 0 4px">${esc(E.machine)}.<br>${esc(E.fridge)}.</p>
+  <div class="row" style="margin-top:8px">${can.edit()?`<button class="btn sm pri" data-a="palBal">Balancear para este conjunto</button>`:''}<button class="btn sm" data-a="go" data-v="producao">Abrir roteiro na ficha</button></div>`
+  :`<p class="note" style="margin:10px 0 0">Escolha um conjunto para preencher maturação, mantecação, endurecimento, freezer e serviço de uma vez, com o roteiro calculado para a receita.</p>`}</div>
+ ${E&&!m.empty?`<div class="card"><h2>Roteiro desta receita</h2><ol class="steps">${equipSteps(m).map(([t,x])=>`<li><span><b style="color:var(--t1)">${t}.</b> ${x}</span></li>`).join('')}</ol>
+  <p class="note">Temperaturas do freezer Panasonic são faixas do fabricante; meça a sua com um termômetro num copo de água com sal deixado 12 h no freezer e ajuste o campo Freezer. O app recalcula tudo.</p></div>`:''}`;}
 
 /* ==== 60-store.js ==== */
 /* ===================== IL FREDOLIN · ARMAZENAMENTO (aparelho + nuvem) =====================
