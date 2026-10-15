@@ -2032,7 +2032,7 @@ const SOUS_ACT=new Set(['go','sub','defMode','defSym','defClr','defOpen','defOpe
 const SOUS_INP=new Set(['flowLabel','flowMeas','prodG','lot','lotTxt','auth','panelTaster','panelNote','palQ']),SOUS_CHG=new Set(['defChk','lot','panelLot']);
 const CHEF_DENY_ACT=new Set(['expJson','expCsv','memInvite','memDel','memDelYes','teamReload']),CHEF_DENY_INP=new Set(['cost']),CHEF_DENY_CHG=new Set(['memRole']);
 /* telas de entrada e saída funcionam para qualquer perfil (inclusive antes de saber o perfil) */
-const ALWAYS_ACT=new Set(['authGo','authMode','authRetry','logout','logoutYes','logoutNo','syncNow']);
+const ALWAYS_ACT=new Set(['appReload','authGo','authMode','authRetry','logout','logoutYes','logoutNo','syncNow']);
 const can={
  page:k=>(PAGE_ROLES[k]||'m').includes(ROLE[0]),
  cost:()=>ROLE==='maestro',
@@ -2200,7 +2200,7 @@ const isMac=()=>{try{return /Mac|iPhone|iPad/.test(navigator.platform||navigator
 const kbd=k=>`<kbd>${isMac()?'⌘':'Ctrl '}${k}</kbd>`;
 
 /* ---------- marca ---------- */
-const VERSION='v17.7';
+const VERSION='v17.7.1';
 const brandHTML=()=>`<div class="brand"><div class="hex"></div><div><b>Il <span>Fredolin</span></b><small>Gelato Lab ${VERSION}${APP_MODE==='app'&&ME.email?' · '+ROLE_N[ROLE]:''}</small></div></div>`;
 
 /* ---------- termômetro da receita: vitrine, serviço ideal (com faixa de incerteza) e freezer numa régua só ---------- */
@@ -4813,7 +4813,14 @@ const TEAM_CHG={inviteRole:t=>{U.invite=U.invite||{email:'',role:'sous',name:''}
 /* ===================== IL FREDOLIN · APLICATIVO INSTALÁVEL =====================
    Service worker: guarda o app para funcionar sem internet e busca a versão nova quando há conexão. */
 if(APP_MODE==='app'&&'serviceWorker' in navigator&&(location.protocol==='https:'||location.hostname==='localhost'||location.hostname==='127.0.0.1')){
- window.addEventListener('load',()=>{navigator.serviceWorker.register('sw.js').catch(()=>{});});}
+ /* v17.7.1 · atualização: o app procura versão nova ao abrir, ao voltar para a tela e a cada 20 min; quando ela chega, avisa e recarrega com um toque */
+ const hadCtl=!!navigator.serviceWorker.controller;let shown=false;
+ const offerReload=()=>{if(shown)return;shown=true;try{const e=document.getElementById('toast');if(!e){location.reload();return;}
+  e.innerHTML='<span>Nova versão do Il Fredolin disponível</span><button data-a="appReload">Atualizar agora</button>';e.hidden=false;clearTimeout(tt);}catch(x){location.reload();}};
+ navigator.serviceWorker.addEventListener('controllerchange',()=>{if(hadCtl)offerReload();});
+ window.addEventListener('load',()=>{navigator.serviceWorker.register('sw.js',{updateViaCache:'none'}).then(reg=>{
+  const up=()=>{try{reg.update();}catch(e){}};document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')up();});setInterval(up,20*60*1000);
+  if(reg.waiting&&hadCtl)offerReload();}).catch(()=>{});});}
 
 /* ==== 70-app.js ==== */
 /* ===================== IL FREDOLIN · APLICAÇÃO (render, ações, eventos) ===================== */
@@ -4871,6 +4878,7 @@ let agingT=null;
 
 /* ---------- AÇÕES (data-a) ---------- */
 const ACT={
+ appReload:()=>{try{location.reload();}catch(e){}},
  sub:v=>{const[p,k]=String(v).split(':');U.sub=U.sub||{};U.sub[p]=k;render();scrollTopAll();},
  go:v=>{S.page=v;U.copy=null;U.recent=[v,...(U.recent||[]).filter(x=>x!==v)].slice(0,6);render();scrollTopAll();},
  add:addSel,
@@ -5046,7 +5054,7 @@ function importBackup(file){const fr=new FileReader();fr.onload=()=>{try{const d
 /* toda ação passa pela checagem do perfil (o servidor também recusa o que o perfil não pode) */
 const denied=()=>toast('Seu perfil não tem acesso a esta função.');
 /* ações que não mexem na receita não entram no desfazer */
-const NO_UNDO=new Set(['go','sub','defMode','defSym','defClr','defOpen','defCat','fam','palOpen','palClose','palRun','undo','copy','chk','unchk','libTab','libAuthor','libMore','libTipo','libVitF','simOpen','simClose','cmpToggle','cmpClear','histOpen','lotOpen','crTab','crSub','atGoal','setSw','navTog','toTop','flowOpen','flowView','flowNotify','flowNext','flowBack','flowDisc','flowColor','flowStart','flowLot','procGo','procPlay','atSel','atPick','atCard','atExplore','nxGoal','sazM','del','delNo','meltTimer','panelSet','panelStart','panelNext','panelCancel','panelReveal','panelReset','testRun','syncNow','age','pick']);
+const NO_UNDO=new Set(['appReload','go','sub','defMode','defSym','defClr','defOpen','defCat','fam','palOpen','palClose','palRun','undo','copy','chk','unchk','libTab','libAuthor','libMore','libTipo','libVitF','simOpen','simClose','cmpToggle','cmpClear','histOpen','lotOpen','crTab','crSub','atGoal','setSw','navTog','toTop','flowOpen','flowView','flowNotify','flowNext','flowBack','flowDisc','flowColor','flowStart','flowLot','procGo','procPlay','atSel','atPick','atCard','atExplore','nxGoal','sazM','del','delNo','meltTimer','panelSet','panelStart','panelNext','panelCancel','panelReveal','panelReset','testRun','syncNow','age','pick']);
 function runAct(k,v,t){if(NO_UNDO.has(k))return ACT[k](v,t);const before=undoSnap();undoMark();const r=ACT[k](v,t);
  if(r&&typeof r.then==='function')return r;if(undoSnap()===before)undoSettle();else if(UNDO_TOAST.has(k))toastUndo();return r;}
 document.addEventListener('click',e=>{const t=e.target.closest('[data-a]');if(!t)return;e.preventDefault();const k=t.dataset.a;if(!ACT[k])return;if(!can.act(k))return denied();runAct(k,t.dataset.v,t);});
