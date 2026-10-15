@@ -858,17 +858,17 @@ const STAB_RNG={agar:[.05,.2],alg:[.1,.3],psy:[.1,.5],konj:[.1,.5],tara:[.05,.2]
 const STAB_N={agar:'Ágar-ágar',alg:'Alginato',psy:'Psyllium',konj:'Glucomanano',tara:'Goma tara',pect:'Pectina',citf:'Fibra de citros',gel:'Gelatina',acacia:'Goma acácia',neutro:'Neutro',lbg:'Goma jataí (LBG)',guar:'Goma guar',xan:'Goma xantana',carr:'Carragena',cmc:'CMC',starch:'Amido',lec:'Lecitina',mono:'Mono e diglicerídeos'};
 
 /* ---------- PROCESSO PADRÃO ---------- */
-const PROC0={pastT:85,pastHold:30,pastHoldU:'s',coolMin:60,matH:8,matT:4,machine:'horiz',drawT:-9,drawMin:10,blastT:-35,hardMin:40,storeT:-20,storeFluct:1,serveFrom:'vitrine',poteMl:500,ambT:23,waitMin:10,hardAuto:0,turboMin:0,equip:'',lossPct:0,fruitStage:'depois',alcStage:'depois',portion:90,labelPortion:60,markup:3.5};
+const PROC0={pastT:85,pastHold:30,pastHoldU:'s',coolMin:60,matH:8,matT:4,machine:'horiz',load:1000,preChill:1,drawT:-9,drawMin:10,blastT:-35,hardMin:40,storeT:-20,storeFluct:1,serveFrom:'vitrine',poteMl:500,ambT:23,waitMin:10,hardAuto:0,turboMin:0,equip:'',lossPct:0,fruitStage:'depois',alcStage:'depois',portion:90,labelPortion:60,markup:3.5};
 /* limites físicos/práticos de cada campo numérico do processo (entrada fora disso é trazida para o limite) */
 /* conjuntos de equipamentos: um toque aplica todo o processo (fontes: manual Maqp1 Maestro Gelatiere 2025;
    Panasonic NR-BB53GV3WB, etiqueta e SAC Panasonic: freezer em Médio entre −17 e −22 °C, Turbo por até 150 min) */
 const EQUIP={casa_mg_pan:{n:'Casa · Maestro Gelatiere + Panasonic NR-BB53',
- machine:'Maqp1 Maestro Gelatiere: cuba 3 L (encher de ¼ a ⅔), retirada de 1 L por ciclo de ~15 min, saída a −4 °C no centro da massa',
+ machine:'Maqp1 Maestro Gelatiere: tanque de 3 L (encher de ¼ a ⅔ ≈ 0,75 a 2 L), retirada de 1 L por ciclo de ~15 min (≈ 1,1 kg de calda), saída a −4 °C ou mais frio no centro da massa',
  fridge:'Panasonic NR-BB53GV3WB frost free: 305 L de refrigerador (Mín/Méd/Máx) e 120 L de freezer embaixo (Mín/Méd/Máx, Médio entre −17 e −22 °C, Turbo até 150 min), degelo automático',
- proc:{machine:'maqp1',drawT:-4,drawMin:15,matT:4,matH:12,coolMin:45,serveFrom:'pote',storeT:-19.5,storeFluct:2,blastT:-24,hardAuto:1,turboMin:120,poteMl:250,ambT:24,waitMin:10,equip:'casa_mg_pan'},
- batch:800}};
-const PROC_LIM={turboMin:[0,150],lossPct:[0,60],poteMl:[100,5000],ambT:[5,40],waitMin:[0,60],pastT:[60,95],pastHold:[0,3600],coolMin:[5,480],matH:[0,96],matT:[0,10],drawT:[-16,-3],drawMin:[2,40],blastT:[-45,-10],hardMin:[5,480],storeT:[-35,-8],storeFluct:[0,10],portion:[20,500],labelPortion:[10,500],markup:[1,15]};
-const MACH={maqp1:{n:'Maqp1 Maestro Gelatiere (350 W, cuba 3 L)',ov:25,max:35,batch:800,drawT:-4,drawMin:15},horiz:{n:'Mantecadora horizontal (batch, tipo Labo)',ov:26,max:42},vert:{n:'Mantecadora vertical (Bravo / Trittico)',ov:20,max:32},dom:{n:'Sorveteira doméstica',ov:15,max:25},paco:{n:'Pacojet (pacotização)',ov:10,max:20}};
+ proc:{machine:'maqp1',load:1100,preChill:0,drawT:-4,drawMin:15,matT:4,matH:12,coolMin:45,serveFrom:'pote',storeT:-19.5,storeFluct:2,blastT:-24,hardAuto:1,turboMin:120,poteMl:250,ambT:24,waitMin:10,equip:'casa_mg_pan'},
+ batch:1100}};
+const PROC_LIM={load:[200,3000],preChill:[0,1],turboMin:[0,150],lossPct:[0,60],poteMl:[100,5000],ambT:[5,40],waitMin:[0,60],pastT:[60,95],pastHold:[0,3600],coolMin:[5,480],matH:[0,96],matT:[0,10],drawT:[-16,-3],drawMin:[2,40],blastT:[-45,-10],hardMin:[5,480],storeT:[-35,-8],storeFluct:[0,10],portion:[20,500],labelPortion:[10,500],markup:[1,15]};
+const MACH={maqp1:{n:'Maqp1 Maestro Gelatiere (350 W, tanque 3 L, retirada 1 L/ciclo)',ov:25,max:35,batch:1100,batchMax:2000,drawT:-4,drawMin:15,load:1100},horiz:{n:'Mantecadora horizontal (batch, tipo Labo)',ov:26,max:42},vert:{n:'Mantecadora vertical (Bravo / Trittico)',ov:20,max:32},dom:{n:'Sorveteira doméstica',ov:15,max:25},paco:{n:'Pacojet (pacotização)',ov:10,max:20}};
 /* Fator de dureza: forma de Corvitto (manteiga de cacau, sólidos de cacau, gordura de oleaginosas),
    coeficientes recalibrados para que o Helado de chocolate e o Helado de nata do Recetario de Corvitto
    sirvam à mesma temperatura (−18 °C), como no livro. */
@@ -1263,6 +1263,28 @@ function quenelleModel(m){if(!m||m.empty||!(m.wat>0))return null;if(m._qn)return
  if(m.crystal>45)notes.push('Cristais grandes deixam a quenelle áspera: endureça mais rápido e evite oscilação no freezer.');
  if(phiServe>.46)notes.push('Muito gelo em volume (pouco ar, muita água): típico de sorbet; tempere mais que uma crema.');
  const r={T,Tbr,Tsl,fq,fBr,fSl,C,H,phi:phiServe,phiQ:icePhaseVol(m,T),smooth,sheen,notes,cal,width:Tsl-Tbr};m._qn=r;return r;}
+/* ---------- MAESTRO GELATIERE (Maqp1): carga × tempo, saída por receita, pré-resfriamento (v17.10) ----------
+   Energia a retirar por ciclo: calor sensível da calda até o ponto de congelamento + do gelado até a saída
+   + calor latente do gelo formado (334 kJ/kg). A capacidade líquida da máquina (W) sai do ciclo que você usa
+   (carga e minutos do Processo; de fábrica: 1 L de retirada ≈ 1,1 kg em ~15 min). Sem pré-resfriar, a máquina
+   ainda gasta energia esfriando o tanque de inox (~1,2 kg de aço, estimativa). Alvo de saída: 35% da água
+   congelada no centro (cada grau abaixo do ponto de congelamento vale ~12–15 pontos de gelo nesse trecho).
+   Referências de gelateria: saída a −10/−11 °C com ~75% da água congelada nas mantecadoras profissionais
+   (Corvitto, p. 107); a Maestro trabalha bem mais quente, então o endurecimento rápido faz o resto. */
+const MAQ_STEEL=.6;  /* kJ/K equivalentes do tanque + batedor (1,2 kg de inox × 0,5 kJ/kg·K) */
+function maqEnergy(m,loadG,Tin,Tdraw){const kg=(loadG||0)/1000;const fp=m.fp,W=(m.wat||0)/100;const ice=W*m.fz(Tdraw)/100;
+ return kg*(3.3*Math.max(0,Tin-fp)+2.6*Math.max(0,fp-Tdraw)+334*ice);}
+function maqPlan(m,prIn){if(!m||m.empty||!(m.wat>0))return null;const pr=Object.assign({},PROC0,prIn||m.pr);const mach=MACH[pr.machine]||{};
+ const load=clamp(+pr.load||mach.load||1000,200,3000),Tin=clamp(+pr.matT||4,-1,12),min=clamp(+pr.drawMin||15,2,60),Td=+pr.drawT||-4;
+ const chillE=pre=>pre?0:MAQ_STEEL*(Math.max(0,(+pr.ambT||24)-Td));
+ const Q=(maqEnergy(m,load,Tin,Td)+chillE(+pr.preChill))/(min*60);  /* kW */
+ const t35=tempAtFz(m,35),t30=tempAtFz(m,30);
+ const time=(g,T,pre,tin)=>(maqEnergy(m,g,tin==null?Tin:tin,T)+chillE(pre==null?+pr.preChill:pre))/Q/60;
+ const loads=[800,1100,1500,2000].map(g=>({g,tDraw:time(g,Td),t35:time(g,t35)}));
+ let best=800;loads.forEach(l=>{if(l.t35<=18)best=l.g;});
+ const savePre=+pr.preChill?0:time(load,Td)-time(load,Td,1),saveCold=time(load,Td)-time(load,Td,null,1);
+ return{load,Q:Q*1000,fp:m.fp,t35,t30,fz35:35,fzNow:m.fz(Td),Td,min,loads,best,wall:m.fp-12,savePre,saveCold,Tin,preChill:+pr.preChill,
+  ovMax:mach.max||35,yieldMl:load/(m.gPerL||900)*1000};}
 /* só o minuto em que a camada de servir chega ao ponto (para listas: para a simulação ali) */
 function poteReady(m,pr){if(m.empty||!(m.wat>0))return null;const T0=Math.min(+pr.storeT,-1);if(T0>=m.serveT)return 0;let tr=null;
  heatSim(m,{ml:pr.poteMl,T0,Tamb:()=>+pr.ambT||23,h:10,tMax:40*60,step:60,watch:s=>{if(s.scoop>=m.serveT){tr=s.t;return true;}return false;}});return tr;}
@@ -1486,7 +1508,8 @@ function diagnoseCore(st,m){
  if(pr.hardAuto&&pr.serveFrom==='pote'){const hm=hardenModel(m,pr);if(hm&&hm.tDone!=null){const h5=f1(hm.tDone/60),big=+pr.poteMl>500;
   add(hm.tDone>300?'warn':'info','Processo','Endurecimento no freezer: centro a '+fT(hm.target)+' °C em '+h5+' h','Pote de '+f0(+pr.poteMl)+' mL saindo a '+fT(pr.drawT)+' °C'+(+pr.turboMin>0?', com Turbo ('+fT(pr.blastT)+' °C) por '+f0(+pr.turboMin)+' min':'')+' e freezer a '+fT(pr.storeT)+' °C. A camada de servir firma em '+f0(hm.tFirm||0)+' min. Sem abatedor, o endurecimento lento faz cristais maiores que no profissional (60–90 min).',big?'Divida em potes de 500 mL ou menos: o centro chega a −18 °C bem antes.':'Para provar no mesmo dia, espere ao menos '+h5+' h; o ideal é servir no dia seguinte.');}}
  else if(pr.blastT>-25||pr.hardMin>90)add('warn','Processo','Abatimento lento','O gelato deve chegar a −18 °C no núcleo em até 60–90 min para fixar cristais pequenos.','Abatedor a −35/−40 °C, cubas rasas.');
- if(m.mach.batch&&T>m.mach.batch)add('warn','Processo','Lote acima da capacidade da máquina','A '+m.mach.n+' processa até '+m.mach.batch+' g por ciclo; o lote tem '+f0(T)+' g.','Divida em '+Math.ceil(T/m.mach.batch)+' ciclos ou escale o lote para '+m.mach.batch+' g.');
+ {const cap=m.mach.batchMax||m.mach.batch;if(cap&&T>cap)add('warn','Processo','Lote acima da capacidade da máquina','A '+m.mach.n+' processa até '+cap+' g por ciclo; o lote tem '+f0(T)+' g.','Divida em '+Math.ceil(T/(m.mach.batch||cap))+' ciclos de ~'+f0(T/Math.ceil(T/(m.mach.batch||cap)))+' g.');
+  else if(m.mach.batchMax&&m.mach.batch&&T>m.mach.batch*1.15)add('info','Processo','Ciclo mais longo que o de referência','Com '+f0(T)+' g por ciclo a '+m.mach.n.split(' (')[0]+' leva mais tempo para congelar (veja Processo › Maestro nesta receita): cristais um pouco maiores.','Para o melhor resultado, ciclos de até ~'+m.mach.batch+' g.');}
  const shock=Math.abs(pr.storeT-m.vit);
  if(pr.storeT>-15)add('crit','Processo','Freezer quente ('+fT(pr.storeT)+' °C)','Acima de −15 °C só '+f0(m.fzStore)+'% da água fica congelada: os cristais crescem rápido e a lactose cristaliza. É comum em freezers domésticos cheios ou com porta muito aberta.','Regule para −18/−22 °C e confira com termômetro no centro de uma cuba.');
  else if(pr.storeT>-18)add('warn','Processo','Freezer acima de −18 °C ('+fT(pr.storeT)+' °C)','Recristalização acelerada no armazenamento.','Regule para −18/−22 °C.');
@@ -2247,7 +2270,7 @@ let S=LS.get(KEY)||fromPreset(PRESETS[0]);
 /* garante todos os campos do estado; roda no boot e antes de cada render (estados antigos ou importados) */
 function normalizeState(){
  try{if(!S.sets||!S.sets.art||!S.sets.pro)setsInit();}catch(e){}
- S.proc=Object.assign({},PROC0,S.proc||{});for(const k in PROC_LIM){const v=+S.proc[k];S.proc[k]=isFinite(v)?clamp(v,PROC_LIM[k][0],PROC_LIM[k][1]):PROC0[k];}if(!isFinite(+S.vit))S.vit=-13;S.brix=S.brix||{};S.costs=S.costs||{};S.page=S.page||'bancada';S.defect=S.defect||'duro';
+ {const pr0=S.proc||{};S.proc=Object.assign({},PROC0,pr0,pr0.load==null&&pr0.machine==='maqp1'?{load:1100,preChill:0}:{});}for(const k in PROC_LIM){const v=+S.proc[k];S.proc[k]=isFinite(v)?clamp(v,PROC_LIM[k][0],PROC_LIM[k][1]):PROC0[k];}if(!isFinite(+S.vit))S.vit=-13;S.brix=S.brix||{};S.costs=S.costs||{};S.page=S.page||'bancada';S.defect=S.defect||'duro';
  if(!Array.isArray(S.recipe)||S.recipe.some(r=>!r||!SAFE_ID.test(String(r.id))||typeof r.g!=='number'||!isFinite(r.g)))S.recipe=cleanRecipe(S.recipe);
  /* ingrediente repetido na receita vira uma linha só (somando as gramas) */
  if(new Set(S.recipe.map(r=>r.id)).size!==S.recipe.length){const by=new Map();S.recipe.forEach(r=>{const e=by.get(r.id);if(e)e.g=Math.round((+e.g+ +r.g)*10)/10;else by.set(r.id,{id:r.id,g:+r.g});});S.recipe=[...by.values()];}
@@ -2368,7 +2391,7 @@ const isMac=()=>{try{return /Mac|iPhone|iPad/.test(navigator.platform||navigator
 const kbd=k=>`<kbd>${isMac()?'⌘':'Ctrl '}${k}</kbd>`;
 
 /* ---------- marca ---------- */
-const VERSION='v17.9';
+const VERSION='v17.10';
 const brandHTML=()=>`<div class="brand"><div class="hex"></div><div><b>Il <span>Fredolin</span></b><small>Gelato Lab ${VERSION}${APP_MODE==='app'&&ME.email?' · '+ROLE_N[ROLE]:''}</small></div></div>`;
 
 /* ---------- termômetro da receita: vitrine, serviço ideal (com faixa de incerteza) e freezer numa régua só ---------- */
@@ -2597,6 +2620,20 @@ function pgLaudo(m,F,sc){
   ${ok.length?`<details class="card dcard" id="laudoOk"${dOpen('laudoOk',false)}><summary><h2 style="margin:0">Acertos</h2><span class="chip ok">${ok.length}</span></summary>${ok.map(findHTML).join('')}</details>`:''}`;}
  return`<div class="pg"><div class="pghead"><div><h1>Laudo técnico</h1><p class="lead">${lead}</p></div>${segHTML('laudo',LAUDO_SEC,t,'Seções do laudo')}</div>${body}</div>`;}
 
+/* ---------- MAESTRO GELATIERE NESTA RECEITA (v17.10) ---------- */
+function maqCard(m){const M=maqPlan(m,S.proc);if(!M)return'';const p=S.proc;
+ return`<div class="card"><div class="row"><h2 style="margin:0">Maestro Gelatiere nesta receita</h2><span class="sp"></span>${can.edit()&&Math.abs(+p.drawT-M.t35)>.15?`<button class="btn sm pri" data-a="maqUse">Usar saída ${f1(M.t35)} °C</button>`:''}</div>
+  <p class="t2" style="margin:6px 0 10px">Saída a <b>${fT(+p.drawT)} °C</b> no centro: <b>${f0(M.fzNow)}%</b> da água já em gelo. Nas mantecadoras profissionais sai a −10/−11 °C com ~75% (Corvitto); na Maestro o alvo realista é <b>${f1(M.t35)} °C</b> (35%), e cada grau a mais vale ~12–15 pontos de gelo. O resto do gelo se forma no freezer: por isso o endurecimento rápido pesa tanto.</p>
+  <div class="tw"><table class="tbl"><thead><tr><th>Carga</th><th class="r">Até ${fT(+p.drawT)} °C</th><th class="r">Até ${f1(M.t35)} °C</th></tr></thead><tbody>
+  ${M.loads.map(l=>`<tr${l.g===M.best?' style="background:var(--hov)"':''}><td>${f0(l.g)} g${l.g===M.best?' · <span class="c-ok">melhor textura</span>':''}</td><td class="r mono" style="white-space:nowrap">${f0(l.tDraw)} min</td><td class="r mono" style="white-space:nowrap">${f0(l.t35)} min</td></tr>`).join('')}</tbody></table></div>
+  <div class="g3" style="margin-top:10px;gap:10px">
+   <div class="kv"><span>Capacidade estimada</span><span>${f0(M.Q)} W</span></div><div class="kv"><span>Calda entra a</span><span>${fT(M.Tin)} °C</span></div><div class="kv"><span>Ponto de congelamento</span><span>${f1(M.fp)} °C</span></div></div>
+  <ul class="t2" style="margin:10px 0 0;padding-left:18px">
+   <li>Calda direto da geladeira; a 1 °C em vez de ${fT(M.Tin)} °C o ciclo cai ~${f0(M.saveCold)} min.</li>
+   <li>${M.preChill?'Pré-resfriando, a parede deve estar bem abaixo de '+f0(M.wall)+' °C (12 °C abaixo do ponto de congelamento) quando a calda entra.':'Pelo manual a refrigeração liga depois da calda. Pré-resfriar 5–8 min com o batedor ligado economizaria ~'+f0(M.savePre)+' min e daria cristais menores; confirme com a Maqp1 antes.'}</li>
+   <li>A temperatura da máquina ao receber a calda não muda de receita para receita (quanto mais fria, melhor). O que muda é a saída: receitas com mais PAC (álcool, dextrose, sorbets) congelam mais frio e pedem mais tempo.</li></ul>
+  <p class="note" style="margin:8px 0 0">Capacidade calculada a partir da sua carga e do seu tempo (${f0(M.load)} g em ${fT(M.min)} min). Meça o tempo real até a saída e ajuste no campo "Tempo de mantecação": a tabela se recalibra. Estimativa linear: perto do limite da máquina o frio rende menos e os tempos longos podem ser maiores.</p></div>`;}
+
 /* ---------- PONTO DE QUENELLE (v17.9) ---------- */
 function quenelleCard(m,compact){const q=quenelleModel(m);if(!q)return'';
  const T0=Math.floor(Math.min(q.Tbr,m.serveT,+S.vit)-2),T1=Math.ceil(Math.max(q.Tsl,m.serveT)+2);const W=380,H=compact?84:96,L=10,R=10,y0=32,bh=22;
@@ -2690,10 +2727,13 @@ function pgProcesso(m,F){
   ${sel('alcStage','Álcool entra',[['depois','na mistura fria'],['antes','antes do calor']],p.alcStage)}
  </div></div>
  ${matCard(S,m)}
+ ${p.machine==='maqp1'?maqCard(m):''}
  <div class="card"><h2>Mantecação, abatimento e armazenamento</h2><div class="form">
   ${sel('machine','Equipamento',Object.entries(MACH).map(([k,v])=>[k,v.n]),p.machine)}
-  ${fieldNum('p-drawT','Temperatura de saída (°C)',p.drawT,.5,'Ideal '+fT(m.P.draw[1])+' a '+fT(m.P.draw[0])+' °C')}
-  ${fieldNum('p-drawMin','Tempo de mantecação (min)',p.drawMin,1,'Batch: 8–12 min')}
+  ${p.machine==='maqp1'?fieldNum('p-load','Carga por ciclo (g)',p.load||1100,50,'Tanque 3 L: de ¼ a ⅔ (≈ 800 a 2.000 g)'):''}
+  ${fieldNum('p-drawT','Temperatura de saída (°C)',p.drawT,.5,p.machine==='maqp1'?'No centro da massa · alvo desta receita '+f1(tempAtFz(m,35))+' °C':'Ideal '+fT(m.P.draw[1])+' a '+fT(m.P.draw[0])+' °C')}
+  ${fieldNum('p-drawMin','Tempo de mantecação (min)',p.drawMin,1,p.machine==='maqp1'?'O tempo que você mede com essa carga (calibra a máquina)':'Batch: 8–12 min')}
+  ${p.machine==='maqp1'?sel('preChill','Antes da calda',[[0,'Como no manual: refrigeração depois da calda'],[1,'Pré-resfriar 5–8 min com o batedor ligado']],+p.preChill||0):''}
   ${fieldNum('p-blastT',p.hardAuto?'Freezer no Turbo (°C)':'Abatedor (°C)',p.blastT,1,p.hardAuto?'Ar do freezer com Turbo ligado; meça se puder':'−35 a −40 °C')}${p.hardAuto?fieldNum('p-turboMin','Turbo durante o endurecimento (min)',p.turboMin,10,'O Turbo dura 150 min; ligado 30 min antes, sobram 120'):''}
   ${fieldNum('p-hardMin','Até −18 °C no núcleo (min)',p.hardMin,5,p.hardAuto?'Calculado pelo conjunto (tamanho do pote, saída e freezer)':'Ideal até 60 min',p.hardAuto?'readonly':'')}
   ${fieldNum('p-storeT','Freezer de armazenamento (°C)',p.storeT,.5,'Meça no centro de uma cuba · ideal −18 a −22 °C')}
@@ -2844,7 +2884,7 @@ function labGerar(){
  const fx=(g.fixed||[]);
  return`<div class="card"><h2>1 · Base e sabor</h2><div class="form">
   <label class="field"><span class="lbl">Tipo</span><select id="gen-tipo" data-c="gen" data-k="tipo">${Object.entries(PROF).map(([k,p])=>`<option value="${k}"${k===g.tipo?' selected':''}>${p.n}</option>`).join('')}</select></label>
-  <label class="field"><span class="lbl">Lote (g)</span><input type="number" id="gen-batch" data-i="gen" data-k="batch" value="${g.batch}" step="50" min="200"><span class="hint">Maqp1: até 850 g por ciclo</span></label>
+  <label class="field"><span class="lbl">Lote (g)</span><input type="number" id="gen-batch" data-i="gen" data-k="batch" value="${g.batch}" step="50" min="200"><span class="hint">Maqp1: ~1,1 kg por ciclo (até 2 kg)</span></label>
   <div class="field"><span class="lbl">Vitrine</span><span class="mono c-ice" style="padding:7px 0">${f1(S.vit)} °C (no topo)</span></div>
  </div>
  <div style="margin-top:12px;display:flex;flex-direction:column;gap:8px">${fx.map((f,k)=>`<div class="row"><select id="gen-fx${k}" data-c="genfx" data-k="${k}" style="flex:1;min-width:180px" aria-label="Ingrediente de sabor ${k+1}">${ingOpts(f.id)}</select><input type="number" id="gen-fg${k}" data-i="genfg" data-k="${k}" value="${f.g}" step="5" min="0" style="width:100px" aria-label="Gramas"><span class="muted">g</span><button class="btn del" data-a="genRmFx" data-v="${k}" aria-label="Remover">✕</button></div>`).join('')}
@@ -4335,7 +4375,7 @@ function poteCard(m,compact){if(m.empty)return'';const P=poteModel(m,S.proc);if(
 
 /* ---------- CONJUNTO DE EQUIPAMENTOS: roteiro calculado para casa (Maestro Gelatiere + freezer Panasonic) ---------- */
 function equipYield(m,batch){const ml=batch/(m.gPerL||800)*1000;return Math.round(ml/10)*10;}
-function equipSteps(m){const E=EQUIP[S.proc.equip];if(!E||m.empty)return null;const p=m.pr,batch=E.batch||800;
+function equipSteps(m){const E=EQUIP[S.proc.equip];if(!E||m.empty)return null;const p=m.pr,batch=+p.load||E.batch||1100;const MP=maqPlan(m,p);
  const P=poteModel(m,p),H=hardenModel(m,p),H1=hardenModel(m,p,1000),Hs=hardenModel(m,p,250);const hr=x=>x==null?'—':f1(x/60)+' h';
  const yl=equipYield(m,batch),npot=Math.max(1,Math.round(yl/(+p.poteMl||500)));
  return[
@@ -4343,7 +4383,7 @@ function equipSteps(m){const E=EQUIP[S.proc.equip];if(!E||m.empty)return null;co
   ['Esfriar rápido',`Panela em banho de água com gelo, mexendo, até ficar abaixo de 10 °C (meta: 4 °C em até ${fT(p.coolMin)} min). Calda quente na geladeira esquenta tudo à volta e demora horas para esfriar.`],
   ['Maturar na geladeira Panasonic',`Pote fechado, ao fundo e longe da porta, com o refrigerador em <b>Máx</b> durante a maturação. Confira com termômetro: a calda deve ficar entre 2 e 4 °C (alvo ${fT(p.matT)} °C). Tempo: <b>${fT(p.matH)} h</b> (mínimo 6 h; até 72 h). Volte o refrigerador para Méd depois.`],
   ['Preparar o freezer',`30 min antes de mantecar, ative o <b>Turbo</b> do freezer (aperte o botão do freezer até acenderem os três indicadores; ele dura 150 min e volta sozinho ao normal). Ponha ${npot>1?npot+' potes':'o pote'} de ${f0(+p.poteMl)} mL vazio${npot>1?'s':''} para gelar.`],
-  ['Mantecar na Maestro Gelatiere',`Ligue o batedor <b>antes</b> de pôr a calda e só depois a refrigeração. Coloque <b>${f0(batch)} g</b> de calda (entre ¼ e ⅔ da cuba de 3 L), tampa fechada, por cerca de <b>${fT(p.drawMin)} min</b>, até <b>${fT(p.drawT)} °C no centro da massa</b> (termômetro culinário, não o da máquina). Rende cerca de ${f0(yl)} mL com ${f0(m.ov)}% de ar.${m.ov>30?' Com mais de 30% de ar o manual pede menos calda: use '+f0(Math.round(batch*1.30/(1+m.ov/100)/10)*10)+' g.':''} Não desligue o batedor com produto na cuba; se desligar, espere 10 min para religar.`],
+  ['Mantecar na Maestro Gelatiere',`${+p.preChill?'Ligue o batedor e a refrigeração com a cuba vazia e tampada por 5–8 min (pré-resfriamento; confirme com a Maqp1 se o seu modelo permite).':'Como no manual: ligue o batedor <b>antes</b> de pôr a calda e só depois a refrigeração.'} Coloque <b>${f0(batch)} g</b> de calda <b>direto da geladeira (2–4 °C)</b> (entre ¼ e ⅔ do tanque de 3 L), tampa fechada, por cerca de <b>${fT(p.drawMin)} min</b>, até <b>${fT(p.drawT)} °C no centro da massa</b> (termômetro culinário, não o da máquina)${MP&&p.drawT>MP.t35+.2?'; se a máquina continuar descendo, vale ir até '+f1(MP.t35)+' °C (35% da água em gelo nesta receita)':''}. Rende cerca de ${f0(yl)} mL com ${f0(m.ov)}% de ar.${m.ov>30?' Com mais de 30% de ar o manual pede menos calda: use '+f0(Math.round(batch*1.30/(1+m.ov/100)/10)*10)+' g.':''} Não desligue o batedor com produto na cuba; se desligar, espere 10 min para religar.`],
   ['Envasar',`Rápido, nos potes gelados, sem bolhas; filme encostado na superfície e tampa. ${+p.poteMl>500?'Potes menores endurecem bem mais rápido.':''}`],
   ['Endurecer no freezer',`Na parte de baixo, sem empilhar e longe da porta. A camada de servir firma em ${H&&H.tFirm!=null?f0(H.tFirm)+' min':'—'}; o centro chega a ${fT(H?H.target:-18)} °C em <b>${hr(H&&H.tDone)}</b> (pote de 250 mL: ${hr(Hs&&Hs.tDone)}; de 1 L: ${hr(H1&&H1.tDone)}). Depois do Turbo, freezer em <b>Médio</b> (−17 a −22 °C).`],
   ['Servir',P?`Tire o pote e espere <b>${f0(+p.waitMin)} min</b> numa cozinha a ${fT(+p.ambT)} °C: a camada da colher chega a ${f1(P.atWait.scoop)} °C (ideal desta receita: ${f1(m.serveT)} °C${P.tReady!=null?'; no ponto em '+f0(P.tReady)+' min':''}). Volte o pote ao freezer logo depois.`:'—']];}
@@ -4774,7 +4814,7 @@ async function saveFile(name,data){try{const d=window.claude&&typeof window.clau
    • Professionale: o laboratório da equipe. Fica guardado na nuvem da equipe (coleção "vit", registro set_pro),
      então todos os aparelhos usam os mesmos equipamentos; Maestro e Chef atualizam quando chegar equipamento novo.
    Campos do set (equipamento) × campos da receita (fruta antes/depois, perda no cozimento, porção, preço). */
-const SET_KEYS=['machine','drawT','drawMin','blastT','hardMin','hardAuto','turboMin','storeT','storeFluct','serveFrom','poteMl','ambT','waitMin','equip','matT','matH','coolMin','pastT','pastHold','pastHoldU'];
+const SET_KEYS=['machine','load','preChill','drawT','drawMin','blastT','hardMin','hardAuto','turboMin','storeT','storeFluct','serveFrom','poteMl','ambT','waitMin','equip','matT','matH','coolMin','pastT','pastHold','pastHoldU'];
 const SETS={
  art:{n:'Artigianale',sub:'Maestro + Panasonic',proc:Object.assign({},EQUIP.casa_mg_pan.proc,{pastT:85,pastHold:30,pastHoldU:'s'}),vit:-14.5,mat:{fridge:'med',pos:'meio',reads:'',entryT:10,probe:'',fruitIn:0},
   gear:{past:'Panela + termômetro (85 °C)',matur:'Panasonic NR-BB53 (refrigerador)',mant:'Maqp1 Maestro Gelatiere',abat:'Freezer Panasonic com Turbo',vitr:'— (serviço do pote)',frz:'Panasonic NR-BB53 (freezer, Médio)'}},
@@ -5129,6 +5169,7 @@ let agingT=null;
 
 /* ---------- AÇÕES (data-a) ---------- */
 const ACT={
+ maqUse:()=>{const M=maqPlan(analyze(S),S.proc);if(!M)return;S.proc.drawT=Math.round(M.t35*2)/2;const t=(maqEnergy(analyze(S),M.load,M.Tin,S.proc.drawT)+(M.preChill?0:MAQ_STEEL*Math.max(0,(+S.proc.ambT||24)-S.proc.drawT)))/(M.Q/1000)/60;S.proc.drawMin=Math.round(clamp(t,2,40));render();toast('Saída '+fT(S.proc.drawT)+' °C · ~'+S.proc.drawMin+' min');},
  appReload:()=>{try{location.reload();}catch(e){}},
  sub:v=>{const[p,k]=String(v).split(':');U.sub=U.sub||{};U.sub[p]=k;render();scrollTopAll();},
  go:v=>{S.page=v;U.copy=null;U.recent=[v,...(U.recent||[]).filter(x=>x!==v)].slice(0,6);render();scrollTopAll();},
@@ -5261,7 +5302,7 @@ const INP={
  lot:(v,t)=>{const L=LOTS.find(l=>l.id===U.lotOpen);if(!L)return;setPath(L,t.dataset.k,v===''?'':(t.type==='number'?+v:v));saveLotSoon(L);render();},
  lotTxt:v=>{const L=LOTS.find(l=>l.id===U.lotOpen);if(L){L.notes=v;saveLotSoon(L);}},
  ingQ:v=>{U.ingQ=v;render();},
- ing:(v,t)=>{const E=U.ingEdit;if(!E)return;const[p,k]=t.dataset.k.split('.');(p==='c'?E.c:E.x)[k]=v===''?'':(t.type==='number'?(p==='c'?num(v,0,100,0):num(v,-1e6,1e6,0)):v);render();},
+ ing:(v,t)=>{const E=U.ingEdit;if(!E)return;const[p,k]=t.dataset.k.split('.');(p==='c'?E.c:E.x)[k]=v===''?'':(t.type==='number'?(p==='c'?num(v,0,100,0):num(v,...(({ph:[2,7.5],sat:[0,1],de:[1,100],brix:[0,90],na:[0,40000],cost:[0,1e6]})[k]||[-1e6,1e6]),0)):v);render();},
  ingName:v=>{if(U.ingEdit){U.ingEdit.n=v;render();}},
  planCap:v=>{S.planCap=v===''?'':num(v,100,1e5,'');render();},planKg:(v,t)=>{S.plan[+t.dataset.k].kg=num(v,0,1e4,0);render();},
  invNew:(v,t)=>{U.invNew=U.invNew||{ingId:'leite',kg:'',costKg:'',lot:'',exp:''};U.invNew[t.dataset.k]=v;},
