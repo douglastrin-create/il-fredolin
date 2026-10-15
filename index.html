@@ -245,6 +245,7 @@ button.chip{cursor:pointer}
 .pill2 .n{font-size:12.5px;color:var(--t2)}.pill2 .v{font:500 12px var(--fm);color:var(--t1)}
 .pill2.ok .dot{background:var(--ok)}.pill2.warn .dot{background:var(--warn)}.pill2.crit .dot{background:var(--crit)}.pill2.info .dot{background:var(--t3)}
 .pill2.crit{border-color:rgba(251,113,133,.35)}.pill2.warn{border-color:rgba(251,191,36,.3)}
+button.pill2{font:inherit;color:inherit;width:100%}button.pill2[aria-pressed=true]{border-color:var(--ice);box-shadow:0 0 0 1px var(--ice) inset}
 .seal{display:flex;align-items:center;gap:12px;padding:11px 13px;margin-bottom:12px;border:1px solid rgba(110,231,183,.45);border-radius:var(--r2);background:var(--ok-a)}
 .seal b{display:block;color:var(--ok);font:600 14.5px var(--fb)}.seal span{font-size:12.5px;color:var(--t2)}
 
@@ -1473,74 +1474,359 @@ function balanceRobust(st){
 
 /* ===================== DEFEITOS ===================== */
 
-/* ---------- DEFEITOS ---------- */
+/* ---------- DEFEITOS: BANCO DE IDENTIFICAÇÃO E CORREÇÃO ----------
+   Cada defeito: nome e sinônimos (it/es/en), categoria, como identificar, sintomas (para o diagnóstico diferencial),
+   mecanismo, causas medidas na receita e no processo pelo motor (c: [teste 0–1, texto, correção]),
+   causas que o motor não enxerga (pc: [causa, correção]), prevenção e fontes.
+   Textos são sínteses próprias das fontes listadas em DEF_SRC (página ou URL), não transcrições. */
+const DEF_SRC={
+ corvitto:'Corvitto, A. — I segreti del gelato / Los secretos del helado (Vilbo, 2005), "I difetti del gelato", p. 407–409',
+ preti:'Preti, G. — Il gelato artigianale italiano (Hoepli, 2013): lattosio e solidi magri p. 47; maturazione p. 60; emulsione instabile p. 61; congelamento e cristalli p. 68–69; indurimento p. 71; carica microbica p. 83–86; zucchero e conservazione p. 91',
+ migoya:'Migoya, F. — Frozen Desserts (Wiley, 2008): defeitos de bases lácteas p. 64; de sorbets p. 79; de semifreddos p. 97',
+ goffTex:'Goff, H.D. — Ice Cream Technology e-book (Univ. of Guelph): Body and texture defects · books.lib.uoguelph.ca/icecreamtechnologyebook/chapter/body-and-texture-defects/',
+ goffFlav:'Goff, H.D. — Ice Cream Technology e-book (Univ. of Guelph): Flavour defects · books.lib.uoguelph.ca/icecreamtechnologyebook/chapter/flavour-defects/',
+ goffShr:'Goff, H.D. — Ice Cream Technology e-book (Univ. of Guelph): Shrinkage · books.lib.uoguelph.ca/icecreamtechnologyebook/chapter/shrinkage/',
+ goffShelf:'Goff, H.D. — Ice Cream Technology e-book (Univ. of Guelph): Ice cream shelf life · books.lib.uoguelph.ca/icecreamtechnologyebook/chapter/ice-cream-shelf-life/',
+ goffCol:'Goff, H.D. — Ice Cream Technology e-book (Univ. of Guelph): Colour defects · books.lib.uoguelph.ca/icecreamtechnologyebook/chapter/colour-defects/',
+ goffAge:'Goff, H.D. — Ice Cream Technology e-book (Univ. of Guelph): Ageing of mix · books.lib.uoguelph.ca/icecreamtechnologyebook/chapter/ageing-of-mix/',
+ tharpFlav:'Tharp, B. & Young, L.S. — "What are major flavor defects in ice cream?", Dairy Foods · dairyfoods.com/articles/84087',
+ tharpMelt:'Tharp, B. — The role of meltdown in the sensory and quality attribute evaluation of ice cream (IDFA) · idfa.org',
+ vanwees:'VanWees, S. — Shrinkage in Frozen Desserts: Past, Present and Future (UW–Madison, Food Science) · foodsci.wisc.edu',
+ muse:'Muse, M.R. & Hartel, R.W. (2004) Ice cream structural elements that affect melting rate and hardness. J. Dairy Sci. 87:1–10',
+ motor:'Il Fredolin — motor de cálculo (curva de congelamento, PAC/POD, cinética de cristais, modelo de maturação)'};
+const DEF_CAT=[['textura','Textura'],['corpo','Corpo e consistência'],['derrete','Derretimento'],['aparencia','Aparência e conservação'],['sabor','Sabor e aroma'],['seguranca','Higiene e segurança']];
+/* sintomas observáveis (diagnóstico diferencial): onde se percebe e o que se percebe */
+const DEF_SINT=[
+ ['colher','Na colher',[['duro','Duro, difícil de servir'],['mole','Mole, perde a forma'],['quebra','Quebradiço, esfarela'],['puxa','Elástico, puxa'],['denso','Denso, pesado'],['fofo','Leve demais, esponjoso'],['pegajoso','Pegajoso, xaroposo']]],
+ ['boca','Na boca',[['gelado','Cristais que derretem (gelado, áspero)'],['areia','Grãos que não derretem (areia)'],['untuoso','Untuoso, flocos de gordura'],['pastoso','Pastoso, gruda no céu da boca'],['aguado','Aguado, sem corpo'],['grumos','Grumos, aspecto de coalhada']]],
+ ['pote','No pote ou na vitrine',[['encolheu','Encolheu, descolou da cuba'],['gelosup','Gelo ou "neve" na superfície'],['fundo','Calda ou líquido no fundo'],['cordesig','Cor desigual, estrias'],['coralt','Cor escurecida, acinzentada ou artificial'],['incl','Inclusões afundadas ou duras']]],
+ ['derr','Ao derreter',[['rapido','Derrete rápido, escorre'],['naoderr','Não derrete, mantém a forma'],['soro','Líquido translúcido separa'],['flocos','Flocos ou coalhos no derretido'],['espuma','Derretido espumoso']]],
+ ['sabor','Sabor e aroma',[['doce','Doce demais'],['poucodoce','Pouco doce'],['apagado','Sabor apagado'],['cozido','Cozido, leite queimado, caramelo'],['oxidado','Papelão, metálico, tinta'],['rancoso','Rançoso, queijo, vômito'],['azedo','Azedo, fermentado'],['salgado','Salgado'],['geladeira','Gosto de geladeira, absorvido'],['xarope','Gosto de xarope'],['sujo','Amargo, sujo, pútrido']]]];
 const DEFECTS=[
- {id:'arenoso',n:'Arenoso',d:'Grãos finos que não derretem na língua',c:[
+ {id:'arenoso',n:'Arenoso',d:'Grãos finos que não derretem na língua',cat:'textura',al:{it:'sabbioso',es:'arenoso',en:'sandy'},sint:['areia'],sev:'qualidade',
+  how:'Prove uma colherada e espere: o gelo derrete e some; a lactose cristalizada fica como areia fina mesmo depois de derretido. Lupa ou microscópio: cristais em forma de machado/tomahawk.',
+  mec:'A lactose é pouco solúvel. Ao congelar, a água vira gelo e a lactose fica concentrada na fase não congelada; acima de ~9–10% da água ela supersatura e cristaliza, sobretudo com oscilações de temperatura e armazenamento longo.',
+  c:[
   [m=>hi(m.lacW,8.5,11),m=>'Lactose em '+f1(m.lacW)+'% da água (limite ~9–10%).','Reduza leite em pó; troque por maltodextrina ou WPC.'],
-  [m=>hi(Math.abs(m.pr.storeT-m.vit),5,12),m=>'Diferença de '+f0(Math.abs(m.pr.storeT-m.vit))+' °C entre armazenamento e vitrine favorece a cristalização da lactose.','Reduza o choque térmico e o tempo de armazenamento.'],
+  [m=>hi(Math.abs(m.pr.storeT-m.vit),10,16)*(m.lacW>7?1:.5),m=>'Diferença de '+f0(Math.abs(m.pr.storeT-m.vit))+' °C entre armazenamento e vitrine favorece a cristalização da lactose.','Reduza o choque térmico e o tempo de armazenamento.'],
   [m=>m.A.ery/m.tot*100>5?1:0,m=>'Eritritol acima de 5% recristaliza.','Limite eritritol a 5%.'],
-  [m=>lo(m.hydro,m.P.stab[0],0),m=>'Estabilizante baixo ('+f2(m.hydro)+'%) não segura a lactose dissolvida.','Neutro na dose usual.']]},
- {id:'gelo',n:'Cristais de gelo',d:'Textura gelada, crocante, áspera',c:[
+  [m=>lo(m.hydro,m.P.stab[0],0),m=>'Estabilizante baixo ('+f2(m.hydro)+'%) não segura a lactose dissolvida.','Neutro na dose usual.'],
+  [m=>hi(m.sol,42,48),m=>'Sólidos totais em '+f1(m.sol)+'%: acima de ~42% a fase líquida satura.','Reduza sólidos (leite em pó, açúcares de alto peso molecular).']],
+  pc:[['Gelato derreteu parcialmente e foi recongelado (transporte, porta do freezer aberta).','Cadeia do frio contínua; nunca recongelar sobra de vitrine.'],['Armazenamento longo em freezer com degelo automático.','Rodízio curto de estoque; freezer de temperatura estável.'],['Leite em pó mal dissolvido.','Dispersar os pós a 40–45 °C com agitação, misturados ao açúcar.']],
+  prev:['Lactose ≤ 9% da água','Endurecimento rápido','Temperatura de armazenamento baixa e constante','Glicose ou dextrose ajudam a manter a lactose dissolvida'],
+  src:['corvitto','preti','goffTex','goffShelf','migoya']},
+ {id:'gelo',n:'Cristais de gelo',d:'Textura gelada, crocante, áspera',cat:'textura',al:{it:'cristalli di ghiaccio / ghiacciato',es:'cristales de hielo',en:'coarse / icy'},sint:['gelado','duro','gelosup'],sev:'qualidade',
+  how:'Áspero e frio na língua, mas os cristais derretem (diferente da areia). Acima de ~50 µm os cristais são percebidos.',
+  mec:'Cristais grandes vêm de nucleação pobre na mantecação, endurecimento lento ou recristalização no armazenamento: a cada oscilação os cristais pequenos derretem e a água recongela nos grandes (maturação de Ostwald).',
+  c:[
   [m=>lo(m.sol,m.P.sol[0],m.P.sol[0]-6),m=>'Sólidos totais em '+f1(m.sol)+'% (mínimo '+fT(m.P.sol[0])+'%).','Aumente sólidos com leite em pó, maltodextrina ou mais fruta.'],
-  [m=>lo(m.fzDraw,45,25),m=>'Só '+f0(m.fzDraw)+'% da água congela na mantecadora (saída a '+fT(m.pr.drawT)+' °C).','Mantecar até −9/−10 °C.'],
+  [m=>lo(m.fzDraw,45,25)*(m.mach&&m.mach.drawT!=null&&m.pr.drawT<=m.mach.drawT+.5?.4:1),m=>'Só '+f0(m.fzDraw)+'% da água congela na mantecadora (saída a '+fT(m.pr.drawT)+' °C)'+(m.mach&&m.mach.drawT!=null&&m.pr.drawT<=m.mach.drawT+.5?', limite do equipamento':'')+'.',m=>m.mach&&m.mach.drawT!=null&&m.pr.drawT<=m.mach.drawT+.5?'Limite da '+m.mach.n.split(' (')[0]+': compense com endurecimento rápido (turbo/abatedor) e estabilizante na dose.':'Mantecar até −9/−10 °C.'],
   [m=>lo(m.ci,80,40),m=>'Índice de cristalização '+f0(m.ci)+'/100: '+(m.ciNotes.join(', ')||'processo lento')+'.','Abatedor a −35 °C logo após mantecar.'],
   [m=>lo(m.hydro,m.P.stab[0],0),m=>'Estabilizante baixo: a água migra e recristaliza.','Aumente estabilizante.'],
-  [m=>hi(Math.abs(m.pr.storeT-m.vit),6,14),m=>'Choque térmico entre armazenamento e vitrine.','Transfira de forma gradual.']]},
- {id:'duro',n:'Duro demais',d:'Difícil de espatular, quebra',c:[
+  [m=>hi(Math.abs(m.pr.storeT-m.vit),10,18),m=>'Choque térmico entre armazenamento e vitrine.','Transfira de forma gradual.'],
+  [m=>hi(m.pr.storeFluct,1.5,4),m=>'Freezer oscila ±'+fT(m.pr.storeFluct)+' °C: cada ciclo engrossa os cristais.','Freezer sem degelo frequente, porta fechada, termômetro de máxima e mínima.'],
+  [m=>hi(m.crystal,40,55),m=>'Cristal previsto de '+f0(m.crystal)+' µm.','Veja o Laudo: endurecimento, estabilizante e açúcares.']],
+  pc:[['Lâminas da mantecadora gastas ou mal ajustadas à parede.','Revisão das pás; elas precisam raspar a parede do cilindro.'],['Mantecação lenta (cilindro sobrecarregado, gás ou compressor fraco).','Respeite a carga máxima; manutenção da máquina.'],['Gelato deixado fora do frio entre a máquina e o abatedor.','Do cilindro direto para o abatedor.'],['Maturação insuficiente.','Veja o tempo calculado em Processo → Maturação.']],
+  prev:['Mantecar até −9/−10 °C (Maqp1: −4 °C no centro da massa)','Abater imediatamente','Armazenar a −20 °C ou menos, estável','Estabilizante na dose','Vitrine com o mínimo de oscilação'],
+  src:['corvitto','preti','migoya','goffTex','goffShelf']},
+ {id:'duro',n:'Duro demais',d:'Difícil de espatular, quebra',cat:'corpo',al:{it:'troppo duro',es:'demasiado duro',en:'too hard'},sint:['duro','quebra'],sev:'qualidade',
+  how:'A espátula não entra, o gelato quebra em placas; em comparação com os outros sabores da mesma vitrine, este está mais duro.',
+  mec:'Água congelada demais na temperatura de serviço: PAC (poder anticongelante) baixo para a vitrine, ou ingredientes que endurecem (manteiga de cacau, gordura de oleaginosas) sem compensação.',
+  c:[
   [m=>hi(m.fzVit,74,84),m=>f0(m.fzVit)+'% da água congelada na vitrine (alvo até '+fT(m.P.fz[1])+'%).','Aumente o PAC trocando sacarose por dextrose (veja o laudo).'],
   [m=>hi(m.hfKg,50,150),m=>'Fator de dureza alto ('+f0(m.hfKg)+'/kg) por cacau ou oleaginosas.','Compense com dextrose ou açúcar invertido.'],
   [m=>hi(m.serveT-m.vit,1,4),m=>'Vitrine a '+fT(m.vit)+' °C, mais fria que o ideal desta receita ('+f1(m.serveT)+' °C).','Suba a temperatura da vitrine.'],
-  [m=>lo(m.ov,m.P.ov[0],10),m=>'Overrun baixo ('+f0(m.ov)+'%): gelato denso parece mais duro.','Mais proteína, emulsificante e maturação.']]},
- {id:'mole',n:'Mole / escorre',d:'Perde forma na vitrine',c:[
+  [m=>lo(m.ov,m.P.ov[0],10),m=>'Overrun baixo ('+f0(m.ov)+'%): gelato denso parece mais duro.','Mais proteína, emulsificante e maturação.']],
+  pc:[['Gelato muito tempo no freezer de estoque sem temperar.','Temperar na vitrine antes do serviço.'],['Vitrine regulada abaixo do ponto da receita.','Agrupe os sabores por temperatura de serviço.']],
+  prev:['Calcular o PAC para a temperatura de serviço','Compensar cacau e oleaginosas'],src:['corvitto','migoya','motor']},
+ {id:'mole',n:'Mole / escorre',d:'Perde forma na vitrine',cat:'corpo',al:{it:'troppo molle',es:'demasiado blando',en:'too soft'},sint:['mole','rapido','pegajoso'],sev:'qualidade',
+  how:'O gelato afunda na cuba, a espátula afunda sem resistência; mais mole que os outros sabores na mesma vitrine.',
+  mec:'Pouca água congelada na temperatura de serviço: excesso de PAC (dextrose, invertido, mel, álcool, sal) ou vitrine quente.',
+  c:[
   [m=>lo(m.fzVit,68,56),m=>'Só '+f0(m.fzVit)+'% da água congelada na vitrine.','Troque dextrose por sacarose ou maltodextrina.'],
   [m=>hi(m.alc,1.5,4),m=>'Álcool em '+f1(m.alc)+'% da mistura.','Reduza o destilado.'],
   [m=>hi(m.vit-m.serveT,1,4),m=>'Vitrine mais quente que o ideal ('+f1(m.serveT)+' °C).','Baixe a vitrine.'],
-  [m=>hi(m.salt+m.A.gly/m.tot*100,.4,1.5),m=>'Sal/glicerol elevam muito o PAC.','Reduza.']]},
- {id:'derrete',n:'Derrete rápido',d:'Escorre na casquinha em poucos minutos',c:[
+  [m=>hi(m.salt+m.A.gly/m.tot*100,.4,1.5),m=>'Sal/glicerol elevam muito o PAC.','Reduza.']],
+  pc:[['Vitrine sobrecarregada ou com degelo frequente.','Revisar a vitrine; não encostar cubas na resistência de degelo.']],
+  prev:['Calcular o PAC para a temperatura de serviço','Álcool dentro do limite'],src:['corvitto','motor']},
+ {id:'derrete',n:'Derrete rápido',d:'Escorre na casquinha em poucos minutos',cat:'derrete',al:{it:'si scioglie troppo in fretta',es:'se funde rápido',en:'melts too fast / weak meltdown'},sint:['rapido','aguado','mole'],sev:'qualidade',
+  how:'Teste de derretimento: uma bola de 100 g sobre grade a 20–22 °C; meça o que pinga em 10 e 30 minutos e compare com o lote padrão.',
+  mec:'O derretimento depende da água que ainda vai derreter, da viscosidade da fase não congelada e da rede de gordura parcialmente coalescida que segura a forma.',
+  c:[
   [m=>lo(m.hydro,m.P.stab[0],0),m=>'Estabilizante baixo ('+f2(m.hydro)+'%).','Neutro na dose usual.'],
   [m=>lo(m.fzVit,68,58),m=>'PAC alto: pouca água congelada.','Rebalanceie os açúcares.'],
-  [m=>(!m.hasEmul&&m.fat>6)?.7:0,m=>'Sem emulsificante: a gordura não forma rede que sustenta o derretimento.','2–4% de gema ou 0,2–0,3% de lecitina.'],
+  [m=>(!m.hasEmul&&m.fat>6)?.25:0,m=>'Sem emulsificante: a gordura não forma rede que sustenta o derretimento.','2–4% de gema ou 0,2–0,3% de lecitina.'],
   [m=>lo(m.sol,m.P.sol[0],m.P.sol[0]-6),m=>'Sólidos baixos.','Aumente sólidos.'],
-  [m=>lo(m.ov,m.P.ov[0],8),m=>'Pouco ar incorporado.','Melhore a aeração.']]},
- {id:'gomoso',n:'Elástico / gomoso',d:'Puxa, textura de chiclete',c:[
-  [m=>hi(m.keyPct.xan||0,.15,.3),m=>'Xantana em '+f2(m.keyPct.xan||0)+'%.','Máximo 0,1–0,15%.'],
+  [m=>lo(m.ov,m.P.ov[0],8),m=>'Pouco ar incorporado.','Melhore a aeração.']],
+  pc:[['Ambiente quente ou freezer de serviço com defeito.','Conferir a temperatura do balcão e do freezer.']],
+  prev:['Sólidos e estabilizante na faixa','Emulsificante nas bases com gordura'],src:['migoya','tharpMelt','muse']},
+ {id:'gomoso',n:'Elástico / gomoso',d:'Puxa, textura de chiclete',cat:'textura',al:{it:'gommoso',es:'gomoso',en:'gummy'},sint:['puxa','pastoso'],sev:'qualidade',
+  how:'Ao levantar a espátula o gelato estica em fios; na boca é borrachudo e demora a derreter.',
+  mec:'Excesso de hidrocoloides (sobretudo xantana, konjac) ou de proteína forma uma rede rígida demais na fase não congelada.',
+  c:[
+  [m=>hi(m.keyPct.xan||0,.1,.25),m=>'Xantana em '+f2(m.keyPct.xan||0)+'%.','Máximo ~0,1%.'],
   [m=>hi(m.hydro,m.P.stab[1],m.P.stab[1]*2),m=>'Estabilizantes em '+f2(m.hydro)+'% (máx. '+fT(m.P.stab[1])+'%).','Reduza a dose.'],
   [m=>hi((m.A.inu+m.A.fos)/m.tot*100,4,8),m=>'Inulina/FOS acima de 4%.','Reduza fibras.'],
   [m=>hi(m.prot,6,9),m=>'Proteína em '+f1(m.prot)+'%.','Reduza leite em pó/WPC.'],
-  [m=>hi(m.keyPct.starch||0,2,4),m=>'Amido em excesso.','Use até 2%.']]},
- {id:'pesado',n:'Pesado / sem ar',d:'Denso, pastoso',c:[
+  [m=>hi(m.keyPct.starch||0,2,4),m=>'Amido em excesso.','Use até 2%.'],
+  [m=>lo(m.ov,m.P.ov[0],10)*.6,m=>'Overrun baixo ('+f0(m.ov)+'%) acentua o gomoso.','Mais ar: proteína, emulsificante, maturação.']],
+  pc:[['Neutro pesado em dobro por engano.','Conferir a pesagem (Ficha de produção).']],
+  prev:['Neutro na dose do fabricante','Xantana ≤ 0,1%'],src:['corvitto','migoya','goffTex','preti']},
+ {id:'pesado',n:'Pesado / sem ar',d:'Denso, pastoso',cat:'corpo',al:{it:'pesante, poco overrun',es:'pesado, poco overrun',en:'heavy / dense'},sint:['denso','pastoso'],sev:'qualidade',
+  how:'Pese um copo de volume conhecido: gelato denso pesa mais (overrun baixo). Na boca é compacto e enjoativo.',
+  mec:'Pouco ar incorporado: sólidos demais, pouca proteína ou emulsificante, maturação curta ou equipamento que incorpora pouco ar.',
+  c:[
   [m=>lo(m.ov,m.P.ov[0],10),m=>'Overrun previsto '+f0(m.ov)+'%.','Proteína, emulsificante e maturação de 6 h+.'],
   [m=>hi(m.sol,m.P.sol[1],m.P.sol[1]+5),m=>'Sólidos em '+f1(m.sol)+'%.','Reduza sólidos.'],
   [m=>lo(m.pr.matH,4,0),m=>'Maturação de '+fT(m.pr.matH)+' h.','Mature 6–12 h.'],
-  [m=>m.pr.machine==='dom'||m.pr.machine==='paco'?.6:0,m=>'Equipamento incorpora pouco ar ('+m.mach.n+').','Normal para este equipamento.']]},
- {id:'manteiga',n:'Amanteigado',d:'Flocos de gordura, sensação untuosa',c:[
+  [m=>m.pr.machine==='dom'||m.pr.machine==='paco'?.6:0,m=>'Equipamento incorpora pouco ar ('+m.mach.n+').','Normal para este equipamento.']],
+  pc:[['Cilindro cheio demais (pouco espaço para o ar).','Respeite a carga máxima da máquina.']],
+  prev:['Sólidos na faixa','Maturação adequada'],src:['corvitto','goffAge']},
+ {id:'manteiga',n:'Amanteigado',d:'Flocos de gordura, sensação untuosa',cat:'textura',al:{it:'burroso',es:'mantecoso / grasoso',en:'buttery / churned'},sint:['untuoso','naoderr'],sev:'qualidade',
+  how:'Pequenos grãos de manteiga visíveis no derretido e película gordurosa no céu da boca.',
+  mec:'A agitação na mantecação quebra as membranas das gotas de gordura; em excesso (muita gordura, emulsificante forte, mantecação longa) a gordura vira manteiga em vez de formar a rede fina que segura o ar.',
+  c:[
   [m=>hi(m.fat,10,14),m=>'Gordura em '+f1(m.fat)+'%.','Reduza creme.'],
-  [m=>hi(m.pr.drawMin,12,18),m=>'Mantecação de '+fT(m.pr.drawMin)+' min.','Reduza o tempo.'],
-  [m=>hi(m.keyPct.mono||0,.3,.6),m=>'Mono e diglicerídeos em excesso.','Máximo 0,3%.']]},
- {id:'doce',n:'Doce demais',d:'Enjoativo, esconde o sabor',c:[
+  [m=>hi(m.pr.drawMin,((m.mach&&m.mach.drawMin)||10)+2,((m.mach&&m.mach.drawMin)||10)+8),m=>'Mantecação de '+fT(m.pr.drawMin)+' min.','Reduza o tempo.'],
+  [m=>hi(m.keyPct.mono||0,.3,.6),m=>'Mono e diglicerídeos em excesso.','Máximo 0,3%.'],
+  [m=>hi(m.destab,50,75),m=>'Desestabilização da gordura prevista em '+f0(m.destab)+'%.','Menos emulsificante, menos tempo de batimento.']],
+  pc:[['Creme batido ou agitado demais antes de entrar na calda.','Incorporar o creme sem bater.']],
+  prev:['Gordura e emulsificante na faixa','Tirar o gelato no ponto'],src:['migoya','tharpMelt']},
+ {id:'doce',n:'Doce demais',d:'Enjoativo, esconde o sabor',cat:'sabor',al:{it:'troppo dolce',es:'demasiado dulce',en:'too sweet'},sint:['doce'],sev:'qualidade',
+  how:'Prova lado a lado com o padrão na mesma temperatura; doçura que fica na boca depois de engolir.',
+  mec:'POD alto, frutose e mel (mais doces que a sacarose) ou serviço quente demais (a doçura percebida sobe com a temperatura).',
+  c:[
   [m=>hi(m.pod,m.P.pod[1],m.P.pod[1]+5),m=>'POD '+f1(m.pod)+'% (máx. '+fT(m.P.pod[1])+'%).','Troque sacarose por dextrose ou maltodextrina.'],
   [m=>hi(m.fruShare,20,35),m=>'Frutose/mel em '+f0(m.fruShare)+'% dos açúcares.','Reduza frutose/mel.'],
-  [m=>hi(m.vit-m.serveT,1,4),m=>'Servido quente demais: a doçura aumenta com a temperatura.','Baixe a vitrine.']]},
- {id:'apagado',n:'Sabor apagado',d:'Sem intensidade',c:[
+  [m=>hi(m.vit-m.serveT,1,4),m=>'Servido quente demais: a doçura aumenta com a temperatura.','Baixe a vitrine.']],
+  pc:[],prev:['POD na faixa do tipo de gelato'],src:['tharpFlav','motor']},
+ {id:'apagado',n:'Sabor apagado',d:'Sem intensidade',cat:'sabor',al:{it:'sapore piatto',es:'sabor apagado',en:'lacks flavor'},sint:['apagado'],sev:'qualidade',
+  how:'Prove derretido a ~10 °C: se o sabor aparece, o problema é temperatura ou viscosidade; se não aparece, é a dose do ingrediente.',
+  mec:'Pouco ingrediente de sabor, frio que anestesia o paladar, viscosidade alta que prende os aromas ou aroma perdido no calor.',
+  c:[
   [m=>lo(m.pod,m.P.pod[0],m.P.pod[0]-5),m=>'POD baixo ('+f1(m.pod)+'%).','Aumente sacarose.'],
   [m=>(m.salt<.03&&m.tipo!=='sorbetto')?.6:0,m=>'Sem sal.','0,05–0,1% de sal realça o sabor.'],
   [m=>hi(m.serveT-m.vit,1.5,5),m=>'Servido frio demais: o frio anestesia o paladar.',m=>'Suba a vitrine para '+f1(m.serveT)+' °C.'],
   [m=>hi(m.hydro,m.P.stab[1],m.P.stab[1]*2),m=>'Excesso de estabilizante abafa o aroma.','Reduza.'],
-  [m=>(m.A.acidFruitG>0&&m.pr.fruitStage==='antes')?1:0,m=>'Fruta aquecida perdeu aroma fresco.','Adicione a fruta fria.']]},
- {id:'soro',n:'Separação de soro',d:'Líquido aquoso na mistura ou ao derreter',c:[
+  [m=>(m.A.acidFruitG>0&&m.pr.fruitStage==='antes')?1:0,m=>'Fruta aquecida perdeu aroma fresco.','Adicione a fruta fria.']],
+  pc:[['Matéria-prima sem maturação (fruta verde) ou pasta de baixa qualidade.','Fruta no ponto; pastas de origem conhecida.']],
+  prev:['Dose de sabor medida no lote-teste','Temperatura de serviço no ponto da receita'],src:['tharpFlav','corvitto']},
+ {id:'soro',n:'Separação de soro',d:'Líquido aquoso na mistura ou ao derreter',cat:'derrete',al:{it:'sineresi',es:'sinéresis / suero',en:'wheying off'},sint:['soro','fundo'],sev:'qualidade',
+  how:'Na calda madura aparece uma camada translúcida; no derretido, um líquido claro se separa do creme.',
+  mec:'Galactomananas (jataí, guar, tara) e caseínas são incompatíveis: separam fases sem um agente de ligação (carragena). Proteína desestabilizada por calor, acidez ou longo armazenamento também solta soro.',
+  c:[
   [m=>(m.keyPct.guar>.03||m.keyPct.lbg>.03)&&!m.keyPct.carr&&m.A.dairyG>0?.8:0,m=>'Guar/jataí com proteínas do leite sem carragena.','Adicione 0,01–0,02% de carragena.'],
   [m=>(m.A.acidFruitG>0&&m.A.dairyG>0&&m.pr.fruitStage==='antes')?1:0,m=>'Fruta ácida aquecida com leite coagula a caseína.','Adicione a fruta fria.'],
-  [m=>m.pr.matT>6?.5:0,m=>'Maturação quente.','2–4 °C.']]},
- {id:'encolhe',n:'Encolhimento',d:'Gelato descola da cuba e afunda',c:[
+  [m=>m.pr.matT>6?.5:0,m=>'Maturação quente.','2–4 °C.']],
+  pc:[['Calda madura sem agitação por muitas horas.','Agitação lenta no maturador ou mexer antes de mantecar.'],['Leite ou creme no fim da validade.','Laticínios frescos.']],
+  prev:['Carragena nos neutros de base láctea','Fruta ácida só na calda fria'],src:['tharpMelt','motor']},
+ {id:'encolhe',n:'Encolhimento',d:'Gelato descola da cuba e afunda',cat:'aparencia',al:{it:'ritiro',es:'encogimiento',en:'shrinkage'},sint:['encolheu'],sev:'comercial',
+  how:'O gelato se afasta das paredes do pote ou da cuba e a superfície afunda; por dentro aparecem canais de ar.',
+  mec:'A espuma congelada colapsa: as bolhas se conectam em canais, o ar escapa e a estrutura afunda. Favorecem: overrun alto, oscilações de temperatura, variações de pressão, muito açúcar e proteína desnaturada.',
+  c:[
   [m=>hi(m.ov,40,60),m=>'Overrun alto ('+f0(m.ov)+'%).','Reduza ar.'],
-  [m=>hi(Math.abs(m.pr.storeT-m.vit),6,14),m=>'Choque térmico.','Transferência gradual.'],
-  [m=>lo(m.prot,3,1.5),m=>'Pouca proteína para estabilizar as bolhas.','Leite em pó/WPC.']]},
- {id:'talhado',n:'Talhado / granuloso',d:'Grumos de proteína, aspecto de coalhada',c:[
- [m=>m.msnf>.5&&m.ph<5.4?(m.pr.fruitStage==='antes'?1:hi(5.4-m.ph,0,1)):0,m=>'pH previsto '+f1(m.ph)+' com proteínas do leite.','Fruta ácida só na mistura fria; reduza o suco ou use polpa menos ácida.'],
- [m=>m.pr.pastT>92?.6:0,m=>'Pasteurização a '+fT(m.pr.pastT)+' °C desnatura demais as proteínas.','Use 85 °C.'],
- [m=>hi(m.yolkPct,8,12),m=>'Gema em '+f1(m.yolkPct)+'%: risco de coagular acima de 85 °C.','Controle a temperatura (82–84 °C) ou reduza gema.']]}
+  [m=>hi(Math.abs(m.pr.storeT-m.vit),10,18),m=>'Choque térmico.','Transferência gradual.'],
+  [m=>m.tipo==='sorbetto'?0:lo(m.prot,m.P.prot[0],m.P.prot[0]-1.5),m=>'Pouca proteína para estabilizar as bolhas.','Leite em pó/WPC.'],
+  [m=>hi(m.pr.storeFluct,1.5,4),m=>'Oscilação de ±'+fT(m.pr.storeFluct)+' °C no freezer.','Freezer estável.']],
+  pc:[['Endurecimento em temperatura extremamente baixa logo após a mantecação.','Abatedor −30/−35 °C; evitar choques maiores.'],['Transporte com variação de altitude ou pressão.','Embalagem bem fechada; evitar viagens longas com o produto.']],
+  prev:['Overrun dentro da faixa','Temperatura estável'],src:['goffShr','vanwees']},
+ {id:'talhado',n:'Talhado / granuloso',d:'Grumos de proteína, aspecto de coalhada',cat:'textura',al:{it:'granuloso / impazzito',es:'cortado / granuloso',en:'curdy / chunky'},sint:['grumos','flocos'],sev:'qualidade',
+  how:'Grumos visíveis na calda quente ou no derretido; com ovos, pedaços de gema cozida.',
+  mec:'Proteínas do leite coagulam por acidez (pH abaixo de ~5,4 com calor) e a gema coagula acima de ~85 °C.',
+  c:[
+  [m=>m.msnf>.5&&m.ph<5.4?(m.pr.fruitStage==='antes'?1:hi(5.4-m.ph,0,1)):0,m=>'pH previsto '+f1(m.ph)+' com proteínas do leite.','Fruta ácida só na mistura fria; reduza o suco ou use polpa menos ácida.'],
+  [m=>m.pr.pastT>92?.6:0,m=>'Pasteurização a '+fT(m.pr.pastT)+' °C desnatura demais as proteínas.','Use 85 °C.'],
+  [m=>hi(m.yolkPct,8,12),m=>'Gema em '+f1(m.yolkPct)+'%: risco de coagular acima de 85 °C.','Controle a temperatura (82–84 °C) ou reduza gema.']],
+  pc:[['Aquecimento sem agitação (fundo da panela queima e coagula).','Pasteurizador com agitação ou mexer sem parar.'],['Pós jogados de uma vez (grumos).','Misturar os pós com o açúcar e adicionar em chuva a 40 °C.']],
+  prev:['Fruta ácida depois da pasteurização','Gema até 82–84 °C'],src:['migoya','motor']},
+ /* ---- novos ---- */
+ {id:'esfarela',n:'Esfarelado / quebradiço',d:'Seco, quebra em pedaços, sensação de neve',cat:'textura',al:{it:'secco, si rompe a pezzi',es:'seco, se rompe en trozos',en:'crumbly'},sint:['quebra','fofo'],sev:'qualidade',
+  how:'Ao passar a espátula o gelato racha e solta flocos secos; não forma a "onda" lisa típica da vitrine.',
+  mec:'Bolhas grandes e lamelas fracas: muito ar com pouca matriz (sólidos, proteína, estabilizante, emulsificante) para sustentá-lo.',
+  c:[
+  [m=>hi(m.ov,m.P.ov[1],m.P.ov[1]+20),m=>'Overrun previsto '+f0(m.ov)+'% (faixa até '+fT(m.P.ov[1])+'%).','Reduza ar: menos tempo de batimento ou cilindro mais cheio.'],
+  [m=>lo(m.hydro,m.P.stab[0],0),m=>'Estabilizante baixo ('+f2(m.hydro)+'%).','Neutro na dose usual.'],
+  [m=>lo(m.sol,m.P.sol[0],m.P.sol[0]-6),m=>'Sólidos em '+f1(m.sol)+'%.','Aumente sólidos.'],
+  [m=>m.tipo==='sorbetto'?0:lo(m.prot,m.P.prot[0],m.P.prot[0]-1.5),m=>'Proteína em '+f1(m.prot)+'%.','Leite em pó ou WPC.'],
+  [m=>(!m.hasEmul&&m.fat>6)?.2:0,m=>'Sem emulsificante na base com gordura.','Gema, lecitina ou mono-diglicerídeos.']],
+  pc:[['Maturação insuficiente (neutro e proteínas não hidratados).','Maturar o tempo calculado.'],['Mantecação longa demais em sorbet.','Tirar no ponto.']],
+  prev:['Overrun na faixa','Neutro e maturação corretos'],src:['corvitto','goffTex','migoya']},
+ {id:'fofo',n:'Fofo / esponjoso',d:'Leve demais, espuma, sem corpo',cat:'textura',al:{it:'troppo leggero',es:'demasiado ligero',en:'fluffy'},sint:['fofo','aguado','espuma'],sev:'qualidade',
+  how:'Muito leve na colher, parece marshmallow; derrete deixando espuma e pouco líquido.',
+  mec:'Ar demais em uma matriz pobre em sólidos e estabilizante.',
+  c:[
+  [m=>hi(m.ov,m.P.ov[1]+5,m.P.ov[1]+25),m=>'Overrun previsto '+f0(m.ov)+'%.','Reduza o ar.'],
+  [m=>lo(m.sol,m.P.sol[0],m.P.sol[0]-6),m=>'Sólidos em '+f1(m.sol)+'%.','Aumente sólidos.'],
+  [m=>lo(m.hydro,m.P.stab[0],0),m=>'Estabilizante baixo.','Neutro na dose.'],
+  [m=>m.tipo==='sorbetto'?lo(m.pod,m.P.pod[0],m.P.pod[0]-6):0,m=>'Sorbet com pouco açúcar (POD '+f1(m.pod)+'%).','Ajuste os açúcares (balanceador).']],
+  pc:[['Sorbet feito só com fruta e pouco xarope.','Balancear açúcares e neutro.']],
+  prev:['Overrun e sólidos na faixa'],src:['corvitto','goffTex','migoya']},
+ {id:'pastoso',n:'Pastoso',d:'Gruda no céu da boca, textura de pudim',cat:'textura',al:{it:'pastoso / colloso',es:'pastoso',en:'pasty / doughy'},sint:['pastoso','denso','naoderr'],sev:'qualidade',
+  how:'Na boca forma uma massa que gruda no céu da boca e demora a se dissolver.',
+  mec:'Sólidos, amido ou proteína em excesso e pouco ar deixam a fase não congelada espessa demais.',
+  c:[
+  [m=>hi(m.sol,m.P.sol[1],m.P.sol[1]+6),m=>'Sólidos em '+f1(m.sol)+'%.','Reduza sólidos.'],
+  [m=>hi(m.keyPct.starch||0,1.5,3),m=>'Amido em '+f2(m.keyPct.starch||0)+'%.','Use até 1,5–2%.'],
+  [m=>hi(m.prot,m.P.prot[1],m.P.prot[1]+3),m=>'Proteína em '+f1(m.prot)+'%.','Reduza leite em pó/WPC.'],
+  [m=>lo(m.ov,m.P.ov[0],10),m=>'Overrun '+f0(m.ov)+'%.','Mais ar.']],
+  pc:[['Amido que retrogradou numa maturação longa no frio.','Não estique a maturação de bases com amido.']],
+  prev:['Sólidos na faixa','Amido moderado'],src:['preti','migoya']},
+ {id:'fraco',n:'Corpo fraco',d:'Sem mastigabilidade, derrete em água',cat:'corpo',al:{it:'corpo debole',es:'cuerpo débil',en:'weak body'},sint:['aguado','rapido','mole'],sev:'qualidade',
+  how:'Parece "ralo": derrete em seguida num líquido aguado, sem a sensação de creme.',
+  mec:'Sólidos baixos, overrun alto e pouco estabilizante: pouca matriz entre os cristais e as bolhas.',
+  c:[
+  [m=>lo(m.sol,m.P.sol[0],m.P.sol[0]-6),m=>'Sólidos em '+f1(m.sol)+'%.','Aumente sólidos.'],
+  [m=>hi(m.ov,m.P.ov[1],m.P.ov[1]+20),m=>'Overrun '+f0(m.ov)+'%.','Menos ar.'],
+  [m=>lo(m.hydro,m.P.stab[0],0),m=>'Estabilizante baixo.','Neutro na dose.'],
+  [m=>m.tipo==='sorbetto'||m.tipo==='vegan'?0:lo(m.fat,m.P.fat[0],m.P.fat[0]-3),m=>'Gordura em '+f1(m.fat)+'%.','Mais creme.']],
+  pc:[],prev:['Sólidos, gordura e estabilizante na faixa'],src:['goffTex','tharpMelt']},
+ {id:'xaroposo',n:'Xaroposo / pegajoso',d:'Gruda, forma poça de calda',cat:'corpo',al:{it:'appiccicoso',es:'almibarado',en:'sticky / syrupy'},sint:['pegajoso','mole','fundo','doce'],sev:'qualidade',
+  how:'Gruda na espátula como calda; no fundo da cuba aparece xarope e o que fica congelado é gelado.',
+  mec:'Açúcar demais para a água disponível: o ponto de congelamento cai muito, a calda concentrada se separa do gelo.',
+  c:[
+  [m=>hi(m.pod,m.P.pod[1]+2,m.P.pod[1]+8),m=>'POD '+f1(m.pod)+'%.','Reduza açúcares.'],
+  [m=>lo(m.fzVit,62,50),m=>'Só '+f0(m.fzVit)+'% da água congelada.','Rebalanceie os açúcares.'],
+  [m=>hi(m.swt,m.tipo==='sorbetto'?32:24,m.tipo==='sorbetto'?38:30),m=>'Açúcares em '+f1(m.swt)+'% da mistura.','Reduza açúcares.']],
+  pc:[],prev:['Açúcares e PAC calculados'],src:['migoya','corvitto']},
+ {id:'naoderr',n:'Não derrete',d:'Mantém a forma, derretimento lento demais',cat:'derrete',al:{it:'non si scioglie',es:'no se funde',en:'excess shape retention'},sint:['naoderr','untuoso','denso'],sev:'qualidade',
+  how:'Teste de derretimento: depois de 30 min a 20 °C a bola mantém o desenho; costuma vir com textura gordurosa ou curta.',
+  mec:'Rede de gordura coalescida forte demais, sólidos altos, pouco ar ou hidrocoloides que gelificam (konjac, carragena em excesso).',
+  c:[
+  [m=>hi(m.destab,45,70),m=>'Desestabilização da gordura em '+f0(m.destab)+'%.','Menos emulsificante ou menos tempo de batimento.'],
+  [m=>hi(m.sol,m.P.sol[1],m.P.sol[1]+5),m=>'Sólidos em '+f1(m.sol)+'%.','Reduza sólidos.'],
+  [m=>hi(m.hydro,m.P.stab[1],m.P.stab[1]*1.8),m=>'Hidrocoloides em '+f2(m.hydro)+'%.','Reduza o neutro.'],
+  [m=>hi(m.keyPct.carr||0,.04,.1),m=>'Carragena em '+f2(m.keyPct.carr||0)+'% gelifica a base.','Use 0,01–0,03%.']],
+  pc:[],prev:['Emulsificante moderado','Sólidos e neutro na faixa'],src:['tharpMelt','muse']},
+ {id:'coalho',n:'Derretido coalhado',d:'Flocos ou grumos no gelato derretido',cat:'derrete',al:{it:'fiocchi nel fuso',es:'fundido cortado',en:'curdy meltdown'},sint:['flocos','soro','grumos'],sev:'qualidade',
+  how:'Deixe derreter num prato: aparecem pontinhos ou flocos dentro do líquido (não na superfície).',
+  mec:'Proteína desestabilizada (calor, acidez, cálcio, laticínios velhos) agrega no congelamento e reaparece como flocos ao derreter.',
+  c:[
+  [m=>m.msnf>.5&&m.ph<5.9?hi(5.9-m.ph,0,.6):0,m=>'pH previsto '+f1(m.ph)+' com proteínas do leite.','Fruta ácida só na calda fria; reduza acidez.'],
+  [m=>m.pr.pastT>90?.5:0,m=>'Pasteurização a '+fT(m.pr.pastT)+' °C.','Use 85 °C.'],
+  [m=>hi(m.prot,m.P.prot[1],m.P.prot[1]+3),m=>'Proteína em '+f1(m.prot)+'%.','Reduza proteína.']],
+  pc:[['Laticínios líquidos armazenados por muito tempo.','Laticínios frescos.'],['Calda maturada além do máximo.','Respeite o máximo calculado na Maturação.']],
+  prev:['Laticínios frescos','Acidez controlada'],src:['tharpMelt']},
+ {id:'espuma',n:'Derretido espumoso',d:'Espuma persistente ao derreter',cat:'derrete',al:{it:'schiumoso',es:'espumoso',en:'foamy meltdown'},sint:['espuma','fofo'],sev:'qualidade',
+  how:'O derretido forma espuma que não desaparece; costuma acompanhar perda rápida de forma.',
+  mec:'Muito ar estabilizado por proteínas do soro em uma fase pouco viscosa.',
+  c:[
+  [m=>hi(m.ov,m.P.ov[1],m.P.ov[1]+20),m=>'Overrun '+f0(m.ov)+'%.','Menos ar.'],
+  [m=>hi(m.prot,m.P.prot[1],m.P.prot[1]+3),m=>'Proteína em '+f1(m.prot)+'%.','Menos WPC/leite em pó.'],
+  [m=>lo(m.hydro,m.P.stab[0],0),m=>'Pouco estabilizante.','Neutro na dose.']],
+  pc:[],prev:['Overrun na faixa'],src:['tharpMelt']},
+ {id:'gelosup',n:'Gelo na superfície / ressecado',d:'Neve, cristais ou parte seca na superfície',cat:'aparencia',al:{it:'brina / bruciatura da freddo',es:'escarcha / quemadura por frío',en:'surface ice / freezer burn'},sint:['gelosup','gelado','coralt'],sev:'comercial',
+  how:'Camada de cristais ("neve") na superfície do pote ou da cuba; a parte de cima fica opaca, seca e gelada.',
+  mec:'Com o pote mal fechado ou com espaço de ar, a água sublima da superfície e recongela como geada (cristais visíveis); oscilações aceleram.',
+  c:[
+  [m=>hi(m.pr.storeFluct,1.5,4),m=>'Oscilação de ±'+fT(m.pr.storeFluct)+' °C no freezer.','Freezer estável; menos aberturas.'],
+  [m=>hi(m.pr.storeT,-17,-12),m=>'Armazenamento a '+fT(m.pr.storeT)+' °C.','−18 a −22 °C.'],
+  [m=>m.pr.serveFrom==='pote'?hi(m.pr.poteMl?-m.pr.poteMl:0,-400,-150)*.45:0,m=>'Pote pequeno com muita superfície exposta.','Filme em contato com a superfície do gelato antes de tampar.']],
+  pc:[['Pote ou cuba sem tampa ou sem filme em contato.','Filme encostado na superfície + tampa.'],['Pote meio vazio (muito ar dentro).','Potes do tamanho da porção.']],
+  prev:['Filme em contato e tampa','Freezer estável'],src:['goffShelf','migoya']},
+ {id:'fundo',n:'Calda no fundo / separação',d:'Líquido ou fibras separados no fundo',cat:'aparencia',al:{it:'separazione',es:'separación',en:'syrup drainage / separation'},sint:['fundo','soro','pegajoso'],sev:'qualidade',
+  how:'Ao raspar o fundo da cuba aparece calda líquida ou uma camada de polpa de fruta separada.',
+  mec:'Fase não congelada concentrada demais (açúcar) ou partículas de fruta sem estabilizante que as mantenha suspensas escorrem por gravidade.',
+  c:[
+  [m=>m.tipo==='sorbetto'||m.tipo==='frutta'?lo(m.hydro,m.P.stab[0],0):0,m=>'Sorbet/fruta com estabilizante baixo ('+f2(m.hydro)+'%).','Neutro para frutas na dose.'],
+  [m=>hi(m.pod,m.P.pod[1]+2,m.P.pod[1]+8),m=>'Açúcar alto (POD '+f1(m.pod)+'%).','Reduza açúcares.'],
+  [m=>lo(m.fzVit,64,52),m=>'Pouca água congelada ('+f0(m.fzVit)+'%).','Rebalanceie.']],
+  pc:[['Calda de fruta sem mixer antes de mantecar.','Passe o mixer na calda de fruta.']],
+  prev:['Neutro para frutas','Açúcares balanceados'],src:['migoya']},
+ {id:'cordesig',n:'Cor desigual',d:'Manchas, estrias ou tons diferentes',cat:'aparencia',al:{it:'colore non uniforme',es:'color desigual',en:'uneven colour'},sint:['cordesig'],sev:'comercial',
+  how:'Estrias mais claras ou escuras e pontos de pó não dissolvido na superfície da cuba.',
+  mec:'Ingredientes de cor (cacau, pastas, corantes) mal dispersos ou adicionados no fim sem mistura completa.',
+  c:[[m=>(m.A.lines||[]).some(l=>l.ing&&l.ing.id==='cacau')&&m.pr.pastT<60?.4:0,m=>'Cacau em base fria (não dispersa bem).','Hidratar o cacau a quente ou em parte do leite.']],
+  pc:[['Pasta ou cacau adicionados no fim, sem mixer.','Mixer na calda antes de mantecar.'],['Variegato mal distribuído.','Variegar em camadas ao montar a cuba.']],
+  prev:['Mixer na calda','Pós misturados ao açúcar'],src:['goffCol']},
+ {id:'coralt',n:'Cor alterada',d:'Escurecida, acinzentada ou artificial',cat:'aparencia',al:{it:'colore alterato',es:'color alterado',en:'unnatural colour'},sint:['coralt'],sev:'comercial',
+  how:'Fruta que escurece (banana, maçã, pera, abacate), creme acinzentado ou cor viva demais para o sabor.',
+  mec:'Escurecimento enzimático da fruta (polifenoloxidase) com pH alto e oxigênio; corante em excesso; neutralização da acidez deixa tom cinza.',
+  c:[[m=>{const ox=['banana','pessego','caqui','figo','cupuacu'];const has=(m.A.lines||[]).some(l=>ox.includes(l.ing&&l.ing.id));return has&&m.ph>4.2?hi(m.ph,4.2,5.2):0;},m=>'Fruta que escurece com pH '+f1(m.ph)+'.','Limão ou ácido cítrico na polpa e processamento rápido, fora do ar.']],
+  pc:[['Fruta descascada esperando no ar.','Processar na hora; ácido cítrico ou ascórbico.'],['Corante acima do necessário.','Cor natural do ingrediente.']],
+  prev:['Fruta processada na hora','Acidificar frutas que escurecem'],src:['goffCol']},
+ {id:'inclusao',n:'Inclusões ruins',d:'Pedaços afundam, ficam duros ou moles',cat:'aparencia',al:{it:'inclusioni',es:'inclusiones',en:'inclusion defects'},sint:['incl'],sev:'qualidade',
+  how:'Pedaços acumulados no fundo; crocantes que ficaram moles; frutas em pedaço que viraram gelo.',
+  mec:'Densidade e viscosidade baixas deixam pedaços afundarem; crocante sem barreira de gordura absorve água; fruta sem açúcar congela como gelo.',
+  c:[[m=>lo(m.hydro,m.P.stab[0],0)*.5,m=>'Base pouco viscosa para segurar pedaços.','Neutro na dose; incluir pedaços com o gelato mais firme.']],
+  pc:[['Crocante sem barreira de gordura (chocolate ou manteiga de cacau).','Cobrir o crocante com gordura antes.'],['Fruta em pedaço sem candir ou sem xarope.','Candir ou macerar em xarope (PAC próximo ao da base).'],['Inclusões adicionadas com o gelato ainda mole.','Incluir na saída, gelato firme.']],
+  prev:['Ver a página Componentes (variegato, crocante, fruta)'],src:['migoya']},
+ {id:'poucodoce',n:'Pouco doce',d:'Doçura fraca, sabor sem vida',cat:'sabor',al:{it:'poco dolce',es:'poco dulce',en:'lacks sweetness'},sint:['poucodoce','apagado'],sev:'qualidade',
+  how:'Prova na temperatura de serviço: sem doçura o sabor do ingrediente também some.',
+  mec:'POD baixo ou serviço frio demais (a doçura percebida cai com o frio).',
+  c:[
+  [m=>lo(m.pod,m.P.pod[0],m.P.pod[0]-5),m=>'POD '+f1(m.pod)+'% (mín. '+fT(m.P.pod[0])+'%).','Aumente sacarose (o balanceador corrige o PAC).'],
+  [m=>hi(m.serveT-m.vit,1.5,5),m=>'Servido frio demais.','Suba a vitrine.']],
+  pc:[],prev:['POD na faixa'],src:['tharpFlav','motor']},
+ {id:'cozido',n:'Gosto de cozido',d:'Leite cozido, caramelo, queimado',cat:'sabor',al:{it:'sapore di cotto',es:'sabor a cocido',en:'cooked / scorched'},sint:['cozido'],sev:'qualidade',
+  how:'Aroma de leite fervido ou doce de leite num sabor que não deveria ter; queimado indica fundo da panela.',
+  mec:'Aquecimento excessivo forma compostos sulfurados e de Maillard; diminui com o tempo, mas o queimado fica.',
+  c:[
+  [m=>hi(m.pr.pastT,88,95),m=>'Pasteurização a '+fT(m.pr.pastT)+' °C.','85 °C basta.'],
+  [m=>m.pr.pastHoldU==='min'&&m.pr.pastT>=80?hi(m.pr.pastHold,5,20):0,m=>'Patamar longo a '+fT(m.pr.pastT)+' °C ('+fT(m.pr.pastHold)+' min).','Alta temperatura com patamar curto (85 °C · 15–30 s) ou baixa (65 °C · 30 min).'],
+  [m=>hi(m.msnf,m.P.msnf[1],m.P.msnf[1]+4),m=>'Muito leite em pó ('+f1(m.msnf)+'% de sólidos do leite).','Reduza leite em pó.']],
+  pc:[['Fundo da panela queimado (sem agitação).','Pasteurizador com agitação ou banho-maria.'],['Ingrediente com gosto de cozido (leite evaporado, doce de leite).','Escolha consciente do ingrediente.']],
+  prev:['Pasteurização correta','Agitação no aquecimento'],src:['corvitto','goffFlav','tharpFlav']},
+ {id:'oxidado',n:'Oxidado / metálico',d:'Papelão, metálico, tinta, peixe',cat:'sabor',al:{it:'ossidato / metallico',es:'oxidado / metálico',en:'oxidized'},sint:['oxidado'],sev:'qualidade',
+  how:'Sabor de papelão molhado que evolui para metálico ou de tinta; mais forte no fundo da boca.',
+  mec:'Oxidação da gordura, catalisada por cobre e ferro, luz e longo armazenamento; gorduras insaturadas (óleos, oleaginosas) oxidam mais.',
+  c:[
+  [m=>{const t=m.fatTypes||{};return m.fat>2?hi((t.oil||0)+(t.nut||0),40,90)*.45:0;},m=>'Gordura insaturada (óleos, oleaginosas) em proporção alta.','Pastas frescas, armazenamento curto e ao abrigo da luz.'],
+  [m=>m.fat>6&&(m.keyPct.mono||0)>.2?.3:0,m=>'Mono e diglicerídeos podem favorecer oxidação.','Usar só o necessário.']],
+  pc:[['Utensílios de cobre, ferro ou mal lavados.','Inox; limpeza correta.'],['Laticínios expostos à luz ou velhos.','Laticínios frescos, protegidos da luz.'],['Pasta de oleaginosa aberta há muito tempo.','Usar pastas frescas, bem fechadas.']],
+  prev:['Inox e higiene','Rodízio de estoque'],src:['corvitto','goffFlav','tharpFlav']},
+ {id:'rancoso',n:'Rançoso',d:'Queijo, manteiga velha, vômito',cat:'sabor',al:{it:'rancido',es:'rancio',en:'rancid'},sint:['rancoso'],sev:'qualidade',
+  how:'Odor de queijo ralado ou manteiga velha; picante no fim da boca.',
+  mec:'A lipase quebra a gordura do leite e libera ácido butírico; acontece com leite cru agitado/bombeado ou aquecimento insuficiente.',
+  c:[[m=>m.A.dairyG>0?hi(72-m.pr.pastT,0,10):0,m=>'Pasteurização a '+fT(m.pr.pastT)+' °C pode não inativar a lipase.','Pasteurizar (85 °C · 15–30 s ou 65 °C · 30 min).']],
+  pc:[['Leite cru agitado ou batido antes de pasteurizar.','Manuseio suave; pasteurizar logo.'],['Laticínios no fim da validade.','Laticínios frescos.']],
+  prev:['Pasteurização','Laticínios frescos'],src:['corvitto','goffFlav','tharpFlav']},
+ {id:'azedo',n:'Azedo / fermentado',d:'Ácido, fermentado, gasoso',cat:'sabor',al:{it:'acido / fermentato',es:'ácido / fermentado',en:'high acid / fermented'},sint:['azedo','sujo'],sev:'seguranca',
+  how:'Acidez que não vem de fruta ou iogurte; às vezes com gás ou odor de fermento.',
+  mec:'Bactérias multiplicam na calda mantida por tempo demais ou quente demais antes de congelar, ou em laticínios ácidos.',
+  c:[
+  [m=>hi(m.pr.matH,48,72),m=>'Maturação de '+fT(m.pr.matH)+' h.','Use a maturação calculada (máximo).'],
+  [m=>hi(m.pr.matT,5,8),m=>'Maturação a '+fT(m.pr.matT)+' °C.','2–4 °C.'],
+  [m=>hi(m.pr.coolMin,90,180),m=>'Resfriamento até 4 °C em '+fT(m.pr.coolMin)+' min.','Banho de gelo; menos de 2 h.']],
+  pc:[['Laticínios ácidos ou velhos.','Laticínios frescos.'],['Calda pasteurizada guardada além de 72 h.','Usar em até 72 h a ≤ 4 °C.']],
+  prev:['Resfriamento rápido','Maturação no tempo e temperatura certos'],src:['goffFlav','tharpFlav','preti']},
+ {id:'salgado',n:'Salgado',d:'Gosto salgado em gelato doce',cat:'sabor',al:{it:'salato',es:'salado',en:'salty'},sint:['salgado'],sev:'qualidade',
+  how:'Salgado perceptível, sem ingrediente salgado proposital.',
+  mec:'Sal adicionado em excesso ou sólidos do leite/soro em pó altos (minerais).',
+  c:[
+  [m=>m.tipo==='gastro'?0:hi(m.salt,.25,.6),m=>'Sal em '+f2(m.salt)+'%.','0,05–0,15% realça sem salgar.'],
+  [m=>hi(m.msnf,m.P.msnf[1],m.P.msnf[1]+4),m=>'Sólidos do leite em '+f1(m.msnf)+'%.','Reduza leite/soro em pó.']],
+  pc:[['Manteiga salgada no lugar da sem sal.','Manteiga sem sal.']],
+  prev:['Sal pesado em balança de precisão'],src:['goffFlav','tharpFlav']},
+ {id:'absorvido',n:'Gosto de geladeira',d:'Sabor estranho absorvido do ambiente',cat:'sabor',al:{it:'odori assorbiti',es:'olores absorbidos',en:'absorbed / storage off-flavour'},sint:['geladeira'],sev:'qualidade',
+  how:'Sabor de cebola, peixe, plástico ou de outro sabor de gelato; mais forte na superfície.',
+  mec:'A gordura absorve voláteis do ambiente; a calda madura e o gelato sem tampa pegam odores da geladeira e da vitrine.',
+  c:[[m=>hi(m.pr.matH,12,48)*.4,m=>'Maturação longa ('+fT(m.pr.matH)+' h): mais tempo exposta a odores.','Calda tampada, longe de alimentos de cheiro forte.']],
+  pc:[['Calda ou cuba sem tampa na geladeira/freezer.','Sempre tampado.'],['Freezer compartilhado com alimentos de cheiro forte.','Espaço dedicado ao gelato.'],['Produtos de limpeza com perfume.','Limpeza sem perfume, bem enxaguada.']],
+  prev:['Tampas e filme','Freezer dedicado'],src:['goffFlav','tharpFlav','corvitto']},
+ {id:'xarope',n:'Gosto de xarope',d:'Doçura "de xarope de milho"',cat:'sabor',al:{it:'gusto di sciroppo',es:'sabor a jarabe',en:'syrup-like'},sint:['xarope','doce'],sev:'qualidade',
+  how:'Doçura plana, levemente caramelizada, tipo xarope de glicose.',
+  mec:'Muito xarope ou sólidos de glicose, ou glicose degradada por calor e tempo.',
+  c:[[m=>hi((m.A.gs||0)/m.tot*100,6,12),m=>'Sólidos de glicose em '+f1((m.A.gs||0)/m.tot*100)+'% da mistura.','Reduza glicose; use sacarose e dextrose.']],
+  pc:[['Xarope de glicose velho ou superaquecido.','Glicose dentro da validade, adicionada no fim do aquecimento.']],
+  prev:['Glicose ≤ 5–6% da mistura'],src:['tharpFlav']},
+ {id:'micro',n:'Contaminação microbiana',d:'Amargo, sujo, pútrido, gás',cat:'seguranca',al:{it:'contaminazione',es:'contaminación',en:'unclean / putrid'},sint:['sujo','azedo','geladeira'],sev:'seguranca',
+  how:'Sabor amargo, sujo ou pútrido, às vezes com gás. Não provar mais: descartar o lote e registrar.',
+  mec:'Multiplicação de bactérias psicrotróficas e patogênicas por falha de pasteurização, resfriamento lento, maturação longa ou quente, ou recontaminação.',
+  c:[
+  [m=>m.A.dairyG>0||m.yolkPct>0?hi(72-m.pr.pastT,0,8):0,m=>'Pasteurização a '+fT(m.pr.pastT)+' °C.','85 °C · 15–30 s ou 65 °C · 30 min.'],
+  [m=>hi(m.pr.coolMin,120,240),m=>'Resfriamento de '+fT(m.pr.coolMin)+' min até 4 °C.','Menos de 2 h (banho de gelo).'],
+  [m=>hi(m.pr.matH,72,96),m=>'Maturação acima de 72 h.','Use em até 72 h.'],
+  [m=>hi(m.pr.matT,6,10),m=>'Maturação a '+fT(m.pr.matT)+' °C.','≤ 4 °C.']],
+  pc:[['Utensílios, máquina ou cubas mal higienizados.','Plano de higiene (APPCC).'],['Gelato derretido e recongelado.','Nunca recongelar.'],['Ingredientes adicionados após a pasteurização sem higiene (frutas, inclusões).','Frutas lavadas e sanitizadas; inclusões de origem segura.']],
+  prev:['APPCC: registros de pasteurização, resfriamento e maturação (Produção ao vivo)'],src:['preti','goffFlav','tharpFlav']}
 ];
 function rankDefect(def,m){return def.c.map(([t,txt,fix])=>{let s=0;try{s=t(m)||0;}catch(e){}return{s,txt:s>0?txt(m):'',fix:s>0?(typeof fix==='function'?fix(m):fix):''};}).filter(x=>x.s>.05).sort((a,b)=>b.s-a.s);}
+/* diagnóstico diferencial: sintomas escolhidos × evidência da receita e do processo */
+function diagnoseSymptoms(sel,m){const S0=new Set(sel||[]);return DEFECTS.map(d=>{const sint=d.sint||[];const hit=sint.filter(s=>S0.has(s)).length;if(!hit)return null;
+  const cover=hit/sint.length,prec=hit/S0.size;const R=m&&!m.empty?rankDefect(d,m):[];const ev=R.length?R[0].s:0;
+  const score=clamp(.45*prec+.25*cover+.3*ev,0,1);return{d,score,hit,ev,R};}).filter(Boolean).sort((a,b)=>b.score-a.score);}
+/* riscos da receita atual: defeitos com causa provável hoje (prevenção) */
+function defectRisks(m){if(!m||m.empty)return[];return DEFECTS.map(d=>{const R=rankDefect(d,m);return R.length?{d,R,s:R[0].s}:null;}).filter(x=>x&&x.s>=.3).sort((a,b)=>b.s-a.s);}
 
 
 /* ---------- NEUTROS, GERADOR E SENSIBILIDADE ---------- */
@@ -1736,9 +2022,9 @@ const PAGE_ROLES={bancada:'mc',creator:'mc',laudo:'mc',congelamento:'mc',quimica
  ingredientes:'mc',rotulo:'mcs',custos:'m',biblioteca:'mc',equipe:'m',dados:'mcs',
  componentes:'mc',degustacao:'mcs',sazonal:'mc'};
 /* o Sous Chef só pode estas ações; o Chef pode tudo menos estas */
-const SOUS_ACT=new Set(['go','navTog','toTop','flowStart','flowNext','flowBack','flowDisc','flowOpen','flowColor','flowView','flowLot','flowNotify','chk','unchk','copy','lotNew','lotOpen','lotSave','lotConsume','defect','execRun','logout','logoutYes','logoutNo','syncNow','testRun','delNo','authMode','authGo',
+const SOUS_ACT=new Set(['go','defMode','defSym','defClr','defOpen','defOpenB','defCat','navTog','toTop','flowStart','flowNext','flowBack','flowDisc','flowOpen','flowColor','flowView','flowLot','flowNotify','chk','unchk','copy','lotNew','lotOpen','lotSave','lotConsume','defect','execRun','logout','logoutYes','logoutNo','syncNow','testRun','delNo','authMode','authGo',
  'meltTimer','fam','palOpen','palClose','palRun','panelStart','panelSet','panelNext','panelCancel','panelReveal','panelReset']);
-const SOUS_INP=new Set(['flowLabel','flowMeas','prodG','lot','lotTxt','auth','panelTaster','panelNote','palQ']),SOUS_CHG=new Set(['lot','panelLot']);
+const SOUS_INP=new Set(['flowLabel','flowMeas','prodG','lot','lotTxt','auth','panelTaster','panelNote','palQ']),SOUS_CHG=new Set(['defChk','lot','panelLot']);
 const CHEF_DENY_ACT=new Set(['expJson','expCsv','memInvite','memDel','memDelYes','teamReload']),CHEF_DENY_INP=new Set(['cost']),CHEF_DENY_CHG=new Set(['memRole']);
 /* telas de entrada e saída funcionam para qualquer perfil (inclusive antes de saber o perfil) */
 const ALWAYS_ACT=new Set(['authGo','authMode','authRetry','logout','logoutYes','logoutNo','syncNow']);
@@ -1896,7 +2182,7 @@ const isMac=()=>{try{return /Mac|iPhone|iPad/.test(navigator.platform||navigator
 const kbd=k=>`<kbd>${isMac()?'⌘':'Ctrl '}${k}</kbd>`;
 
 /* ---------- marca ---------- */
-const VERSION='v17.5';
+const VERSION='v17.6';
 const brandHTML=()=>`<div class="brand"><div class="hex"></div><div><b>Il <span>Fredolin</span></b><small>Gelato Lab ${VERSION}${APP_MODE==='app'&&ME.email?' · '+ROLE_N[ROLE]:''}</small></div></div>`;
 
 /* ---------- termômetro da receita: vitrine, serviço ideal (com faixa de incerteza) e freezer numa régua só ---------- */
@@ -2224,14 +2510,46 @@ function pgBrix(m){
    <p class="t2" style="margin:6px 0 0">Abaixo de 20: ácido dominante · 20–35: vivo, cítrico · 35–60: fruta madura equilibrada · acima de 60: plano. Acidez orgânica da mistura: ${f2(m.acd)}%.</p></div>
  </div></div>`;}
 
-/* ---------- DEFEITOS ---------- */
+/* ---------- DEFEITOS (v17.6): sintomas → diagnóstico diferencial · banco por defeito · risco da receita ---------- */
+const DEF_SEV={qualidade:['Qualidade','info'],comercial:['Comercial','warn'],seguranca:['Segurança','crit']};
+const defLvl=s=>s>.66?'crit':s>.33?'warn':'info';
+const defLvlN=s=>s>.66?'alta':s>.33?'média':'baixa';
+const DEF_SNAME={};DEF_SINT.forEach(g=>g[2].forEach(([k,n])=>DEF_SNAME[k]=n));
+function defCauses(R){return R.length?R.map(r=>`<div class="find"><div class="bar ${defLvl(r.s)}"></div><div><div class="area">Probabilidade ${defLvlN(r.s)} · ${f0(r.s*100)}%</div><h3>${esc(r.txt)}</h3><div class="fix"><b>Correção</b>${esc(r.fix)}</div></div></div>`).join('')
+ :'<p class="t2" style="margin:0">Nenhuma causa provável na receita e no processo atuais. Confira a lista de processo e manuseio abaixo, a pesagem e a calibração dos termômetros.</p>';}
+function defDetail(d,m){const R=m.empty?[]:rankDefect(d,m);const sv=DEF_SEV[d.sev]||DEF_SEV.qualidade;const al=d.al||{};
+ return`<div class="card"><h2>${esc(d.n)} <span class="muted" style="text-transform:none;letter-spacing:0">— ${esc(d.d)}</span></h2>
+ <div class="chips" style="margin:2px 0 10px">${[['it','IT'],['es','ES'],['en','EN']].filter(([k])=>al[k]).map(([k,n])=>`<span class="tag">${n} · ${esc(al[k])}</span>`).join('')}<span class="tag" style="color:var(--${sv[1]==='info'?'t2':sv[1]})">${sv[0]}</span></div>
+ ${d.sev==='seguranca'?'<p class="t2" style="margin:0 0 10px"><b style="color:var(--crit)">Segurança alimentar:</b> na dúvida, não prove de novo. Descarte o lote e registre em Produção ao vivo.</p>':''}
+ ${d.how?`<h3 style="margin:10px 0 4px">Como identificar</h3><p class="t2" style="margin:0 0 6px">${esc(d.how)}</p>`:''}
+ ${d.mec?`<h3 style="margin:10px 0 4px">Por que acontece</h3><p class="t2" style="margin:0">${esc(d.mec)}</p>`:''}</div>
+ <div class="card"><h2>Causas na receita e no processo atuais</h2>${defCauses(R)}</div>
+ ${(d.pc&&d.pc.length)?`<div class="card"><h2>Verifique também (processo e manuseio)</h2>${d.pc.map(([c,f],i)=>`<label class="find" style="cursor:pointer"><div class="bar info"></div><div><h3><input type="checkbox" data-c="defChk" data-v="${d.id}:${i}"${U.defChk&&U.defChk[d.id+':'+i]?' checked':''} style="margin-right:8px">${esc(c)}</h3><div class="fix"><b>Correção</b>${esc(f)}</div></div></label>`).join('')}</div>`:''}
+ <div class="card"><h2>Prevenção</h2><ul class="t2" style="margin:0;padding-left:18px">${(d.prev||[]).map(x=>`<li>${esc(x)}</li>`).join('')}</ul>
+ <h3 style="margin:14px 0 4px">Fontes</h3><ul class="muted" style="margin:4px 0 0;padding-left:18px;font-size:12px">${(d.src||[]).map(k=>`<li>${esc(DEF_SRC[k]||k)}</li>`).join('')}</ul></div>`;}
 function pgDefeitos(m){
- const d=DEFECTS.find(x=>x.id===S.defect)||DEFECTS[0];const R=m.empty?[]:rankDefect(d,m);
- return`<div class="pg"><div><h1>Diagnóstico de defeitos</h1><p class="lead">Escolha o defeito que apareceu na produção. O motor cruza a receita e o processo atuais e ordena as causas mais prováveis.</p></div>
- <div class="card"><div class="chips">${DEFECTS.map(x=>`<button data-a="defect" data-v="${x.id}" aria-pressed="${x.id===d.id}">${x.n}</button>`).join('')}</div></div>
- <div class="card"><h2>${esc(d.n)} <span class="muted" style="text-transform:none;letter-spacing:0">— ${esc(d.d)}</span></h2>
- ${R.length?R.map(r=>`<div class="find"><div class="bar ${r.s>.66?'crit':r.s>.33?'warn':'info'}"></div><div><div class="area">Probabilidade ${r.s>.66?'alta':r.s>.33?'média':'baixa'} · ${f0(r.s*100)}%</div><h3>${esc(r.txt)}</h3><div class="fix"><b>Correção</b>${esc(r.fix)}</div></div></div>`).join('')
- :'<p class="t2" style="margin:0">Nenhuma causa provável na receita e no processo atuais. Se o defeito aparece mesmo assim, verifique a pesagem, a calibração do termômetro da mantecadora e as oscilações da vitrine.</p>'}</div></div>`;}
+ const mode=U.defMode||'sint';const sel=U.defSym||[];
+ const tabs=`<div class="chips">${[['sint','Pelos sintomas'],['banco','Por defeito'],['risco','Risco da receita']].map(([k,n])=>`<button data-a="defMode" data-v="${k}" aria-pressed="${mode===k}">${n}</button>`).join('')}</div>`;
+ let body='';
+ if(mode==='sint'){
+  const D=sel.length?diagnoseSymptoms(sel,m):[];const top=D[0];
+  body=`<div class="card"><h2>O que você percebe? <span class="muted" style="text-transform:none;letter-spacing:0">— marque um ou mais sintomas</span></h2>
+  ${DEF_SINT.map(([g,gn,L])=>`<div style="margin:10px 0 4px" class="muted">${gn}</div><div class="chips">${L.map(([k,n])=>`<button data-a="defSym" data-v="${k}" aria-pressed="${sel.includes(k)}">${n}</button>`).join('')}</div>`).join('')}
+  ${sel.length?`<div style="margin-top:12px"><button class="btn ghost" data-a="defClr">Limpar sintomas</button></div>`:''}</div>
+  ${sel.length?`<div class="card"><h2>Diagnóstico diferencial</h2><p class="t2" style="margin:0 0 8px">Ordem pela combinação dos sintomas marcados e das causas que o motor encontra na receita e no processo atuais.</p>
+  ${D.length?`<div class="pills">${D.slice(0,8).map(x=>`<button class="pill2 ${defLvl(x.score)}" data-a="defOpen" data-v="${x.d.id}" style="text-align:left;cursor:pointer" aria-pressed="${top&&x.d.id===(U.defPick||top.d.id)}"><span class="dot"></span><span class="n">${esc(x.d.n)}</span><span class="v">${f0(x.score*100)}% · ${x.ev>.05?'receita confirma':'sintomas'}</span></button>`).join('')}</div>`:'<p class="t2">Nenhum defeito do banco combina com esses sintomas.</p>'}</div>
+  ${(()=>{const pk=D.find(x=>x.d.id===U.defPick)||top;return pk?defDetail(pk.d,m):'';})()}`:''}`;
+ }else if(mode==='banco'){
+  const cat=U.defCat||'';const L=DEFECTS.filter(x=>!cat||x.cat===cat);const d=DEFECTS.find(x=>x.id===S.defect)||L[0]||DEFECTS[0];
+  body=`<div class="card"><div class="chips" style="margin-bottom:10px"><button data-a="defCat" data-v="" aria-pressed="${!cat}">Todos · ${DEFECTS.length}</button>${DEF_CAT.map(([k,n])=>`<button data-a="defCat" data-v="${k}" aria-pressed="${cat===k}">${n} · ${DEFECTS.filter(x=>x.cat===k).length}</button>`).join('')}</div>
+  <div class="chips">${L.map(x=>`<button data-a="defect" data-v="${x.id}" aria-pressed="${x.id===d.id}">${x.n}</button>`).join('')}</div></div>${defDetail(d,m)}`;
+ }else{
+  const R=defectRisks(m);
+  body=`<div class="card"><h2>Riscos da receita atual</h2><p class="t2" style="margin:0 0 8px">Antes de produzir: defeitos que a receita e o processo atuais tendem a provocar, com a causa principal e a correção.</p>
+  ${m.empty?'<p class="t2">Monte uma receita na Bancada.</p>':R.length?R.map(x=>`<div class="find"><div class="bar ${defLvl(x.s)}"></div><div><div class="area">${esc(x.d.n)} · risco ${defLvlN(x.s)} · ${f0(x.s*100)}%</div><h3>${esc(x.R[0].txt)}</h3><div class="fix"><b>Correção</b>${esc(x.R[0].fix)}</div><div style="margin-top:6px"><button class="btn ghost" data-a="defOpenB" data-v="${x.d.id}">Ver ficha do defeito</button></div></div></div>`).join('')
+  :'<p class="t2" style="margin:0">Nenhum risco relevante: a receita e o processo atuais estão dentro das faixas de todos os '+DEFECTS.length+' defeitos do banco.</p>'}</div>`;}
+ return`<div class="pg"><div><h1>Diagnóstico de defeitos</h1><p class="lead">Banco de ${DEFECTS.length} defeitos do gelato artesanal com sintomas, mecanismo, causas medidas pelo motor, checklist de processo, prevenção e fontes.</p></div>
+ <div class="card">${tabs}</div>${body}</div>`;}
 
 /* ---------- RÓTULO ---------- */
 const BRAL={leite:'LEITE E DERIVADOS',ovo:'OVOS E DERIVADOS',soja:'SOJA E DERIVADOS',amendoim:'AMENDOIM',peixe:'PEIXES',crustaceo:'CRUSTÁCEOS'};
@@ -4526,6 +4844,12 @@ const ACT={
  balApply:()=>{if(U.bal&&U.bal.ok){S.recipe=U.bal.newRecipe;U.bal=null;render();toast(S.proc.serveFrom==='pote'?'Açúcares rebalanceados para '+f0(+S.proc.waitMin)+' min de espera':'Açúcares rebalanceados');}},
  balClose:()=>{U.bal=null;render();},
  defect:v=>{S.defect=v;render();},
+ defMode:v=>{U.defMode=v;render();},
+ defSym:v=>{const a=U.defSym||[];U.defSym=a.includes(v)?a.filter(x=>x!==v):a.concat(v);U.defPick=null;render();},
+ defClr:()=>{U.defSym=[];U.defPick=null;render();},
+ defOpen:v=>{U.defPick=v;render();},
+ defOpenB:v=>{U.defMode='banco';U.defCat='';S.defect=v;scrollTopAll();render();},
+ defCat:v=>{U.defCat=v;const L=DEFECTS.filter(x=>!v||x.cat===v);if(L.length&&!L.some(x=>x.id===S.defect))S.defect=L[0].id;render();},
  brixReset:v=>{delete S.brix[v];render();},
  load:v=>{const l=LIB.find(x=>x.id==v);if(!l)return;Object.assign(S,JSON.parse(JSON.stringify(l.st)));S.proc=Object.assign({},PROC0,S.proc);S.libId=String(l.id);S.execId=null;S.page='bancada';U.bal=null;render();toast(l.name+' aberta');},
  del:v=>{U.del=String(v);render();},delNo:()=>{U.del=null;render();},
@@ -4655,6 +4979,7 @@ const INP={
 
 /* ---------- MUDANÇAS (data-c, selects/checkboxes/arquivo) ---------- */
 const CHG={
+ defChk:t=>{U.defChk=U.defChk||{};U.defChk[t.dataset.v]=t.checked;},
  tipo:t=>{S.tipo=t.value;U.bal=null;},
  proc:t=>{const k=t.dataset.k;S.proc[k]=t.value;if(k==='pastHoldU'&&t.value==='min'&&S.proc.pastHold>60)S.proc.pastHold=30;},
  gen:t=>{const k=t.dataset.k;S.lab.gen[k]=t.value;if(k==='tipo')Object.assign(S.lab.gen,GEN_DEF[t.value]);U.gen=null;},
@@ -4684,7 +5009,7 @@ function importBackup(file){const fr=new FileReader();fr.onload=()=>{try{const d
 /* toda ação passa pela checagem do perfil (o servidor também recusa o que o perfil não pode) */
 const denied=()=>toast('Seu perfil não tem acesso a esta função.');
 /* ações que não mexem na receita não entram no desfazer */
-const NO_UNDO=new Set(['go','fam','palOpen','palClose','palRun','undo','copy','chk','unchk','libTab','libAuthor','libMore','libTipo','libVitF','simOpen','simClose','cmpToggle','cmpClear','histOpen','lotOpen','crTab','crSub','atGoal','setSw','navTog','toTop','flowOpen','flowView','flowNotify','flowNext','flowBack','flowDisc','flowColor','flowStart','flowLot','procGo','procPlay','atSel','atPick','atCard','atExplore','nxGoal','sazM','del','delNo','meltTimer','panelSet','panelStart','panelNext','panelCancel','panelReveal','panelReset','testRun','syncNow','age','pick']);
+const NO_UNDO=new Set(['go','defMode','defSym','defClr','defOpen','defCat','fam','palOpen','palClose','palRun','undo','copy','chk','unchk','libTab','libAuthor','libMore','libTipo','libVitF','simOpen','simClose','cmpToggle','cmpClear','histOpen','lotOpen','crTab','crSub','atGoal','setSw','navTog','toTop','flowOpen','flowView','flowNotify','flowNext','flowBack','flowDisc','flowColor','flowStart','flowLot','procGo','procPlay','atSel','atPick','atCard','atExplore','nxGoal','sazM','del','delNo','meltTimer','panelSet','panelStart','panelNext','panelCancel','panelReveal','panelReset','testRun','syncNow','age','pick']);
 function runAct(k,v,t){if(NO_UNDO.has(k))return ACT[k](v,t);const before=undoSnap();undoMark();const r=ACT[k](v,t);
  if(r&&typeof r.then==='function')return r;if(undoSnap()===before)undoSettle();else if(UNDO_TOAST.has(k))toastUndo();return r;}
 document.addEventListener('click',e=>{const t=e.target.closest('[data-a]');if(!t)return;e.preventDefault();const k=t.dataset.a;if(!ACT[k])return;if(!can.act(k))return denied();runAct(k,t.dataset.v,t);});
