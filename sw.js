@@ -1,7 +1,7 @@
-/* Il Fredolin · service worker (versão 2534a5908a)
+/* Il Fredolin · service worker (versão 6f1998eb64)
    Página e arquivos do app: busca na rede quando há conexão (sempre a versão mais nova) e usa a cópia guardada sem internet.
    Dados da equipe (Supabase) nunca passam por aqui: vão direto, com login. */
-const CACHE='il-fredolin-2534a5908a';
+const CACHE='il-fredolin-6f1998eb64';
 const CORE=['./','./index.html','./config.js','./manifest.webmanifest','./icons/icon-192.png','./icons/icon-512.png','./icons/apple-touch-icon.png','./icons/favicon-64.png'];
 self.addEventListener('install',e=>{e.waitUntil(caches.open(CACHE).then(c=>c.addAll(CORE)).then(()=>self.skipWaiting()));});
 self.addEventListener('activate',e=>{e.waitUntil(caches.keys().then(ks=>Promise.all(ks.filter(k=>k.startsWith('il-fredolin-')&&k!==CACHE).map(k=>caches.delete(k)))).then(()=>self.clients.claim()));});
