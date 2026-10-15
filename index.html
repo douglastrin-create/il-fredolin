@@ -86,26 +86,31 @@ nav .cnt .c{background:var(--crit-a);color:var(--crit)}nav .cnt .w{background:va
 .rtype:hover{color:var(--t1)}
 output.ro,.rname.ro{display:block;font-weight:600;color:var(--t1);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;border:0;margin:0;padding:2px 0}
 .r-lbl{font-size:11.5px;color:var(--t3)}
-.thermo{flex:1 1 520px;display:flex;align-items:center;gap:14px;min-width:0;max-width:720px}
-.th-step{display:flex;flex-direction:column;gap:3px;flex:none}
-.th-step>span{font-size:11.5px;color:var(--t3)}
-.stepper,.vit{display:flex;align-items:center;gap:2px;background:var(--surf);border:1px solid var(--line);border-radius:10px;padding:2px}
-.stepper button,.vit button{width:28px;height:28px;border:0;border-radius:7px;background:none;cursor:pointer;color:var(--t2);font-size:16px;line-height:1}
-.stepper button:hover,.vit button:hover{background:var(--hov);color:var(--t1)}
-.stepper output,.vit output{font:500 15px/1 var(--fm);color:var(--ice);min-width:50px;text-align:center;font-variant-numeric:tabular-nums}
-.vit output{min-width:66px}
-.stepper output.s-ok{color:var(--ok)}.stepper output.s-warn{color:var(--warn)}.stepper output.s-crit{color:var(--crit)}.stepper output.frzv{color:var(--info)}
-.th-rail{position:relative;flex:1;height:44px;min-width:150px;cursor:pointer;touch-action:none;user-select:none}
-.th-track{position:absolute;left:0;right:0;top:19px;height:6px;border-radius:3px;background:linear-gradient(90deg,rgba(167,139,250,.35),rgba(125,211,252,.3) 55%,rgba(110,231,183,.3))}
-.th-tick{position:absolute;top:31px;transform:translateX(-50%);font:500 9.5px/1 var(--fm);color:var(--t3)}
-.th-band{position:absolute;top:16px;height:12px;border-radius:6px;background:rgba(110,231,183,.2);border:1px solid rgba(110,231,183,.55)}
-.th-mk{position:absolute;top:0;bottom:0;width:0}
-.th-mk i{position:absolute;display:block}
-.th-mk.vit i{top:12px;left:-2px;width:4px;height:20px;border-radius:2px;background:var(--ice);box-shadow:0 0 0 3px var(--bg)}
-.th-mk.vit.s-ok i{background:var(--ok)}.th-mk.vit.s-warn i{background:var(--warn)}.th-mk.vit.s-crit i{background:var(--crit)}
-.th-mk.ideal i{top:16px;left:-1px;width:2px;height:12px;background:var(--ok)}
-.th-mk.ideal{z-index:2}.th-mk.ideal b{position:absolute;top:0;left:0;transform:translateX(-50%);background:var(--bg);padding:0 4px;border-radius:4px;font:500 10.5px/1 var(--fm);color:var(--ok);white-space:nowrap}
-.th-mk.frz i{top:15px;left:-5px;width:10px;height:14px;border-radius:3px;border:2px solid var(--info);background:var(--bg)}
+.thermo{flex:1 1 560px;display:flex;align-items:center;gap:22px;min-width:0;max-width:760px;padding:8px 16px;border-radius:16px;background:rgba(255,255,255,.035);box-shadow:inset 0 0 0 .5px rgba(255,255,255,.08)}
+.thermo{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Text',var(--fb)}
+/* leitura no estilo Apple: rótulo pequeno, valor grande com números tabulares, ajuste em cápsula logo abaixo */
+.tq{display:grid;grid-template-columns:auto auto;grid-template-areas:"l l" "v s";align-items:center;column-gap:10px;row-gap:1px;flex:none}
+.tq-l{grid-area:l;font-size:11.5px;font-weight:500;color:var(--t3);letter-spacing:.01em}
+.tq-v{grid-area:v;display:flex;align-items:baseline;gap:2px;font-variant-numeric:tabular-nums}
+.tq-v b{font:600 21px/1.1 -apple-system,BlinkMacSystemFont,'SF Pro Display',var(--fb);letter-spacing:-.02em;color:var(--t1)}
+.tq-v span{font-size:12px;color:var(--t3);font-weight:500}
+.tq.sec .tq-v b{font-size:17px;color:var(--t2)}
+.ios-step{grid-area:s;display:flex;align-items:center;height:28px;border-radius:8px;background:rgba(255,255,255,.08);overflow:hidden}
+.ios-step button{width:34px;height:100%;border:0;background:none;color:var(--t1);font:400 18px/1 -apple-system,BlinkMacSystemFont,var(--fb);cursor:pointer;padding:0}
+.ios-step button:hover{background:rgba(255,255,255,.06)}.ios-step button:active{background:rgba(255,255,255,.14)}
+.ios-step i{width:1px;height:16px;background:rgba(255,255,255,.14)}
+.tbar{flex:1;min-width:180px;display:flex;flex-direction:column;gap:6px}
+.tbar-cap{display:flex;justify-content:space-between;align-items:baseline;gap:10px;font-size:12px;color:var(--t3);white-space:nowrap;min-width:0}
+.tbar-cap b{color:var(--t1);font-weight:600;font-variant-numeric:tabular-nums}
+.tbar-cap em{font-style:normal;margin-left:6px;color:var(--t3);font-variant-numeric:tabular-nums}
+.tbar-st{font-weight:500;overflow:hidden;text-overflow:ellipsis}.tbar-st.ok{color:var(--ok)}.tbar-st.warn{color:var(--warn)}.tbar-st.crit{color:var(--crit)}
+.th-rail{position:relative;height:18px;cursor:pointer;touch-action:none;user-select:none;-webkit-user-select:none}
+.th-track{position:absolute;left:0;right:0;top:6px;height:6px;border-radius:3px;background:rgba(255,255,255,.09)}
+.th-band{position:absolute;top:6px;height:6px;border-radius:3px;background:linear-gradient(90deg,#38a0d4,#6ee7b7)}
+.th-ideal{position:absolute;top:4px;width:2px;height:10px;margin-left:-1px;border-radius:1px;background:rgba(255,255,255,.55)}
+.th-dot{position:absolute;top:2px;width:14px;height:14px;margin-left:-7px;border-radius:50%;background:#fff;box-shadow:0 0 0 2.5px var(--bg),0 1px 4px rgba(0,0,0,.5)}
+.th-dot.warn{box-shadow:0 0 0 2.5px var(--bg),0 0 0 4.5px var(--warn)}.th-dot.crit{box-shadow:0 0 0 2.5px var(--bg),0 0 0 4.5px var(--crit)}
+.tbar-ax{display:flex;justify-content:space-between;font-size:10.5px;color:var(--t3);font-variant-numeric:tabular-nums;margin-top:-2px}
 .hright{display:flex;align-items:center;gap:10px;margin-left:auto;flex:none}
 .score{display:flex;align-items:center;gap:8px;border:1px solid var(--line);background:var(--surf);border-radius:var(--r2);padding:4px 12px 4px 5px;cursor:pointer;color:var(--t3)}
 .score:hover{border-color:var(--line2)}
@@ -319,8 +324,9 @@ button.chip{cursor:pointer}
  .hbrand{display:block;grid-area:brand}.rcp{grid-area:rcp;flex:none}.hright{grid-area:right}.thermo{grid-area:thermo;max-width:none;gap:10px}
  .kbtn span,.kbtn kbd,.sc-t{display:none}.kbtn{padding:8px}
  .score{padding:3px 9px 3px 3px}.score svg{width:26px;height:26px}
- .th-step>span{font-size:11px}.stepper output{min-width:44px;font-size:14px}.stepper button{width:30px;height:30px}
- .th-rail{min-width:0}.th-tick:nth-child(even){display:none}
+  .thermo{display:grid;grid-template-columns:1fr 1fr;grid-template-areas:"v f" "b b";gap:12px 16px;padding:12px 14px}
+ .thermo>.tq:first-child{grid-area:v}.thermo>.tq.sec{grid-area:f;justify-self:end}.tbar{grid-area:b;min-width:0}
+ .tbar-cap em{display:none}
  main{padding:14px 16px calc(96px + env(safe-area-inset-bottom,0px))}
  .ptabs{display:flex;width:auto;margin:0 -16px 16px;border-radius:0;border-left:0;border-right:0;padding:3px 12px;background:transparent;border-top:0}
  h1{font-size:23px}
@@ -335,7 +341,7 @@ button.chip{cursor:pointer}
 @media (min-width:761px) and (max-width:1180px){.g3{grid-template-columns:repeat(2,minmax(0,1fr))}}
 /* toque (iPad, celular): alvos de pelo menos 44 px */
 @media (pointer:coarse){.btn{min-height:44px;padding:10px 14px}.btn.sm{min-height:40px}.btn.del{min-width:40px;min-height:40px}.chips button{min-height:40px;padding:9px 14px}
- input[type=text],input[type=number],input[type=date],select{min-height:42px}.tbl input[type=number]{min-height:40px}.np,.ptabs button{min-height:42px}.stepper button{width:36px;height:36px}.th-rail{height:48px}}
+ input[type=text],input[type=number],input[type=date],select{min-height:42px}.tbl input[type=number]{min-height:40px}.np,.ptabs button{min-height:42px}.ios-step{height:34px}.ios-step button{width:42px}.th-rail{height:28px}.th-rail .th-track,.th-rail .th-band{top:11px}.th-rail .th-ideal{top:9px}.th-rail .th-dot{top:7px}}
 /* ---------- aplicativo da equipe: entrada, aprovação, perfis ---------- */
 .card.approve{border-color:rgba(110,231,183,.3);background:linear-gradient(180deg,rgba(110,231,183,.05),transparent)}
 .card.exec h3 .chip{vertical-align:2px;margin-left:4px}
@@ -1628,18 +1634,23 @@ const VERSION='v14';
 const brandHTML=()=>`<div class="brand"><div class="hex"></div><div><b>Il <span>Fredolin</span></b><small>Gelato Lab ${VERSION}${APP_MODE==='app'&&ME.email?' · '+ROLE_N[ROLE]:''}</small></div></div>`;
 
 /* ---------- termômetro da receita: vitrine, serviço ideal (com faixa de incerteza) e freezer numa régua só ---------- */
-const TH_LO=-26,TH_HI=-6;
+const TH_LO=-24,TH_HI=-6;
+/* Como a faixa do dia no app Tempo: trilho em cápsula, trecho colorido = faixa ideal de serviço,
+   ponto branco = vitrine. O ponto dentro do trecho quer dizer gelato no ponto. */
+const tm=v=>String(v).replace(/^-/,'−');
 function thermo(m){const pos=t=>clamp((t-TH_LO)/(TH_HI-TH_LO)*100,0,100);const vit=+S.vit,frz=+S.proc.storeT;
- let band='',ideal='';if(!m.empty){const u=uncertainty(S);const lo=u?u.lo:m.serveT,hi=u?u.hi:m.serveT;
-  band=`<span class="th-band" style="left:${pos(lo)}%;width:${Math.max(.8,pos(hi)-pos(lo))}%"></span>`;
-  ideal=`<span class="th-mk ideal" style="left:${pos(m.serveT)}%"><i></i><b>ideal ${f1(m.serveT)}</b></span>`;}
- const dev=m.empty?0:vit-m.serveT;const st=Math.abs(dev)<=1.5?'ok':Math.abs(dev)<=3?'warn':'crit';
- const ticks=[];for(let t=-24;t<=-8;t+=4)ticks.push(`<span class="th-tick" style="left:${pos(t)}%">${t}</span>`);
+ const u=m.empty?null:uncertainty(S);const lo=u?u.lo:m.serveT,hi=u?u.hi:m.serveT;
+ const dev=m.empty?0:vit-m.serveT;const st=m.empty?'':Math.abs(dev)<=1.5?'ok':Math.abs(dev)<=3?'warn':'crit';
+ const msg=m.empty?'Monte a receita para ver o ponto':st==='ok'?'No ponto':(dev<0?fT(Math.abs(dev))+'° mais fria · mais duro':fT(dev)+'° mais quente · mais mole');
+ const step=(a,lbl)=>`<div class="ios-step" role="group" aria-label="${lbl}"><button data-a="${a}" data-v="-.5" aria-label="${lbl}: mais frio">−</button><i></i><button data-a="${a}" data-v=".5" aria-label="${lbl}: menos frio">+</button></div>`;
  return`<div class="thermo" aria-label="Temperaturas da receita">
-  <div class="th-step"><span>${S.proc.serveFrom==='freezer'?'Serviço':'Vitrine'}</span><div class="stepper"><button data-a="vit" data-v="-.5" aria-label="Vitrine mais fria">−</button><output class="${m.empty?'':'s-'+st}">${f1(vit)}</output><button data-a="vit" data-v=".5" aria-label="Vitrine menos fria">+</button></div></div>
-  <div class="th-rail" data-rail="1" title="Toque para mudar a vitrine">${ticks.join('')}<span class="th-track"></span>${band}${ideal}
-   <span class="th-mk frz" style="left:${pos(frz)}%"><i></i></span><span class="th-mk vit s-${st}" style="left:${pos(vit)}%"><i></i></span></div>
-  <div class="th-step"><span>Freezer</span><div class="stepper"><button data-a="frz" data-v="-.5" aria-label="Freezer mais frio">−</button><output class="frzv">${f1(frz)}</output><button data-a="frz" data-v=".5" aria-label="Freezer menos frio">+</button></div></div>
+  <div class="tq"><span class="tq-l">${S.proc.serveFrom==='freezer'?'Serviço':'Vitrine'}</span><div class="tq-v"><b>${tm(f1(vit))}</b><span>°C</span></div>${step('vit','Vitrine')}</div>
+  <div class="tbar">
+   <div class="tbar-cap"${u?` title="Faixa provável: ${tm(f1(lo))}° a ${tm(f1(hi))}°"`:''}><span>Ideal <b>${m.empty?'—':tm(f1(m.serveT))+'°'}</b></span><span class="tbar-st ${st}">${msg}</span></div>
+   <div class="th-rail" data-rail="1" title="Toque ou arraste para mudar a vitrine"><span class="th-track"></span>${m.empty?'':`<span class="th-band" style="left:${pos(lo)}%;width:${Math.max(1.2,pos(hi)-pos(lo))}%"></span><span class="th-ideal" style="left:${pos(m.serveT)}%"></span>`}<span class="th-dot ${st}" style="left:${pos(vit)}%"></span></div>
+   <div class="tbar-ax"><span>${tm(TH_LO)}°</span><span>${tm((TH_LO+TH_HI)/2)}°</span><span>${tm(TH_HI)}°</span></div>
+  </div>
+  <div class="tq sec"><span class="tq-l">Freezer</span><div class="tq-v"><b>${tm(f1(frz))}</b><span>°C</span></div>${step('frz','Freezer')}</div>
  </div>`;}
 function railSet(el,clientX){const r=el.getBoundingClientRect();if(!r.width)return;const t=TH_LO+(clientX-r.left)/r.width*(TH_HI-TH_LO);
  const v=clamp(Math.round(t*2)/2,-24,-6);if(v===+S.vit)return;undoMark();S.vit=v;if(S.proc.serveFrom==='freezer')S.proc.storeT=v;U.bal=null;render();}
