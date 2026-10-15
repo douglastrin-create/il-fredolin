@@ -1,6 +1,7 @@
 <!doctype html>
 <html lang="pt-BR">
 <head>
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>Il Fredolin</title>
@@ -298,25 +299,25 @@ button.chip{cursor:pointer}
 
 /* ---------- telas médias ---------- */
 @media (max-width:1280px){.tiles{grid-template-columns:repeat(3,minmax(0,1fr))}}
-@media (max-width:1280px) and (min-width:1101px){header{flex-wrap:wrap}.thermo{order:3;flex-basis:100%;max-width:none}}
-/* iPad: a barra lateral vira trilho de ícones e as páginas irmãs aparecem como abas */
-@media (max-width:1100px) and (min-width:761px){
- .app{grid-template-columns:84px minmax(0,1fr)}
- nav{padding:14px 8px 8px;align-items:stretch}
- .nbrand{display:flex;justify-content:center;padding:2px 0 14px}.nbrand .brand>div:last-child{display:none}
- .nsearch{justify-content:center;padding:10px 0}.nsearch span,.nsearch kbd{display:none}
- .nlist{gap:4px}.np{display:none}
- .fam{flex-direction:column;gap:5px;padding:10px 2px;font-size:11px;font-weight:500;justify-content:center;text-align:center;border-radius:var(--r2)}
- .fam .ico{width:22px;height:22px}
- .nfam.on .fam{background:var(--ice-a);color:var(--ice)}
- .nb{position:absolute;top:4px;right:6px}
- .nfoot{justify-content:center;padding:12px 0}.nfoot span,.nfoot small{display:none}
- .ptabs{display:flex}
- header{flex-wrap:wrap;gap:10px 16px;padding:10px 18px}.thermo{order:3;flex-basis:100%;max-width:none}
- .kbtn span{display:none}
- main{padding:18px 20px 40px}
- .g3{grid-template-columns:repeat(2,minmax(0,1fr))}
-}
+/* trilho de ícones (telas médias ou barra lateral recolhida): as páginas irmãs aparecem como abas */
+body[data-nav=rail] .app{grid-template-columns:84px minmax(0,1fr)}
+body[data-nav=rail] nav{padding:14px 8px 8px;align-items:stretch}
+body[data-nav=rail] .nbrand{display:flex;flex-direction:column;align-items:center;gap:10px;padding:2px 0 14px}body[data-nav=rail] .nbrand .brand>div:last-child{display:none}
+body[data-nav=rail] .nsearch{justify-content:center;padding:10px 0}body[data-nav=rail] .nsearch span,body[data-nav=rail] .nsearch kbd{display:none}
+body[data-nav=rail] .nlist{gap:4px}body[data-nav=rail] .np{display:none}
+body[data-nav=rail] .fam{flex-direction:column;gap:5px;padding:10px 2px;font-size:11px;font-weight:500;justify-content:center;text-align:center;border-radius:var(--r2)}
+body[data-nav=rail] .fam .ico{width:22px;height:22px}
+body[data-nav=rail] .nfam.on .fam{background:var(--ice-a);color:var(--ice)}
+body[data-nav=rail] .nb{position:absolute;top:4px;right:6px}
+body[data-nav=rail] .nfoot{justify-content:center;padding:12px 0}body[data-nav=rail] .nfoot span,body[data-nav=rail] .nfoot small{display:none}
+body[data-nav=rail] .ptabs{display:flex}
+body[data-nav=rail] .kbtn span{display:none}
+body[data-nav=rail] main{padding:18px 20px 40px}
+/* cabeçalho: decide pelo espaço real do cabeçalho (container query), não pelo aparelho — como as size classes da Apple.
+   Cabe tudo: uma linha. Não cabe: o termômetro desce para a segunda linha, ocupando a largura toda. */
+@media (min-width:761px){header{container-type:inline-size;container-name:hdr;flex-wrap:wrap;row-gap:10px}header .thermo{flex:1 1 360px}header .rcp{flex:0 1 230px}}
+@container hdr (max-width:1240px){.sc-t,.kbtn kbd{display:none}.kbtn span{display:none}header .setsw.dk{display:none}header .setsw.ph{display:inline-flex}header .rcp{flex:0 1 350px}header .rrow{flex-wrap:nowrap}header .rrow .setsw button{padding:2px 9px}header .setsw.ph small{display:none}header .thermo{gap:12px;padding:6px 12px}}
+@container hdr (max-width:1000px){header .thermo{order:3;flex:1 1 100%;max-width:none}header .rcp{flex:1 1 200px}}
 /* celular: abas inferiores, cabeçalho em três linhas */
 @media (max-width:760px){
  .app{grid-template-columns:minmax(0,1fr);grid-template-rows:auto minmax(0,1fr);grid-template-areas:"hdr" "main"}
@@ -416,11 +417,39 @@ body.auth .app{grid-template-columns:minmax(0,1fr);grid-template-areas:"hdr" "ma
 .setsw button:focus-visible{outline:2px solid var(--ice)}
 .setcmp{border:1px solid var(--line);border-radius:var(--r2);padding:10px 12px;margin-top:8px}.setcmp.on{border-color:rgba(125,211,252,.45);background:rgba(125,211,252,.04)}
 @media (max-width:720px){.setsw button small{display:none}.setsw button{padding:4px 10px}}
+.ntog{border:0;background:none;color:var(--t3);cursor:pointer;padding:6px;border-radius:8px;display:inline-grid;place-items:center}.ntog:hover{color:var(--t1);background:var(--raise)}.ntog .ico{width:18px;height:18px}
+.nbrand{display:flex;align-items:center;justify-content:space-between}
+#mini{display:none}
+.hright .setsw small{display:none}
+@media (min-width:1500px){.hright .setsw small{display:block}}
+.setsw.ph{display:none}
+@media (min-width:1600px){.pg{max-width:1360px}.ptabs{max-width:min(1360px,100%)}}
+/* iPhone e janelas estreitas: o cabeçalho rola com a página; uma barra compacta fica no topo */
+@media (max-width:760px){
+ html,body{overflow:hidden}
+ .app{display:block;height:100%;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior-y:contain}
+ main{overflow:visible}
+ .setsw.dk{display:none}.setsw.ph{display:inline-flex}
+ .rrow{gap:6px}
+ #mini{display:block;position:sticky;top:calc(-1 * env(safe-area-inset-top,0px));z-index:30;height:0;overflow:visible}
+ #mini .minib{position:absolute;left:0;right:0;top:0;display:flex;align-items:center;gap:10px;padding:calc(10px + env(safe-area-inset-top,0px)) 16px 10px;border:0;border-bottom:1px solid var(--line);background:rgba(8,12,20,.86);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);color:var(--t1);font-size:14px;cursor:pointer;transform:translateY(-110%);opacity:0;transition:transform .18s ease,opacity .18s ease;text-align:left}
+ #mini.show .minib{transform:none;opacity:1}
+ #mini .minib b{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-weight:650}
+ #mini .mini-sc{font:600 13px var(--fm);padding:2px 8px;border-radius:99px;background:var(--raise)}
+ .nbrand .ntog{display:none}
+ nav .nbrand{display:none}
+ .setsw button{padding:4px 9px}.setsw button b{font-size:12px}
+ .rtype,header select.rtype{max-width:52%}
+}
+/* altura baixa (iPhone deitado, janela achatada): o cabeçalho rola junto e a barra lateral fica presa */
+@media (max-height:560px) and (min-width:761px){.app{overflow-y:auto}main{overflow:visible}nav{position:sticky;top:0;height:100vh;height:100dvh;align-self:start}}
+@media (pointer:coarse){.setsw button{min-height:40px;justify-content:center}.ios-step{height:40px}.crrow .stp button{min-width:40px;min-height:40px}input[type=range]{min-height:32px}.fname{min-height:40px}.ntog{padding:10px}}
 </style>
 </head>
 <body>
 <div class="app">
   <header id="hdr"></header>
+  <div id="mini"></div>
   <nav id="nav" aria-label="Módulos"></nav>
   <main id="main"></main>
 </div>
@@ -1707,7 +1736,7 @@ const PAGE_ROLES={bancada:'mc',creator:'mc',laudo:'mc',congelamento:'mc',quimica
  ingredientes:'mc',rotulo:'mcs',custos:'m',biblioteca:'mc',equipe:'m',dados:'mcs',
  componentes:'mc',degustacao:'mcs',sazonal:'mc'};
 /* o Sous Chef só pode estas ações; o Chef pode tudo menos estas */
-const SOUS_ACT=new Set(['go','flowStart','flowNext','flowBack','flowDisc','flowOpen','flowColor','flowView','flowLot','flowNotify','chk','unchk','copy','lotNew','lotOpen','lotSave','lotConsume','defect','execRun','logout','logoutYes','logoutNo','syncNow','testRun','delNo','authMode','authGo',
+const SOUS_ACT=new Set(['go','navTog','toTop','flowStart','flowNext','flowBack','flowDisc','flowOpen','flowColor','flowView','flowLot','flowNotify','chk','unchk','copy','lotNew','lotOpen','lotSave','lotConsume','defect','execRun','logout','logoutYes','logoutNo','syncNow','testRun','delNo','authMode','authGo',
  'meltTimer','fam','palOpen','palClose','palRun','panelStart','panelSet','panelNext','panelCancel','panelReveal','panelReset']);
 const SOUS_INP=new Set(['flowLabel','flowMeas','prodG','lot','lotTxt','auth','panelTaster','panelNote','palQ']),SOUS_CHG=new Set(['lot','panelLot']);
 const CHEF_DENY_ACT=new Set(['expJson','expCsv','memInvite','memDel','memDelYes','teamReload']),CHEF_DENY_INP=new Set(['cost']),CHEF_DENY_CHG=new Set(['memRole']);
@@ -1855,6 +1884,7 @@ const ICO={
  acervo:'<path d="M4 4.2c0-.8.6-1.4 1.4-1.4H10v13.6H5.4c-.8 0-1.4.6-1.4 1.4z"/><path d="M16 4.2c0-.8-.6-1.4-1.4-1.4H10v13.6h4.6c.8 0 1.4.6 1.4 1.4z"/>',
  gestao:'<path d="M3.5 6h13M3.5 14h13"/><circle cx="7.5" cy="6" r="1.9"/><circle cx="12.5" cy="14" r="1.9"/>',
  busca:'<circle cx="8.8" cy="8.8" r="5.3"/><path d="m12.8 12.8 4.2 4.2"/>',
+ lado:'<rect x="2.8" y="3.8" width="14.4" height="12.4" rx="2.4"/><path d="M7.6 3.8v12.4"/>',
  desfazer:'<path d="M7.5 5 3.8 8.7l3.7 3.7"/><path d="M4 8.7h7.6a4.6 4.6 0 0 1 0 9.2H8.5"/>',
  pagina:'<rect x="4" y="3" width="12" height="14" rx="2"/><path d="M7 7.5h6M7 10.5h6M7 13.5h3.5"/>',
  acao:'<path d="M11 2.8 4.8 11h5l-1 6.2L15.2 9h-5z"/>',
@@ -1866,7 +1896,7 @@ const isMac=()=>{try{return /Mac|iPhone|iPad/.test(navigator.platform||navigator
 const kbd=k=>`<kbd>${isMac()?'⌘':'Ctrl '}${k}</kbd>`;
 
 /* ---------- marca ---------- */
-const VERSION='v17.4';
+const VERSION='v17.5';
 const brandHTML=()=>`<div class="brand"><div class="hex"></div><div><b>Il <span>Fredolin</span></b><small>Gelato Lab ${VERSION}${APP_MODE==='app'&&ME.email?' · '+ROLE_N[ROLE]:''}</small></div></div>`;
 
 /* ---------- termômetro da receita: vitrine, serviço ideal (com faixa de incerteza) e freezer numa régua só ---------- */
@@ -1928,9 +1958,9 @@ function hdr(m,sc,F){F=F||[];
   return`<div class="hbrand">${brandHTML()}</div><div class="rcp"><span class="r-lbl">Receita em execução</span><output class="rname ro">${ex?esc(ex.name)+' <span class="muted">v'+ex.v+'</span>':'Escolha uma receita em "Em execução"'}</output></div><div class="hright">${find}<button class="btn sm ghost" data-a="logout">Sair</button></div>`;}
  return`<div class="hbrand">${brandHTML()}</div>
  <div class="rcp"><input type="text" id="nm" class="rname" data-i="name" value="${esc(S.name)}" maxlength="60" aria-label="Nome da receita" placeholder="Receita sem nome">
-  <div class="rrow"><select id="tipo" class="rtype" data-c="tipo" aria-label="Tipo de gelato">${Object.entries(PROF).map(([k,p])=>`<option value="${k}"${k===S.tipo?' selected':''}>${p.n}</option>`).join('')}</select>${setSwitchHTML()}</div></div>
+  <div class="rrow"><select id="tipo" class="rtype" data-c="tipo" aria-label="Tipo de gelato">${Object.entries(PROF).map(([k,p])=>`<option value="${k}"${k===S.tipo?' selected':''}>${p.n}</option>`).join('')}</select>${setSwitchHTML('ph')}</div></div>
  ${thermo(m)}
- <div class="hright">${scoreBtn(m,sc,F)}${find}</div>`;}
+ <div class="hright">${setSwitchHTML('dk')}${scoreBtn(m,sc,F)}${find}</div>`;}
 
 /* ---------- navegação ---------- */
 function navHTML(F){const c=F.filter(f=>f.sev==='crit').length,w=F.filter(f=>f.sev==='warn').length;const cur=PAGE_FAM[S.page];
@@ -1938,7 +1968,7 @@ function navHTML(F){const c=F.filter(f=>f.sev==='crit').length,w=F.filter(f=>f.s
   return`<div class="nfam${cur===f?' on':''}"><button class="fam" data-a="fam" data-v="${f}"${cur===f?' aria-current="true"':''}>${icon(f)}<span>${n}</span>${badge}</button>
    ${P.map(([k,pn])=>`<button class="np" data-a="go" data-v="${k}"${S.page===k?' aria-current="page"':''}><span>${pn}</span>${k==='laudo'&&(c||w)?`<span class="cnt">${c?`<i class="c">${c}</i>`:''}${w?`<i class="w">${w}</i>`:''}</span>`:''}</button>`).join('')}</div>`;}).join('');
  const st=STORE.status;const dot={cloud:'ok',syncing:'info',offline:'warn',error:'crit'}[st]||'muted';
- return`<div class="nbrand">${brandHTML()}</div>
+ return`<div class="nbrand">${brandHTML()}<button class="ntog" data-a="navTog" aria-label="${document.body&&document.body.dataset&&document.body.dataset.nav==='rail'?'Expandir':'Recolher'} a barra lateral" title="Barra lateral (${isMac()?'⌘':'Ctrl '}\\)">${icon('lado')}</button></div>
  <button class="nsearch" data-a="palOpen">${icon('busca')}<span>Buscar</span>${kbd('K')}</button>
  <div class="nlist">${fams}</div>
  <button class="nfoot" data-a="go" data-v="dados" title="${esc(STORE.msg||'')}"><i class="dot ${dot}"></i><span>${st==='cloud'?'Sincronizado':st==='syncing'?'Sincronizando…':st==='offline'?'Sem conexão':st==='error'?'Falha ao sincronizar':'Neste aparelho'}</span>${APP_MODE==='app'&&ME.email?`<small>${esc(ROLE_N[ROLE])}</small>`:''}</button>`;}
@@ -1997,6 +2027,8 @@ function palRun(i){const L=palItems((U.pal&&U.pal.q)||'');const x=L[+i];U.pal=nu
 
 /* ---------- ações deste módulo ---------- */
 const SHELL_ACT={
+ navTog:()=>{const cur=navMode();if(cur==='tab')return;try{localStorage.setItem(NAVKEY,cur==='rail'?'full':'rail');}catch(e){}navApply();render();},
+ toTop:()=>scrollTopAll(),
  fam:v=>{const P=famPages(v);if(!P.length)return;const last=(S.famLast||{})[v];ACT.go(P.some(([k])=>k===last)?last:P[0][0]);},
  palOpen:()=>{U.pal={q:'',sel:0};render();setTimeout(()=>{const e=document.getElementById('palQ');e&&e.focus();},0);},
  palClose:()=>{U.pal=null;render();},
@@ -2006,6 +2038,23 @@ const SHELL_ACT={
  undo:()=>{if(undoRestore()){render();toast('Desfeito');}else toast('Nada para desfazer');}
 };
 const SHELL_INP={palQ:v=>{if(!U.pal)U.pal={q:'',sel:0};U.pal.q=v;U.pal.sel=0;render();}};
+
+/* ---------- tamanho da tela → navegação (como o iPadOS: barra lateral, trilho de ícones ou abas inferiores) ----------
+   compacto (≤ 760 px: iPhone, iPad em Split View estreito): abas inferiores e cabeçalho que rola junto com a página
+   médio (761–1365 px: iPad, MacBook 13" com janela menor): trilho de ícones + abas das páginas irmãs
+   amplo (≥ 1366 px: MacBook, iPad 13" deitado): barra lateral completa
+   A barra lateral pode ser recolhida/expandida (botão ou ⌘\\); a escolha fica salva neste aparelho. */
+const NAVKEY='fredolin_nav';
+function navMode(){const w=typeof innerWidth==='number'?innerWidth:1440;if(w<=760)return'tab';let p=null;try{p=localStorage.getItem(NAVKEY);}catch(e){}if(p==='rail'||p==='full')return p;return w<1366?'rail':'full';}
+function navApply(){try{const b=document.body;if(!b||!b.dataset)return;const m=navMode();if(b.dataset.nav!==m)b.dataset.nav=m;}catch(e){}}
+function scrollTopAll(){try{const m=$('#main');if(m)m.scrollTop=0;const a=document.querySelector('.app');if(a&&'scrollTop' in a)a.scrollTop=0;}catch(e){}}
+/* barra compacta que aparece no topo quando o cabeçalho sai da tela (iPhone) */
+function miniHTML(m,sc){if(m.empty)return'';const v=S.proc.serveFrom==='pote'?'na colher '+fT(Math.round(S.vit*10)/10):fT(Math.round(S.vit*10)/10);
+ return`<button class="minib" data-a="toTop" aria-label="Voltar ao topo"><b>${esc(S.name||'Receita')}</b><span class="mono">${v} °C</span><span class="mini-sc ${sc.total>=90?'c-ok':sc.total>=75?'c-warn':'c-crit'}">${sc.total}</span></button>`;}
+let _miniObs=null;
+function miniWire(){if(_miniObs||typeof IntersectionObserver==='undefined')return;const h=document.getElementById('hdr'),mi=document.getElementById('mini'),app=document.querySelector('.app');if(!h||!mi||!app)return;
+ _miniObs=new IntersectionObserver(es=>{es.forEach(e=>{mi.classList[e.isIntersecting?'remove':'add']('show');});},{root:app,threshold:0});_miniObs.observe(h);}
+if(typeof window!=='undefined'&&window.addEventListener&&window.document){window.addEventListener('resize',()=>{const b=document.body;const was=b&&b.dataset&&b.dataset.nav;navApply();if(b&&b.dataset&&b.dataset.nav!==was&&typeof render==='function')render();});}
 
 /* ==== 50-pages.js ==== */
 /* ===================== IL FREDOLIN · PÁGINAS ===================== */
@@ -3675,7 +3724,7 @@ const V13_ACT={
  panelReset:()=>{U.panel={lots:[],codes:{},order:[],taster:'',i:-1,cur:{},reveal:false};savePanel();render();},
  libTipo:v=>{U.libTipo=v;U.libN=0;render();},libVitF:v=>{U.libVitF=+v;U.libN=0;render();},
  simOpen:v=>{U.simOf=v;masterIndex();render();},simClose:()=>{U.simOf=null;render();},
- cmpToggle:v=>{const c=U.cmp=U.cmp||[];const i=c.indexOf(v);if(i>=0)c.splice(i,1);else{c.push(v);if(c.length>2)c.shift();}render();if(c.length===2)$('#main').scrollTop=0;},
+ cmpToggle:v=>{const c=U.cmp=U.cmp||[];const i=c.indexOf(v);if(i>=0)c.splice(i,1);else{c.push(v);if(c.length>2)c.shift();}render();if(c.length===2)scrollTopAll();},
  cmpClear:()=>{U.cmp=[];render();},
  cmpToLab:()=>{(U.cmp||[]).map(cmpSrc).filter(Boolean).forEach(s=>addVariant(s.name.slice(0,40),recFromPairs(s.recipe)));U.cmp=[];S.page='creator';S.creatorTab='gelato';S.crSub='comparar';render();},
  histOpen:v=>{U.hist=U.hist===v?null:v;render();},
@@ -4173,8 +4222,8 @@ function setsFromCloud(){const r=(VITS||[]).find(v=>v.id==='set_pro'&&v.cfg);if(
 /* carregar receita (biblioteca, mestres, execução, lotes) não troca o equipamento: o set ativo prevalece */
 const SET_LOADERS=['load','preset','master','execRun','histLoad','lotBench','varToBench','genToBench','sensApply','cmpLoad','libVar'];
 function setsWrap(A){SET_LOADERS.forEach(k=>{const f=A[k];if(typeof f!=='function')return;A[k]=function(...a){const r=f.apply(this,a);if(S.sets&&S.sets[S.set]){setApply();render();}return r;};});}
-function setSwitchHTML(){if(ROLE==='sous')return'';const cur=S.set||'art';
- return`<div class="setsw" role="radiogroup" aria-label="Set de equipamentos">${['art','pro'].map(k=>`<button role="radio" data-a="setSw" data-v="${k}" aria-checked="${cur===k}" title="${esc(SETS[k].n+' · '+SETS[k].sub)}"><b>${SETS[k].n}</b><small>${SETS[k].sub}</small></button>`).join('')}</div>`;}
+function setSwitchHTML(v){if(ROLE==='sous')return'';const cur=S.set||'art';
+ return`<div class="setsw${v?' '+v:''}" role="radiogroup" aria-label="Set de equipamentos">${['art','pro'].map(k=>`<button role="radio" data-a="setSw" data-v="${k}" aria-checked="${cur===k}" title="${esc(SETS[k].n+' · '+SETS[k].sub)}"><b>${SETS[k].n}</b><small>${SETS[k].sub}</small></button>`).join('')}</div>`;}
 /* a mesma receita nos dois sets, com o melhor balanceamento de cada um */
 let _SETCMP={key:null,res:null};
 function setCompare(){if(!S.sets||!S.sets.art||!S.sets.pro||!(S.recipe||[]).length)return null;const key=JSON.stringify([S.recipe,S.tipo,S.sets.art,S.sets.pro,S.brix,ING_VER]);if(_SETCMP.key===key)return _SETCMP.res;
@@ -4433,7 +4482,7 @@ const VIEW={execucao:pgExecucao,equipe:pgEquipe,bancada:pgBancada,creator:pgCrea
 /* ---------- RENDER: um quadro por vez (várias mudanças no mesmo quadro geram um único desenho) ---------- */
 let GSIM=null,NSIM=null;
 function renderNow(){
- normalizeState();
+ normalizeState();navApply();
  if(APP_MODE==='app'&&AUTH.state!=='ready'){$('#hdr').innerHTML=brandHTML();$('#nav').innerHTML='';$('#main').innerHTML=AUTH.view();document.body.classList.add('auth');return;}
  document.body.classList.remove('auth');
  if(!can.page(S.page))S.page=homePage();
@@ -4441,7 +4490,7 @@ function renderNow(){
  const m=analyze(S),F=diagnose(S,m),sc=score(S,m,F);
  if(PAGE_FAM[S.page])S.famLast[PAGE_FAM[S.page]]=S.page;
  $('#hdr').innerHTML=hdr(m,sc,F);$('#nav').innerHTML=navHTML(F);$('#main').innerHTML=tabsHTML()+(VIEW[S.page]||pgBancada)(m,F,sc);
- $('#pal').innerHTML=palHTML();document.body.classList[U.pal?'add':'remove']('pal-open');
+ $('#pal').innerHTML=palHTML();{const mi=document.getElementById('mini');if(mi){mi.innerHTML=miniHTML(m,sc);miniWire();}}document.body.classList[U.pal?'add':'remove']('pal-open');
  /* animação só quando a página muda (não a cada tecla) */
  if(renderNow.page!==S.page){renderNow.page=S.page;const pg=document.querySelector&&document.querySelector('#main .pg');if(pg&&pg.classList)pg.classList.add('enter');}
  if(id){const el=document.getElementById(id);if(el){if(val!=null&&el.tagName==='INPUT'&&el.value!==val)el.value=val;el.focus({preventScroll:true});try{if(s1!=null)el.setSelectionRange(s1,s2);}catch(e){}}}
@@ -4468,7 +4517,7 @@ let agingT=null;
 
 /* ---------- AÇÕES (data-a) ---------- */
 const ACT={
- go:v=>{S.page=v;U.copy=null;U.recent=[v,...(U.recent||[]).filter(x=>x!==v)].slice(0,6);render();$('#main').scrollTop=0;},
+ go:v=>{S.page=v;U.copy=null;U.recent=[v,...(U.recent||[]).filter(x=>x!==v)].slice(0,6);render();scrollTopAll();},
  add:addSel,
  rm:v=>{S.recipe=S.recipe.filter(r=>r.id!==v);U.bal=null;render();},
  norm:()=>{const t=S.recipe.reduce((s,r)=>s+(+r.g||0),0);if(!t)return;S.recipe.forEach(r=>r.g=Math.round(r.g*1000/t*10)/10);render();toast('Receita normalizada para 1000 g');},
@@ -4532,8 +4581,8 @@ const ACT={
   L.recipe.forEach(r=>{const used=INV.filter(e=>e.ingId===r.id&&+e.qty>0).sort((a,b)=>String(a.exp||'9999').localeCompare(String(b.exp||'9999')));const rest=consumeFIFO(INV,r.id,+r.g);if(used[0]&&!L.trace[r.id])L.trace[r.id]=used[0].lot||'';if(rest>.5)miss.push(ING_BY[r.id]?ING_BY[r.id].n:r.id);});
   INV.filter(e=>e._dirty).forEach(e=>{delete e._dirty;STORE.put('inv',e);});saveLot(L);render();toast(miss.length?'Baixado; faltou estoque de '+miss.length+' item(ns)':'Estoque baixado (FEFO)');},
  ingNew:()=>{U.ingEdit={id:null,n:'',c:{w:0},x:{cost:0,al:[]}};render();},
- ingDup:v=>{const i=ING_BY[v];U.ingEdit={id:null,n:i.n+' (meu)',c:JSON.parse(JSON.stringify(i.c)),x:{cost:i.cost||0,lab:i.lab||'',brix:i.brix,ph:i.ph,de:i.de,na:i.na,sat:i.sat,hfB:i.hfB,hfS:i.hfS,hfN:i.hfN,al:[...(i.al||[])],dairy:i.dairy,added:i.added,acid:i.acid,msnf:i.msnf,br:i.br}};render();$('#main').scrollTop=0;},
- ingEdit:v=>{const c=CUST.find(x=>x.id===v);if(c){U.ingEdit=JSON.parse(JSON.stringify(c));render();$('#main').scrollTop=0;}},
+ ingDup:v=>{const i=ING_BY[v];U.ingEdit={id:null,n:i.n+' (meu)',c:JSON.parse(JSON.stringify(i.c)),x:{cost:i.cost||0,lab:i.lab||'',brix:i.brix,ph:i.ph,de:i.de,na:i.na,sat:i.sat,hfB:i.hfB,hfS:i.hfS,hfN:i.hfN,al:[...(i.al||[])],dairy:i.dairy,added:i.added,acid:i.acid,msnf:i.msnf,br:i.br}};render();scrollTopAll();},
+ ingEdit:v=>{const c=CUST.find(x=>x.id===v);if(c){U.ingEdit=JSON.parse(JSON.stringify(c));render();scrollTopAll();}},
  ingCancel:()=>{U.ingEdit=null;render();},
  ingSave:()=>{const E=U.ingEdit;if(!E||!E.n.trim())return;if(!E.id)E.id='ui_'+Date.now();const clean={};for(const k in E.c)if(+E.c[k]>0)clean[k]=+E.c[k];E.c=clean;const x={};for(const k in E.x){const v=E.x[k];if(v===''||v==null)continue;x[k]=typeof v==='string'&&k!=='lab'&&k!=='br'&&!isNaN(+v)?+v:v;}E.x=x;
   STORE.put('ings',E);registerCustom(E);U.ingEdit=null;render();toast('Ingrediente salvo');},
@@ -4635,7 +4684,7 @@ function importBackup(file){const fr=new FileReader();fr.onload=()=>{try{const d
 /* toda ação passa pela checagem do perfil (o servidor também recusa o que o perfil não pode) */
 const denied=()=>toast('Seu perfil não tem acesso a esta função.');
 /* ações que não mexem na receita não entram no desfazer */
-const NO_UNDO=new Set(['go','fam','palOpen','palClose','palRun','undo','copy','chk','unchk','libTab','libAuthor','libMore','libTipo','libVitF','simOpen','simClose','cmpToggle','cmpClear','histOpen','lotOpen','crTab','crSub','atGoal','setSw','flowOpen','flowView','flowNotify','flowNext','flowBack','flowDisc','flowColor','flowStart','flowLot','procGo','procPlay','atSel','atPick','atCard','atExplore','nxGoal','sazM','del','delNo','meltTimer','panelSet','panelStart','panelNext','panelCancel','panelReveal','panelReset','testRun','syncNow','age','pick']);
+const NO_UNDO=new Set(['go','fam','palOpen','palClose','palRun','undo','copy','chk','unchk','libTab','libAuthor','libMore','libTipo','libVitF','simOpen','simClose','cmpToggle','cmpClear','histOpen','lotOpen','crTab','crSub','atGoal','setSw','navTog','toTop','flowOpen','flowView','flowNotify','flowNext','flowBack','flowDisc','flowColor','flowStart','flowLot','procGo','procPlay','atSel','atPick','atCard','atExplore','nxGoal','sazM','del','delNo','meltTimer','panelSet','panelStart','panelNext','panelCancel','panelReveal','panelReset','testRun','syncNow','age','pick']);
 function runAct(k,v,t){if(NO_UNDO.has(k))return ACT[k](v,t);const before=undoSnap();undoMark();const r=ACT[k](v,t);
  if(r&&typeof r.then==='function')return r;if(undoSnap()===before)undoSettle();else if(UNDO_TOAST.has(k))toastUndo();return r;}
 document.addEventListener('click',e=>{const t=e.target.closest('[data-a]');if(!t)return;e.preventDefault();const k=t.dataset.a;if(!ACT[k])return;if(!can.act(k))return denied();runAct(k,t.dataset.v,t);});
@@ -4649,6 +4698,8 @@ document.addEventListener('change',e=>{const t=e.target;if(t.id==='impFile'&&t.f
 document.addEventListener('keydown',e=>{
  if(e.target&&e.target.dataset&&e.target.dataset.rail&&ROLE!=='sous'&&railKey(e))return;
  const mod=e.metaKey||e.ctrlKey,k=(e.key||'').toLowerCase(),inField=/^(INPUT|TEXTAREA|SELECT)$/.test((e.target&&e.target.tagName)||'')&&e.target.id!=='palQ';
+ if(mod&&e.key==='\\'){e.preventDefault();SHELL_ACT.navTog();return;}
+ if(mod&&!e.shiftKey&&!e.altKey&&/^[1-5]$/.test(e.key)&&ROLE!=='sous'){const f=FAMILIES.filter(x=>famPages(x[0]).length)[+e.key-1];if(f){e.preventDefault();ACT.fam(f[0]);return;}}
  if(mod&&k==='k'&&!(APP_MODE==='app'&&AUTH.state!=='ready')){e.preventDefault();U.pal?ACT.palClose():ACT.palOpen();return;}
  if(U.pal){const n=palItems(U.pal.q||'').length;
   if(e.key==='Escape'){e.preventDefault();ACT.palClose();return;}
