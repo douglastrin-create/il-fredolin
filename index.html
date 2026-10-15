@@ -83,6 +83,11 @@ nav .cnt .c{background:var(--crit-a);color:var(--crit)}nav .cnt .w{background:va
 .ptabs button{flex:none;border:0;background:none;color:var(--t2);padding:7px 13px;border-radius:9px;cursor:pointer;white-space:nowrap;font-size:13.5px}
 .ptabs button:hover{color:var(--t1)}
 .ptabs button[aria-selected=true]{background:var(--raise);color:var(--t1);font-weight:500;box-shadow:inset 0 1px 0 rgba(255,255,255,.04),0 1px 3px rgba(0,0,0,.35)}
+.seg{display:flex;gap:2px;overflow-x:auto;padding:3px;border:1px solid var(--line);border-radius:var(--r2);background:var(--surf);width:fit-content;max-width:100%;scrollbar-width:none}.seg::-webkit-scrollbar{display:none}
+.seg button{flex:none;border:0;background:none;color:var(--t2);padding:7px 13px;border-radius:9px;cursor:pointer;white-space:nowrap;font-size:13.5px;min-height:36px}.seg button:hover{color:var(--t1)}
+.seg button[aria-selected=true]{background:var(--raise);color:var(--t1);font-weight:500;box-shadow:inset 0 1px 0 rgba(255,255,255,.04),0 1px 3px rgba(0,0,0,.35)}
+.pghead{display:flex;flex-wrap:wrap;align-items:flex-end;gap:12px 20px}.pghead>div:first-child{flex:1;min-width:240px}
+.dcard>summary{display:flex;align-items:center;gap:10px;cursor:pointer;list-style:none;min-height:28px}.dcard>summary::-webkit-details-marker{display:none}.dcard>summary::after{content:"";margin-left:auto;flex:none;width:8px;height:8px;border-right:1.5px solid var(--t3);border-bottom:1.5px solid var(--t3);transform:rotate(45deg);transition:transform .15s}.dcard[open]>summary::after{transform:rotate(225deg)}
 
 /* ---------- cabeçalho: receita, termômetro, índice, busca ---------- */
 .hbrand{display:none}
@@ -2022,7 +2027,7 @@ const PAGE_ROLES={bancada:'mc',creator:'mc',laudo:'mc',congelamento:'mc',quimica
  ingredientes:'mc',rotulo:'mcs',custos:'m',biblioteca:'mc',equipe:'m',dados:'mcs',
  componentes:'mc',degustacao:'mcs',sazonal:'mc'};
 /* o Sous Chef só pode estas ações; o Chef pode tudo menos estas */
-const SOUS_ACT=new Set(['go','defMode','defSym','defClr','defOpen','defOpenB','defCat','navTog','toTop','flowStart','flowNext','flowBack','flowDisc','flowOpen','flowColor','flowView','flowLot','flowNotify','chk','unchk','copy','lotNew','lotOpen','lotSave','lotConsume','defect','execRun','logout','logoutYes','logoutNo','syncNow','testRun','delNo','authMode','authGo',
+const SOUS_ACT=new Set(['go','sub','defMode','defSym','defClr','defOpen','defOpenB','defCat','navTog','toTop','flowStart','flowNext','flowBack','flowDisc','flowOpen','flowColor','flowView','flowLot','flowNotify','chk','unchk','copy','lotNew','lotOpen','lotSave','lotConsume','defect','execRun','logout','logoutYes','logoutNo','syncNow','testRun','delNo','authMode','authGo',
  'meltTimer','fam','palOpen','palClose','palRun','panelStart','panelSet','panelNext','panelCancel','panelReveal','panelReset']);
 const SOUS_INP=new Set(['flowLabel','flowMeas','prodG','lot','lotTxt','auth','panelTaster','panelNote','palQ']),SOUS_CHG=new Set(['defChk','lot','panelLot']);
 const CHEF_DENY_ACT=new Set(['expJson','expCsv','memInvite','memDel','memDelYes','teamReload']),CHEF_DENY_INP=new Set(['cost']),CHEF_DENY_CHG=new Set(['memRole']);
@@ -2037,7 +2042,7 @@ const can={
  inp:(k,t)=>k==='auth'||ROLE==='maestro'||(ROLE==='chef'?!CHEF_DENY_INP.has(k)&&!(k==='proc'&&t&&t.dataset.k==='markup'):SOUS_INP.has(k)),
  chg:k=>ROLE==='maestro'||(ROLE==='chef'?!CHEF_DENY_CHG.has(k):SOUS_CHG.has(k))
 };
-const homePage=()=>ROLE==='sous'?'execucao':'bancada';
+const homePage=()=>ROLE==='sous'?'linha':'bancada';
 /* trecho de interface que só o Maestro vê (custos, preços, margens) */
 const $cost=h=>can.cost()?h:'';
 
@@ -2151,12 +2156,25 @@ function radar(series,size=230){const ax=[['doce','Doçura'],['cremoso','Cremosi
    Termômetro da receita no topo, paleta de comandos (⌘K) e desfazer (⌘Z). */
 
 const FAMILIES=[
- ['formular','Formular',[['bancada','Bancada'],['creator','Creator'],['componentes','Componentes'],['sazonal','Frutas da estação']]],
- ['analisar','Analisar',[['laudo','Laudo técnico'],['congelamento','Congelamento'],['quimica','Química e sensorial'],['vitrine','Vitrine'],['defeitos','Diagnóstico de defeitos']]],
- ['produzir','Produzir',[['linha','Produção ao vivo'],['execucao','Em execução'],['producao','Ficha de produção'],['lotes','Lotes e calibração'],['degustacao','Painel cego'],['processo','Processo'],['brix','Calibração Brix'],['planejamento','Planejamento'],['estoque','Estoque']]],
- ['acervo','Acervo',[['biblioteca','Biblioteca'],['ingredientes','Ingredientes']]],
+ ['formular','Formular',[['bancada','Bancada'],['creator','Creator'],['processo','Processo e equipamentos'],['componentes','Componentes']]],
+ ['analisar','Analisar',[['laudo','Laudo técnico'],['vitrine','Vitrine'],['defeitos','Diagnóstico de defeitos']]],
+ ['produzir','Produzir',[['linha','Produção ao vivo'],['producao','Ficha de produção'],['lotes','Lotes e qualidade'],['planejamento','Planejamento e estoque']]],
+ ['acervo','Acervo',[['biblioteca','Biblioteca'],['ingredientes','Ingredientes'],['sazonal','Frutas da estação']]],
  ['gestao','Gestão',[['rotulo','Rótulo e alérgenos'],['custos','Custos'],...(APP_MODE==='app'?[['equipe','Equipe']]:[]),['dados','Dados e sincronização']]]
 ];
+/* v17.7 · páginas que viraram seções de outra (a chave antiga continua valendo: links, testes, estado salvo, busca) */
+const PAGE_ALIAS={congelamento:['laudo','congelamento','Congelamento'],quimica:['laudo','quimica','Química e vida útil'],brix:['bancada',null,'Calibração Brix'],
+ execucao:['linha',null,'Receitas em execução'],degustacao:['lotes','painel','Painel cego'],estoque:['planejamento','estoque','Estoque']};
+function pageResolve(){const k=S.page,al=PAGE_ALIAS[k];if(!al)return;S.page=al[0];if(al[1]){U.sub=U.sub||{};U.sub[al[0]]=al[1];}if(k==='brix')U.brixOpen=1;}
+const subOf=(pg,def)=>(U.sub&&U.sub[pg])||def;
+/* usa uma página antiga como seção de outra: tira o invólucro .pg e o título; devolve a descrição (lead) e o corpo */
+function embedPg(h){h=String(h||'').trim();const o=h.match(/^<div class="pg[^"]*">([\s\S]*)<\/div>$/);if(o)h=o[1].trim();
+ const r=h.match(/^(?:<div[^>]*>\s*)?<h1[^>]*>[\s\S]*?<\/h1>\s*(?:<p class="lead"[^>]*>([\s\S]*?)<\/p>)?\s*(?:<\/div>)?/);
+ if(!r)return{lead:'',body:h};let body=h.slice(r[0].length);
+ /* cabeçalhos que trazem controles ao lado do título (ex.: lotes) ficam no corpo */
+ return{lead:r[1]||'',body};}
+/* seletor de seção dentro de uma página (mesmo componente em todas) */
+const segHTML=(pg,items,cur,label)=>`<div class="seg" role="tablist" aria-label="${esc(label||'Seções')}">${items.map(([k,n])=>`<button role="tab" data-a="sub" data-v="${pg}:${k}" aria-selected="${cur===k}">${n}</button>`).join('')}</div>`;
 /* formato antigo (grupo, páginas), usado pelos testes e pela busca */
 const PAGES=FAMILIES.map(([,n,p])=>[n,p]);
 const PAGE_N={};const PAGE_FAM={};FAMILIES.forEach(([f,,p])=>p.forEach(([k,n])=>{PAGE_N[k]=n;PAGE_FAM[k]=f;}));
@@ -2182,7 +2200,7 @@ const isMac=()=>{try{return /Mac|iPhone|iPad/.test(navigator.platform||navigator
 const kbd=k=>`<kbd>${isMac()?'⌘':'Ctrl '}${k}</kbd>`;
 
 /* ---------- marca ---------- */
-const VERSION='v17.6';
+const VERSION='v17.7';
 const brandHTML=()=>`<div class="brand"><div class="hex"></div><div><b>Il <span>Fredolin</span></b><small>Gelato Lab ${VERSION}${APP_MODE==='app'&&ME.email?' · '+ROLE_N[ROLE]:''}</small></div></div>`;
 
 /* ---------- termômetro da receita: vitrine, serviço ideal (com faixa de incerteza) e freezer numa régua só ---------- */
@@ -2280,7 +2298,7 @@ const PAL_ACTS=[
  ['undo','Desfazer a última mudança','Z',['voltar']],
  ['norm','Normalizar a receita para 1000 g',null,['escala','1kg']],
  ['palBal','Balancear açúcares para a vitrine',null,['açúcar','congelamento','acucar']],
- ['lotNew','Registrar lote da bancada',null,['produção','lote']],
+ ['lotNew','Registrar lote já produzido',null,['produção','lote','bancada']],
  ['flowStart','Iniciar calda na produção ao vivo',null,['produção','cronômetro','maturação','timer']],
  ['varAdd','Copiar a bancada como variação',null,['comparar','creator']],
  ['compAdd:variegato','Adicionar variegato',null,['componente','calda']],
@@ -2293,6 +2311,7 @@ function palItems(q){const nq=norm(q.trim());const words=nq.split(/\s+/).filter(
   for(const w of words){if(t.startsWith(w))s+=100;else if(new RegExp('(^|\\s)'+w.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')).test(t))s+=70;else if(t.includes(w))s+=40;else if(a.includes(w))s+=25;else return 0;}return s;};
  const recent=U.recent||[];
  FAMILIES.forEach(([f,fn,P])=>P.forEach(([k,n])=>{if(!can.page(k))return;const s=sc(n,[fn]);if(s)out.push({g:'Ir para',t:n,sub:fn,ic:f,a:'go',v:k,s:s+(recent.includes(k)?(8-recent.indexOf(k)):0)+(words.length?0:5)});}));
+ if(words.length)Object.entries(PAGE_ALIAS).forEach(([k,[to,,n]])=>{if(!can.page(to))return;const s=sc(n,[PAGE_N[to]]);if(s)out.push({g:'Ir para',t:n,sub:PAGE_N[to],ic:PAGE_FAM[to],a:'go',v:k,s:s-1});});
  PAL_ACTS.forEach(([a,t,key,al])=>{const[act,v]=a.split(':');if(!ACT[act]||!can.act(act))return;if(act==='undo'&&!UNDO.length)return;const s=sc(t,al);if(s)out.push({g:'Ações',t,ic:'acao',a:act,v:v||'',key,s:s+(words.length?0:3)});});
  if(nq.length>=2){
   if(can.act('crAdd'))ING.filter(i=>i.id!=='nx_tmp').map(i=>({i,s:sc(i.n,[i.cat,i.lab||''])})).filter(x=>x.s).sort((a,b)=>b.s-a.s).slice(0,6).forEach(({i,s})=>out.push({g:'Adicionar à bancada',t:i.n,sub:i.cat,ic:'ingrediente',a:'crAdd',v:i.id,s:s*.8}));
@@ -2371,41 +2390,43 @@ function pgBancada(m,F,sc){
  <div class="card"><div class="row" style="margin-bottom:8px"><h2 style="margin:0">Receita</h2><span class="sp"></span><span class="chip">${f0(m.tot)} g</span></div>
   ${rows?`<div class="tw"><table class="tbl"><thead><tr><th>Ingrediente</th><th class="r">Gramas</th><th class="r">% mistura</th><th></th></tr></thead><tbody>${rows}</tbody></table></div>`:'<p class="muted">Bancada vazia. Busque um ingrediente acima ou carregue uma base na Biblioteca.</p>'}
   <div class="row" style="margin-top:12px"><button class="btn sm" data-a="norm">Normalizar para 1000 g</button><span class="sp"></span>
-   <input type="number" id="scaleG" data-i="scaleG" value="${U.scaleG}" placeholder="peso do lote" style="width:130px" aria-label="Novo peso do lote em gramas"><button class="btn sm" data-a="scale">Escalar lote</button></div>${pairChips()}</div></div><div class="bcol">
+   <input type="number" id="scaleG" data-i="scaleG" value="${U.scaleG}" placeholder="peso do lote" style="width:130px" aria-label="Novo peso do lote em gramas"><button class="btn sm" data-a="scale">Escalar lote</button></div>${pairChips()}</div>${brixFruitCard(m)}</div><div class="bcol">
  ${S.proc.serveFrom==='pote'?poteCard(m,true):''}
- ${liveBalCard(m)}
- ${setCompareCard(m)}
+ ${balanceCard(m)}
  ${approveCard(m,F,sc)}
  ${top.length?`<div class="card"><div class="row"><h2 style="margin:0">Pontos que pedem ajuste</h2><span class="sp"></span><button class="btn sm pri" data-a="go" data-v="laudo">Abrir laudo completo</button></div>${top.map(findHTML).join('')}</div>`:(m.empty?'':`<div class="card"><h2>Laudo</h2><p class="c-ok" style="margin:0">Nenhum erro ou alerta. A receita está equilibrada para ${P.n.toLowerCase()} a ${f1(S.vit)} °C.</p></div>`)}
  </div></div></div>`;}
 
 /* ---------- LAUDO ---------- */
+/* Laudo único (v17.7): resumo com problemas primeiro e riscos de defeito; congelamento, química/vida útil e parâmetros como seções */
+const LAUDO_SEC=[['resumo','Resumo'],['congelamento','Congelamento'],['quimica','Química e vida útil'],['parametros','Parâmetros']];
 function pgLaudo(m,F,sc){
  if(m.empty)return`<div class="pg"><h1>Laudo técnico</h1><p class="lead">Monte uma receita na Bancada para gerar o laudo.</p></div>`;
- const P=m.P,groups=['crit','warn','info','ok'];
+ const P=m.P,groups=['crit','warn','info','ok'];const t=subOf('laudo','resumo');
  const prm=[
   ['Água congelada na vitrine',m.fzVit,'%',P.fz,1],['Sólidos totais',m.sol,'%',P.sol,1],['Gordura',m.fat,'%',P.fat,1],['Proteína',m.prot,'%',P.prot,1],
   ['MSNF',m.msnf,'%',P.msnf[1]>0?P.msnf:null,1],['Lactose / água',m.lacW,'%',[0,9],1],['Açúcares e polióis (sem lactose)',m.swt,'%',P.swt,1],
   ['Doçura POD',m.pod,'%',P.pod,1],['Estabilizantes',m.hydro,'%',P.stab,2],['Emulsificantes',m.emul,'%',null,2],['Gema',m.yolkPct,'%',null,1],
   ['Fruta',m.fruit,'%',P.frt,0],['Álcool (etanol)',m.alc,'%',null,1],['Overrun previsto',m.ov,'%',P.ov,0]];
- const bal=U.bal;
- return`<div class="pg">
- <div><h1>Laudo técnico</h1><p class="lead">Cada parâmetro é comparado com a faixa de ${P.n.toLowerCase()} e com o processo informado. As soluções trazem gramagens calculadas para o lote atual de ${f0(m.tot)} g.</p></div>
- <div class="card"><div class="row" style="gap:20px;align-items:center">${ring(sc.total)}<div style="flex:1;min-width:240px;display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px 16px">
+
+ let body='',lead='';
+ if(t==='congelamento'){const E=embedPg(pgCongel(m));lead=E.lead;body=E.body;}
+ else if(t==='quimica'){const E=embedPg(pgQuimica(m));lead=E.lead;body=E.body+brixMixCards(m);}
+ else if(t==='parametros'){lead='Cada parâmetro da receita contra a faixa de '+esc(P.n.toLowerCase())+'.';body=`<div class="card"><h2>Parâmetros</h2><div class="tw"><table class="tbl"><thead><tr><th>Parâmetro</th><th class="r">Valor</th><th class="r">Alvo</th><th style="width:30%">Posição</th></tr></thead><tbody>
+  ${prm.map(([n,v,u,r,d])=>{const lo=r?Math.min(r[0],v)-(r[1]-r[0]||1)*.6:0,hi=r?Math.max(r[1],v)+(r[1]-r[0]||1)*.6:1;return`<tr><td>${n}</td><td class="r mono ${stCls(v,r)}">${d===0?f0(v):d===2?f2(v):f1(v)}${u}</td><td class="r mono muted">${r?(d===2?f2(r[0])+'–'+f2(r[1]):f0(r[0])+'–'+f0(r[1]))+u:'—'}</td><td>${r?rbar(v,r,lo,hi):''}</td></tr>`;}).join('')}
+ </tbody></table></div></div>`;}
+ else{lead='Cada parâmetro é comparado com a faixa de '+esc(P.n.toLowerCase())+' e com o processo informado. As soluções trazem gramagens calculadas para o lote atual de '+f0(m.tot)+' g.';
+  const R=defectRisks(m),ok=F.filter(f=>f.sev==='ok');
+  body=`<div class="card"><div class="row" style="gap:20px;align-items:center">${ring(sc.total)}<div style="flex:1;min-width:240px;display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px 16px">
   ${sc.parts.map(([n,w,v])=>`<div><div class="row" style="justify-content:space-between"><span class="t2" style="font-size:12.5px">${n}</span><span class="mono" style="font-size:11px">${f0(v*100)}</span></div>${rbar(v*100,[85,100],0,100)}</div>`).join('')}</div></div>
   <div class="row" style="margin-top:12px">${groups.map(g=>{const n=F.filter(f=>f.sev===g).length;const PL={crit:['crítico','críticos'],warn:['alerta','alertas'],info:['observação','observações'],ok:['acerto','acertos']}[g];return n?`<span class="chip ${g}">${n} ${PL[n>1?1:0]}</span>`:'';}).join('')}<span class="sp"></span><span class="chip" title="Faixa provável com a variação natural dos ingredientes">serviço ideal ${f1(m.serveT)} °C · ${uncLine(m)}</span></div></div>
- ${approveCard(m,F,sc)}
- ${groups.map(g=>{const L=F.filter(f=>f.sev===g);return L.length?`<div class="card"><h2>${{crit:'Erros críticos',warn:'Atenção',info:'Observações',ok:'Acertos'}[g]}</h2>${L.map(findHTML).join('')}</div>`:'';}).join('')}
- <div class="card"><h2>Balanceador de açúcares</h2>
-  <p class="t2" style="margin:0 0 10px;max-width:80ch">Recalcula sacarose, dextrose e maltodextrina DE 19 (e os outros açúcares estruturais da receita) para atingir ao mesmo tempo ${fT(P.fz[0])}–${fT(P.fz[1])}% de água congelada ${S.proc.serveFrom==='pote'?'na camada de servir depois de '+f0(+S.proc.waitMin)+' min fora do freezer a '+fT(S.proc.storeT)+' °C':'a '+f1(S.vit)+' °C'}, a doçura central da faixa e os sólidos dentro do alvo. O restante da receita não muda. Quando o clássico não resolve (salgados, sem açúcar, álcool alto, sólidos fora da faixa), o balanceador do laboratório também ajusta sal, sólidos, polióis, o líquido da base ou o álcool, sempre com a menor mudança possível.</p>
-  <button class="btn pri" data-a="bal">Calcular proposta</button>
-  ${bal?(bal.ok?`<div class="tw" style="margin-top:12px"><table class="tbl"><thead><tr><th>Ingrediente</th><th class="r">Atual</th><th class="r">Proposto</th><th class="r">Diferença</th></tr></thead><tbody>${bal.prop.map((p,k)=>`<tr><td>${esc(ING_BY[p.id].n)}</td><td class="r mono">${f0(bal.cur[k])} g</td><td class="r mono c-ice">${f0(p.g)} g</td><td class="r mono">${p.g-bal.cur[k]>=0?'+':''}${f0(p.g-bal.cur[k])} g</td></tr>`).join('')}</tbody></table></div>
-   <p class="t2" style="margin:10px 0">Resultado: ${f0(bal.m1.fzVit)}% congelada · POD ${f1(bal.m1.pod)}% · sólidos ${f1(bal.m1.sol)}% · lote ${f0(bal.m1.tot)} g${bal.note?'<br><span class="c-warn">'+esc(bal.note)+'</span>':bal.mode!=='3'?' · <span class="c-warn">sólidos ficaram livres para atingir congelamento e doçura</span>':''}${bal.poteVit!=null?'<br><span class="c-ice">Depois de '+f0(+S.proc.waitMin)+' min fora do freezer a camada de servir fica a '+f1(bal.poteVit)+' °C: no ponto.</span>':''}</p>
-   <div class="row"><button class="btn okb" data-a="balApply">Aplicar na receita</button><button class="btn sm" data-a="balClose">Descartar</button></div>`:`<p class="c-warn" style="margin:10px 0 0">${esc(bal.msg)}</p>`):''}</div>
- <div class="card"><h2>Parâmetros</h2><div class="tw"><table class="tbl"><thead><tr><th>Parâmetro</th><th class="r">Valor</th><th class="r">Alvo</th><th style="width:30%">Posição</th></tr></thead><tbody>
-  ${prm.map(([n,v,u,r,d])=>{const lo=r?Math.min(r[0],v)-(r[1]-r[0]||1)*.6:0,hi=r?Math.max(r[1],v)+(r[1]-r[0]||1)*.6:1;return`<tr><td>${n}</td><td class="r mono ${stCls(v,r)}">${d===0?f0(v):d===2?f2(v):f1(v)}${u}</td><td class="r mono muted">${r?(d===2?f2(r[0])+'–'+f2(r[1]):f0(r[0])+'–'+f0(r[1]))+u:'—'}</td><td>${r?rbar(v,r,lo,hi):''}</td></tr>`;}).join('')}
- </tbody></table></div></div>
- </div>`;}
+  ${groups.slice(0,3).map(g=>{const L=F.filter(f=>f.sev===g);return L.length?`<div class="card"><h2>${{crit:'Erros críticos',warn:'Atenção',info:'Observações'}[g]}</h2>${L.map(findHTML).join('')}</div>`:'';}).join('')}
+  ${F.some(f=>f.sev==='crit'||f.sev==='warn')&&can.edit()?balanceCard(m):''}
+  <div class="card"><div class="row"><h2 style="margin:0">Riscos de defeito</h2><span class="sp"></span><button class="btn sm" data-a="go" data-v="defeitos">Diagnóstico por sintomas</button></div>
+   ${R.length?R.map(x=>`<div class="find"><div class="bar ${defLvl(x.s)}"></div><div><div class="area">${esc(x.d.n)} · risco ${defLvlN(x.s)} · ${f0(x.s*100)}%</div><h3>${esc(x.R[0].txt)}</h3><div class="fix"><b>Correção</b>${esc(x.R[0].fix)}</div><div style="margin-top:6px"><button class="btn ghost sm" data-a="defOpenB" data-v="${x.d.id}">Ficha do defeito</button></div></div></div>`).join('')
+   :'<p class="t2" style="margin:0">Nenhum dos '+DEFECTS.length+' defeitos do banco tem causa provável na receita e no processo atuais.</p>'}</div>
+  ${ok.length?`<details class="card dcard"><summary><h2 style="margin:0">Acertos</h2><span class="chip ok">${ok.length}</span></summary>${ok.map(findHTML).join('')}</details>`:''}`;}
+ return`<div class="pg"><div class="pghead"><div><h1>Laudo técnico</h1><p class="lead">${lead}</p></div>${segHTML('laudo',LAUDO_SEC,t,'Seções do laudo')}</div>${body}</div>`;}
 
 /* ---------- CONGELAMENTO ---------- */
 function chart(m){
@@ -2457,9 +2478,8 @@ function pgCongel(m){
 function pgProcesso(m,F){
  const p=S.proc,PF=F.filter(f=>f.area==='Processo'||f.area==='Segurança');
  const sel=(id,label,opts,val,hint)=>`<label class="field"><span class="lbl">${label}</span><select id="p-${id}" data-c="proc" data-k="${id}">${opts.map(([v,n])=>`<option value="${v}"${String(v)===String(val)?' selected':''}>${n}</option>`).join('')}</select>${hint?`<span class="hint">${hint}</span>`:''}</label>`;
- return`<div class="pg"><div><h1>Processo</h1><p class="lead">Pasteurização, maturação, mantecação e abatimento mudam o resultado tanto quanto a fórmula. Ajuste os valores reais da sua produção.</p></div>
+ return`<div class="pg"><div><h1>Processo e equipamentos</h1><p class="lead">Pasteurização, maturação, mantecação e abatimento mudam o resultado tanto quanto a fórmula. Os valores pertencem ao set ativo (Artigianale ou Professionale); o roteiro passo a passo fica na Ficha de produção.</p></div>
  ${setGearCard()}
- ${equipCard(m)}
  <div class="card"><h2>Pasteurização e resfriamento</h2><div class="form">
   ${fieldNum('p-pastT','Temperatura (°C)',p.pastT,1,'Alta 85 °C · baixa 65 °C')}
   ${fieldNum('p-pastHold','Retenção',p.pastHold,1,'')}
@@ -2494,21 +2514,23 @@ function pgProcesso(m,F){
  </div>`;}
 
 /* ---------- BRIX ---------- */
-function pgBrix(m){
- const fr=(S.recipe||[]).filter(r=>ING_BY[r.id]&&ING_BY[r.id].brix);
- const ref=analyze({...S,brix:{}});const dPod=m.A.pod-ref.A.pod,dPac=m.A.pac-ref.A.pac;
- return`<div class="pg"><div><h1>Calibração Brix</h1><p class="lead">A doçura de cada safra varia. Meça o °Brix da polpa no refratômetro e informe aqui: o motor corrige açúcares e água da fruta e recalcula toda a receita.</p></div>
- <div class="card"><h2>Frutas da receita</h2>${fr.length?`<div class="tw"><table class="tbl"><thead><tr><th>Fruta</th><th class="r">Gramas</th><th class="r">°Bx tabela</th><th class="r">°Bx medido</th><th class="r">Δ açúcar no lote</th><th></th></tr></thead><tbody>
+/* Brix da safra: cartão contextual na Bancada (só aparece com fruta na receita) e leitura da mistura no Laudo */
+function brixFruitCard(m){const fr=(S.recipe||[]).filter(r=>ING_BY[r.id]&&ING_BY[r.id].brix);if(!fr.length||m.empty)return'';
+ const ref=analyze({...S,brix:{}});const dPod=m.A.pod-ref.A.pod,dPac=m.A.pac-ref.A.pac;const meas=fr.some(r=>S.brix[r.id]!=null&&S.brix[r.id]!=='');
+ return`<details class="card dcard" id="brixCard"${U.brixOpen||meas?' open':''}><summary><h2 style="margin:0">Brix da fruta desta safra</h2><span class="muted" style="font-size:12.5px">${meas?'medido':'valores de tabela'}</span></summary><p class="note" style="margin:8px 0">A doçura de cada safra varia. Meça o °Brix da polpa no refratômetro: o motor corrige açúcares e água da fruta e recalcula a receita inteira.</p>
+${true?`<div class="tw"><table class="tbl"><thead><tr><th>Fruta</th><th class="r">Gramas</th><th class="r">°Bx tabela</th><th class="r">°Bx medido</th><th class="r">Δ açúcar no lote</th><th></th></tr></thead><tbody>
   ${fr.map(r=>{const i=ING_BY[r.id],b=S.brix[r.id];const has=b!=null&&b!=='';const d=has?(+b-i.brix):0;return`<tr><td>${esc(i.n)}</td><td class="r mono">${f0(r.g)}</td><td class="r mono muted">${i.brix}</td><td class="r"><input type="number" id="bx-${r.id}" data-i="brix" data-id="${r.id}" value="${has?esc(b):''}" placeholder="${i.brix}" step=".1" min="0" max="40" aria-label="Brix medido de ${esc(i.n)}"></td><td class="r mono ${d>0?'c-gold':d<0?'c-crit':'muted'}">${has?(d>=0?'+':'')+f1(r.g*.9*d/100)+' g':'—'}</td><td class="r">${has?`<button class="btn sm" data-a="brixReset" data-v="${r.id}">Padrão</button>`:''}</td></tr>`;}).join('')}
  </tbody></table></div>
- ${Math.abs(dPod)>.5?`<div class="find" style="border:0;padding-bottom:0"><div class="bar ${dPod>0?'warn':'info'}"></div><div><h3>Compensação da safra</h3><p>A fruta medida traz ${dPod>0?'+':''}${f0(dPod)} g de doçura equivalente e ${dPac>0?'+':''}${f0(dPac)} de PAC em relação à tabela.</p><div class="fix"><b>Solução</b>Para manter a receita original, ${dPod>0?'retire':'acrescente'} ≈ ${f0(Math.abs(dPod))} g de sacarose; ou use o balanceador do laudo para redistribuir os açúcares.</div></div></div>`:''}`
- :'<p class="muted">Nenhuma fruta na receita. Polpas e sucos do banco aparecem aqui automaticamente.</p>'}</div>
- <div class="g2">
+ ${Math.abs(dPod)>.5?`<div class="find" style="border:0;padding-bottom:0"><div class="bar ${dPod>0?'warn':'info'}"></div><div><h3>Compensação da safra</h3><p>A fruta medida traz ${dPod>0?'+':''}${f0(dPod)} g de doçura equivalente e ${dPac>0?'+':''}${f0(dPac)} de PAC em relação à tabela.</p><div class="fix"><b>Solução</b>Para manter a receita original, ${dPod>0?'retire':'acrescente'} ≈ ${f0(Math.abs(dPod))} g de sacarose; ou aplique o balanceamento da Bancada, que já considera a fruta medida.</div></div></div>`:''}`
+ :'<p class="muted">Nenhuma fruta na receita. Polpas e sucos do banco aparecem aqui automaticamente.</p>'}
+</details>`;}
+function brixMixCards(m){if(m.empty)return'';return`<div class="g2">
   <div class="card"><h2>Brix estimado da mistura</h2><div class="big c-ice">${m.empty?'—':f1(m.brixMix)}<small class="muted" style="font-size:14px"> °Bx</small></div>
    <p class="t2" style="margin:6px 0 0">${S.tipo==='sorbetto'?'Sorbetto: leitura no refratômetro entre 28 e 32 °Bx. Se medir diferente do previsto, a fruta ou a pesagem divergem.':'Em bases lácteas a gordura e a proteína distorcem a leitura do refratômetro; use o valor só como controle de lote para lote.'}</p></div>
   <div class="card"><h2>Relação Brix / acidez</h2><div class="big ${m.brixAcid==null?'muted':m.brixAcid<20?'c-warn':m.brixAcid>60?'c-info':'c-ok'}">${m.brixAcid==null||m.acd<.05?'—':f0(m.brixAcid)}</div>
    <p class="t2" style="margin:6px 0 0">Abaixo de 20: ácido dominante · 20–35: vivo, cítrico · 35–60: fruta madura equilibrada · acima de 60: plano. Acidez orgânica da mistura: ${f2(m.acd)}%.</p></div>
  </div></div>`;}
+function pgBrix(m){return`<div class="pg"><div><h1>Calibração Brix</h1></div>${brixFruitCard(m)||'<p class="muted">Nenhuma fruta na receita.</p>'}${brixMixCards(m)}</div>`;}
 
 /* ---------- DEFEITOS (v17.6): sintomas → diagnóstico diferencial · banco por defeito · risco da receita ---------- */
 const DEF_SEV={qualidade:['Qualidade','info'],comercial:['Comercial','warn'],seguranca:['Segurança','crit']};
@@ -2528,8 +2550,8 @@ function defDetail(d,m){const R=m.empty?[]:rankDefect(d,m);const sv=DEF_SEV[d.se
  <div class="card"><h2>Prevenção</h2><ul class="t2" style="margin:0;padding-left:18px">${(d.prev||[]).map(x=>`<li>${esc(x)}</li>`).join('')}</ul>
  <h3 style="margin:14px 0 4px">Fontes</h3><ul class="muted" style="margin:4px 0 0;padding-left:18px;font-size:12px">${(d.src||[]).map(k=>`<li>${esc(DEF_SRC[k]||k)}</li>`).join('')}</ul></div>`;}
 function pgDefeitos(m){
- const mode=U.defMode||'sint';const sel=U.defSym||[];
- const tabs=`<div class="chips">${[['sint','Pelos sintomas'],['banco','Por defeito'],['risco','Risco da receita']].map(([k,n])=>`<button data-a="defMode" data-v="${k}" aria-pressed="${mode===k}">${n}</button>`).join('')}</div>`;
+ const mode=subOf('defeitos',U.defMode||'sint');const sel=U.defSym||[];
+ const tabs=segHTML('defeitos',[['sint','Pelos sintomas'],['banco','Por defeito']],mode,'Modo do diagnóstico');
  let body='';
  if(mode==='sint'){
   const D=sel.length?diagnoseSymptoms(sel,m):[];const top=D[0];
@@ -2543,13 +2565,8 @@ function pgDefeitos(m){
   const cat=U.defCat||'';const L=DEFECTS.filter(x=>!cat||x.cat===cat);const d=DEFECTS.find(x=>x.id===S.defect)||L[0]||DEFECTS[0];
   body=`<div class="card"><div class="chips" style="margin-bottom:10px"><button data-a="defCat" data-v="" aria-pressed="${!cat}">Todos · ${DEFECTS.length}</button>${DEF_CAT.map(([k,n])=>`<button data-a="defCat" data-v="${k}" aria-pressed="${cat===k}">${n} · ${DEFECTS.filter(x=>x.cat===k).length}</button>`).join('')}</div>
   <div class="chips">${L.map(x=>`<button data-a="defect" data-v="${x.id}" aria-pressed="${x.id===d.id}">${x.n}</button>`).join('')}</div></div>${defDetail(d,m)}`;
- }else{
-  const R=defectRisks(m);
-  body=`<div class="card"><h2>Riscos da receita atual</h2><p class="t2" style="margin:0 0 8px">Antes de produzir: defeitos que a receita e o processo atuais tendem a provocar, com a causa principal e a correção.</p>
-  ${m.empty?'<p class="t2">Monte uma receita na Bancada.</p>':R.length?R.map(x=>`<div class="find"><div class="bar ${defLvl(x.s)}"></div><div><div class="area">${esc(x.d.n)} · risco ${defLvlN(x.s)} · ${f0(x.s*100)}%</div><h3>${esc(x.R[0].txt)}</h3><div class="fix"><b>Correção</b>${esc(x.R[0].fix)}</div><div style="margin-top:6px"><button class="btn ghost" data-a="defOpenB" data-v="${x.d.id}">Ver ficha do defeito</button></div></div></div>`).join('')
-  :'<p class="t2" style="margin:0">Nenhum risco relevante: a receita e o processo atuais estão dentro das faixas de todos os '+DEFECTS.length+' defeitos do banco.</p>'}</div>`;}
- return`<div class="pg"><div><h1>Diagnóstico de defeitos</h1><p class="lead">Banco de ${DEFECTS.length} defeitos do gelato artesanal com sintomas, mecanismo, causas medidas pelo motor, checklist de processo, prevenção e fontes.</p></div>
- <div class="card">${tabs}</div>${body}</div>`;}
+ }
+ return`<div class="pg"><div class="pghead"><div><h1>Diagnóstico de defeitos</h1><p class="lead">Banco de ${DEFECTS.length} defeitos do gelato artesanal com sintomas, mecanismo, causas medidas pelo motor, checklist de processo, prevenção e fontes. Os riscos da receita atual estão no Laudo.</p></div>${tabs}</div>${body}</div>`;}
 
 /* ---------- RÓTULO ---------- */
 const BRAL={leite:'LEITE E DERIVADOS',ovo:'OVOS E DERIVADOS',soja:'SOJA E DERIVADOS',amendoim:'AMENDOIM',peixe:'PEIXES',crustaceo:'CRUSTÁCEOS'};
@@ -2734,17 +2751,17 @@ function pgLotes(m){
  let scat='';if(ovPts.length){const W=300,H=200,L=34,B=26,T=10,R=10;const lo=Math.min(...ovPts.flatMap(r=>r.ov))-5,hi=Math.max(...ovPts.flatMap(r=>r.ov))+5;const sx=v=>L+(v-lo)/(hi-lo)*(W-L-R),sy=v=>T+(1-(v-lo)/(hi-lo))*(H-T-B);
   scat=`<svg viewBox="0 0 ${W} ${H}" style="width:100%;max-width:340px;height:auto" role="img" aria-label="Overrun previsto contra medido"><line x1="${sx(lo)}" y1="${sy(lo)}" x2="${sx(hi)}" y2="${sy(hi)}" stroke="var(--t3)" stroke-dasharray="3 3"/>${ovPts.map(r=>`<circle cx="${sx(r.ov[0])}" cy="${sy(r.ov[1])}" r="4.5" fill="var(--ice)"/>`).join('')}<text x="${W/2}" y="${H-6}" text-anchor="middle" fill="var(--t3)" font-size="9.5">previsto (%)</text><text x="12" y="${H/2}" fill="var(--t3)" font-size="9.5" transform="rotate(-90 12 ${H/2})" text-anchor="middle">medido (%)</text>${[lo,hi].map(v=>`<text x="${sx(v)}" y="${H-14}" text-anchor="middle" fill="var(--t3)" font-size="9">${f0(v)}</text>`).join('')}</svg>`;}
  const cnt=CAL.counts||{ov:0,tex:0,melt:0,icy:0};
- return`<div class="pg"><div><h1>Lotes e calibração</h1><p class="lead">Registre cada produção com as medições reais. Os desvios entre previsto e medido ajustam o motor para a sua máquina, seus fornecedores e seu paladar.</p></div>
+ return`<div class="pg"><div><h1>Lotes e calibração</h1><p class="lead">Cada calda iniciada na Produção ao vivo já vira um lote aqui. Registre as medições reais: os desvios entre previsto e medido ajustam o motor para a sua máquina, seus fornecedores e seu paladar.</p></div>
+ <div class="card"><div class="row"><h2 style="margin:0">Diário de produção</h2><span class="sp"></span><button class="btn pri" data-a="lotNew"${m.empty?' disabled':''}>${m.empty?'Abra uma receita aprovada':'Registrar lote já produzido'}</button></div>
+  ${LOTS.length?`<div class="tw" style="margin-top:10px"><table class="tbl"><thead><tr><th>Lote</th><th>Receita</th><th>Data</th><th class="r">Overrun prev./med.</th><th>APPCC</th><th></th></tr></thead><tbody>
+   ${LOTS.map(L=>{const ov=measuredOverrun(L.meas||{});const h=haccp(L);const worst=h.some(x=>x[1]==='crit')?'crit':h.some(x=>x[1]==='warn')?'warn':'ok';return`<tr${U.lotOpen===L.id?' style="background:var(--hov)"':''}><td class="mono">${esc(L.code)}</td><td>${esc(L.name)}</td><td class="mono">${esc(L.date)}</td><td class="r mono">${f0(L.pred.ov)}% / ${ov!=null?f0(ov)+'%':'—'}</td><td><span class="chip ${worst}">${worst==='ok'?'conforme':worst==='warn'?'pendências':'não conforme'}</span></td><td class="r"><button class="btn sm" data-a="lotOpen" data-v="${L.id}">${U.lotOpen===L.id?'Fechar':'Abrir'}</button></td></tr>`;}).join('')}</tbody></table></div>`:'<p class="muted" style="margin:10px 0 0">Nenhum lote registrado. Produza a receita da bancada e registre aqui as medições.</p>'}</div>
+ ${open?lotEditor(open):''}
  ${ROLE==='sous'?'':` <div class="card"><div class="row"><h2 style="margin:0">Calibração do motor</h2><span class="sp"></span><label class="row" style="gap:6px;font-size:13px"><input type="checkbox" id="calOn" data-c="calOn" ${CAL.on?'checked':''}> Aplicar calibração</label></div>
   <div class="g3" style="margin-top:12px;gap:12px">
    <div class="card flat"><span class="lbl">Overrun por máquina</span>${Object.keys(CAL.ov).length?Object.entries(CAL.ov).map(([k,v])=>`<div class="kv"><span>${esc((MACH[k]||{}).n||k)}</span><span>${v>0?'+':''}${f1(v)} pp</span></div>`).join(''):'<p class="note">Sem medições ainda.</p>'}<p class="note">${cnt.ov} lote(s) com overrun medido</p></div>
    <div class="card flat"><span class="lbl">Dureza na vitrine</span><div class="kv"><span>Ajuste de temperatura</span><span>${CAL.tShift>0?'+':''}${f2(CAL.tShift)} °C</span></div><div class="kv"><span>Derretimento (10 min)</span><span>${CAL.meltBias>0?'+':''}${f1(CAL.meltBias)} pp</span></div><p class="note">${cnt.tex} avaliação(ões) de textura · ${cnt.melt} teste(s) de derretimento</p></div>
    <div class="card flat"><span class="lbl">Recristalização</span><div class="kv"><span>Multiplicador de K</span><span>× ${f2(CAL.kMult)}</span></div><p class="note">${cnt.icy} lote(s) com dia de gelo perceptível. Cada ajuste é encolhido em direção a zero até haver lotes suficientes (média bayesiana com prior de 3 lotes).</p></div>
   </div>${scat?`<div style="margin-top:10px"><span class="lbl">Overrun previsto × medido</span>${scat}</div>`:''}</div>`}
- <div class="card"><div class="row"><h2 style="margin:0">Diário de produção</h2><span class="sp"></span><button class="btn pri" data-a="lotNew"${m.empty?' disabled':''}>${ROLE==='sous'?(m.empty?'Abra uma receita em "Em execução"':'Registrar lote de '+esc(S.name)):'Registrar lote da bancada'}</button></div>
-  ${LOTS.length?`<div class="tw" style="margin-top:10px"><table class="tbl"><thead><tr><th>Lote</th><th>Receita</th><th>Data</th><th class="r">Overrun prev./med.</th><th>APPCC</th><th></th></tr></thead><tbody>
-   ${LOTS.map(L=>{const ov=measuredOverrun(L.meas||{});const h=haccp(L);const worst=h.some(x=>x[1]==='crit')?'crit':h.some(x=>x[1]==='warn')?'warn':'ok';return`<tr${U.lotOpen===L.id?' style="background:var(--hov)"':''}><td class="mono">${esc(L.code)}</td><td>${esc(L.name)}</td><td class="mono">${esc(L.date)}</td><td class="r mono">${f0(L.pred.ov)}% / ${ov!=null?f0(ov)+'%':'—'}</td><td><span class="chip ${worst}">${worst==='ok'?'conforme':worst==='warn'?'pendências':'não conforme'}</span></td><td class="r"><button class="btn sm" data-a="lotOpen" data-v="${L.id}">${U.lotOpen===L.id?'Fechar':'Abrir'}</button></td></tr>`;}).join('')}</tbody></table></div>`:'<p class="muted" style="margin:10px 0 0">Nenhum lote registrado. Produza a receita da bancada e registre aqui as medições.</p>'}</div>
- ${open?lotEditor(open):''}
  <div class="card flat"><p class="note" style="margin:0"><b style="color:var(--t2)">Como medir sem laboratório.</b> Overrun: encha um copo de volume fixo com a mistura e pese; depois o mesmo copo com o gelato recém-extraído, nivelado (overrun = (mistura − gelato) ÷ gelato). Derretimento: 100 g de gelato numa grade a 20 °C; pese o que escorreu em 10 min. Textura: avalie na espátula, de −2 (muito mole) a +2 (muito duro), anotando a temperatura da vitrine. Gelo: anote o dia em que percebeu cristais na língua.</p></div></div>`;}
 function lotEditor(L){const me=L.meas||{},se=L.sens||{};const ov=measuredOverrun(me);const h=haccp(L);
  const plan=L.plan||{};const num=(k,label,step,hint)=>{const pk=k.startsWith('meas.')?plan[k.slice(5)]:null;return`<label class="field"><span class="lbl">${label}</span><input type="number" id="lot-${k.replace('.','-')}" data-i="lot" data-k="${k}" value="${getPath(L,k)!=null?esc(getPath(L,k)):''}" step="${step}"${pk!=null?` placeholder="plano: ${esc(fT(pk))}"`:''}>${hint?`<span class="hint">${hint}</span>`:''}</label>`;};
@@ -3184,7 +3201,7 @@ function phaseMap(m,p){const P=m.P,W=300,H=190,L=34,R=10,T=10,B=26;const x0=50,x
 function pgCreator(m,F,sc){
  const tab=S.creatorTab||'gelato';
  return`<div class="pg"><div class="row" style="align-items:flex-end"><div style="flex:1;min-width:240px"><h1>Creator</h1><p class="lead">Laboratório de formulação com simulação ao vivo. Cada grama alterada recalcula o motor e a microestrutura reage.</p></div>
-  <div class="chips">${[['gelato','Gelato'],['neutros','Neutros']].map(([k,n])=>`<button data-a="crTab" data-v="${k}" aria-pressed="${tab===k}">${n}</button>`).join('')}</div></div>
+  <div class="seg" role="tablist" aria-label="Laboratório">${[['gelato','Gelato'],['neutros','Neutros']].map(([k,n])=>`<button role="tab" data-a="crTab" data-v="${k}" aria-selected="${tab===k}">${n}</button>`).join('')}</div></div>
  ${tab==='gelato'?crGelato(m,F,sc):crNeutros(m)}</div>`;}
 
 function crGelato(m,F,sc){
@@ -3198,8 +3215,8 @@ function crGelato(m,F,sc){
   <div class="card crleft"><h2>Formulação <span class="muted" style="text-transform:none;letter-spacing:0">${f0(m.tot)} g · ${esc(m.P.n)}</span></h2>
    <div class="search" style="margin-bottom:10px"><input type="text" id="cq" data-i="cq" value="${esc(U.cq||'')}" placeholder="Adicionar ingrediente…" autocomplete="off" aria-label="Adicionar ingrediente">${res.length?`<div class="res">${res.map(i=>`<button data-a="crAdd" data-v="${i.id}"><span>${esc(i.n)}</span><span class="tag">${esc(i.cat)}</span></button>`).join('')}</div>`:''}</div>
    <div class="crlist">${rows||'<p class="muted">Adicione ingredientes ou carregue uma receita da Biblioteca.</p>'}</div>
-   <div class="row" style="margin-top:10px"><button class="btn sm" data-a="bal">Balancear açúcares</button><button class="btn sm" data-a="go" data-v="laudo">Laudo</button></div>
-   ${U.bal&&U.bal.ok?`<div class="fix" style="margin-top:10px;padding:8px 10px;border:1px solid var(--line);border-radius:8px;background:var(--surf);font-size:12.5px">Proposta: ${U.bal.prop.map((x,k)=>esc(ING_BY[x.id].n)+' '+f0(U.bal.cur[k])+'→<b class="c-ice">'+f0(x.g)+'</b> g').join(' · ')}<div class="row" style="margin-top:8px"><button class="btn sm okb" data-a="balApply">Aplicar</button><button class="btn sm" data-a="balClose">Descartar</button></div></div>`:U.bal?`<p class="c-warn" style="font-size:12.5px">${esc(U.bal.msg)}</p>`:''}
+   ${(()=>{const h=liveBalCard(m);return h?h.replace(/^<div class="card">/,'<div class="crbal" style="margin-top:12px;padding-top:12px;border-top:1px solid var(--line)">'):'';})()}
+   <div class="row" style="margin-top:10px"><button class="btn sm" data-a="go" data-v="laudo">Abrir laudo</button></div>
   </div>
   <div class="crcenter">
    <div class="card" style="padding:0;overflow:hidden"><div id="gsimHost" class="simhost"></div>
@@ -4401,7 +4418,7 @@ function pgLinha(m){const now=Date.now();const all=flowLots();const act=all.filt
   <div class="row" style="gap:8px">${notif==='default'?'<button class="btn sm" data-a="flowNotify">Ativar avisos</button>':notif==='granted'?'<span class="chip ok">Avisos ativos</span>':''}${can.edit()||ROLE==='sous'?`<button class="btn pri" data-a="flowStart"${m.empty?' disabled':''}>+ Iniciar calda: ${esc(S.name||'bancada')}</button>`:''}</div></div>
  <div class="fkpis">${kpi('Maturando',cnt('mat'),rd?rd+' pronta'+(rd>1?'s':''):'')}${kpi('Mantecadora',cnt('mant'))}${kpi('Endurecendo',cnt('hard'))}${kpi('No freezer',cnt('store'),act.filter(L=>L.flow.stage==='store').reduce((a,L)=>a+(+L.flow.kg||0),0).toFixed(1).replace('.',',')+' kg')}${kpi('Atenção',al,al?'ver cartões':'tudo no prazo',al?'warn':'')}${kpi('Hoje',fT(Math.round(todayKg*10)/10)+' kg','mantecados')}</div>
  <div class="chips" style="margin:4px 0 12px">${[['quadro','Quadro'],['tempo','Linha do tempo']].map(([k,n])=>`<button data-a="flowView" data-v="${k}" aria-pressed="${view===k}">${n}</button>`).join('')}</div>
- ${!act.length?`<div class="card"><p class="muted" style="margin:0">Nenhuma calda em produção. Abra ou crie uma receita na Bancada (ou em "Em execução") e toque em <b>Iniciar calda</b>: o app passa a cronometrar cada etapa e avisa quando a maturação chegar ao ponto.</p></div>`:
+ ${!act.length?`<div class="card"><p class="muted" style="margin:0">Nenhuma calda em produção. Escolha uma receita aprovada abaixo (Produzir) ou abra uma receita na Bancada e toque em <b>Iniciar calda</b>: o app passa a cronometrar cada etapa e avisa quando a maturação chegar ao ponto.</p></div>`:
   view==='tempo'?`<div class="card" style="overflow-x:auto">${flowGantt(act,now)}<p class="note">Barras cheias: o que já aconteceu. Tracejado: previsão pelos alvos do motor. Ponto verde: chegada prevista ao freezer.</p></div>`:
   `<div class="fboard">${cols.map(([c,n])=>{const L=act.filter(x=>inCol(x,c));return`<section class="fcol"><h3>${n} <span class="muted">${L.length||''}</span></h3>${L.map(x=>flowCard(x,now)).join('')||'<p class="fempty">—</p>'}</section>`;}).join('')}</div>`}
  ${hist.length?`<div class="card"><h2>Recentes</h2>${hist.map(L=>`<div class="kv"><span><i class="sw" style="background:${L.flow.color}"></i>${esc(L.flow.label)} · ${esc(L.name||'')}</span><span class="muted" style="font-size:12px">${FLOW_N[L.flow.stage]} · ${new Date(flowSince(L)).toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'})}</span></div>`).join('')}</div>`:''}
@@ -4564,6 +4581,14 @@ function setGearCard(){const k=S.set||'art',c=S.sets&&S.sets[k];if(!c)return'';c
   <div class="form" style="grid-template-columns:repeat(3,minmax(0,1fr))">${GEAR_N.map(([g,n])=>`<label class="field"><span class="lbl">${n}</span><input type="text" id="gear-${g}" data-i="gear" data-k="${g}" value="${esc(c.gear[g]||'')}" maxlength="60"${ed?'':' readonly'}></label>`).join('')}</div></div>`;}
 const SET_ACT={setSw:v=>{if(!SETS[v])return;setSwitch(v);render();toast('Set '+SETS[v].n+': processo e balanceamento recalculados');}};
 const SET_INP={gear:(v,t)=>{const k=t.dataset.k;if(!GEAR_N.some(g=>g[0]===k))return;const c=S.sets&&S.sets[S.set];if(!c)return;if(S.set==='pro'&&!(ROLE==='maestro'||ROLE==='chef'))return;c.gear[k]=String(v).slice(0,60);render();}};
+
+/* v17.7 · um só cartão de balanceamento: proposta ao vivo para o set ativo + a mesma receita no outro set (antes eram dois cartões) */
+function setOtherLine(){if(ROLE==='sous')return'';const R=setCompare();if(R==='pending')return'<p class="note" style="margin:10px 0 0">Comparando com o outro set…</p>';if(!R||R.some(x=>!x))return'';
+ const o=R.find(x=>x.k!==(S.set||'art'));if(!o)return'';const ch=o.b&&o.b.ok?o.b.prop.map((p,i)=>({id:p.id,a:o.b.cur[i],g:p.g})).filter(p=>Math.abs(p.g-p.a)>=1):[];
+ const vida=S.sets[o.k]&&S.sets[o.k].proc.serveFrom==='vitrine'?'na vitrine':'no freezer';
+ return`<div class="setcmp" style="margin-top:12px"><div class="row" style="justify-content:space-between"><b>No set ${SETS[o.k].n}</b><button class="btn sm" data-a="setSw" data-v="${o.k}">Usar este set</button></div>
+  <p class="note" style="margin:4px 0 0">Serviço ${fT(Math.round(o.serve*10)/10)} °C · índice ${o.sc} (fino ${f1(o.q)}) · cristal ${f0(o.d)} µm · vida ${vida} ${o.shelf>30?'30+':f0(o.shelf)} d. ${ch.length?'Balanceado para ele: '+ch.map(p=>esc(ING_BY[p.id]?ING_BY[p.id].n.split(' (')[0]:p.id)+' '+f0(p.a)+'→'+f0(p.g)+' g').join(' · ')+(o.q3!=null?' (fino '+f1(o.q3)+')':'')+'.':'Já no melhor ponto para ele.'}</p></div>`;}
+function balanceCard(m){const h=liveBalCard(m);if(!h)return'';const k=h.lastIndexOf('</div>');return h.slice(0,k)+setOtherLine()+h.slice(k);}
 
 /* ==== 62-supabase.js ==== */
 /* ===================== IL FREDOLIN · NUVEM DA EQUIPE (Supabase) =====================
@@ -4793,14 +4818,25 @@ if(APP_MODE==='app'&&'serviceWorker' in navigator&&(location.protocol==='https:'
 /* ==== 70-app.js ==== */
 /* ===================== IL FREDOLIN · APLICAÇÃO (render, ações, eventos) ===================== */
 const VIEW={execucao:pgExecucao,equipe:pgEquipe,bancada:pgBancada,creator:pgCreator,laudo:pgLaudo,congelamento:pgCongel,quimica:pgQuimica,vitrine:pgVitrine,
- lotes:pgLotes,planejamento:pgPlanejamento,estoque:pgEstoque,processo:pgProcesso,brix:pgBrix,defeitos:pgDefeitos,producao:pgProducao,
+ lotes:pgLotesQual,planejamento:pgPlanEst,estoque:pgEstoque,processo:pgProcesso,brix:pgBrix,defeitos:pgDefeitos,producao:pgProducao,
  ingredientes:pgIngredientes,rotulo:pgRotulo,custos:pgCustos,biblioteca:pgBiblioteca,dados:pgDados,
- componentes:pgComponentes,linha:pgLinha,degustacao:pgDegustacao,sazonal:pgSazonal};
+ componentes:pgComponentes,linha:pgProducaoViva,degustacao:pgDegustacao,sazonal:pgSazonal};
 
+
+/* ---------- v17.7 · páginas-eixo: cada tarefa num lugar só ---------- */
+/* Produção ao vivo também é onde se escolhe a receita aprovada (antes: página "Em execução") */
+function pgProducaoViva(m){const h=pgLinha(m);const act=flowLots().some(L=>FLOW_ACTIVE.includes(L.flow.stage));const k=h.lastIndexOf('</div>');
+ const sec=`<details class="card dcard" id="execSec"${!act||ROLE==='sous'?' open':''}><summary><h2 style="margin:0">Receitas aprovadas</h2><span class="chip">${EXEC.length}</span></summary>
+  <p class="note" style="margin:8px 0 12px">${ROLE==='sous'?'As receitas liberadas para produção. Toque em Produzir para abrir a ficha com a pesagem, o processo e o cronômetro.':'A versão aprovada de cada receita é a que a equipe produz, sem custos e sem edição. Aprove na Bancada.'}</p>${execList()}</details>`;
+ return h.slice(0,k)+sec+h.slice(k);}
+function hubPage(pg,title,lead,secs,def,render){const t=subOf(pg,def);const E=embedPg(render(t));
+ return`<div class="pg"><div class="pghead"><div><h1>${title}</h1><p class="lead">${E.lead||lead}</p></div>${segHTML(pg,secs,t,title)}</div>${E.body}</div>`;}
+function pgLotesQual(m){return hubPage('lotes','Lotes e qualidade','',[['lotes','Lotes e calibração'],['painel','Painel cego']],'lotes',t=>t==='painel'?pgDegustacao():pgLotes(m));}
+function pgPlanEst(m){return hubPage('planejamento','Planejamento e estoque','',[['plano','Plano de produção'],['estoque','Estoque']],'plano',t=>t==='estoque'?pgEstoque():pgPlanejamento());}
 /* ---------- RENDER: um quadro por vez (várias mudanças no mesmo quadro geram um único desenho) ---------- */
 let GSIM=null,NSIM=null;
 function renderNow(){
- normalizeState();navApply();
+ normalizeState();pageResolve();navApply();
  if(APP_MODE==='app'&&AUTH.state!=='ready'){$('#hdr').innerHTML=brandHTML();$('#nav').innerHTML='';$('#main').innerHTML=AUTH.view();document.body.classList.add('auth');return;}
  document.body.classList.remove('auth');
  if(!can.page(S.page))S.page=homePage();
@@ -4835,6 +4871,7 @@ let agingT=null;
 
 /* ---------- AÇÕES (data-a) ---------- */
 const ACT={
+ sub:v=>{const[p,k]=String(v).split(':');U.sub=U.sub||{};U.sub[p]=k;render();scrollTopAll();},
  go:v=>{S.page=v;U.copy=null;U.recent=[v,...(U.recent||[]).filter(x=>x!==v)].slice(0,6);render();scrollTopAll();},
  add:addSel,
  rm:v=>{S.recipe=S.recipe.filter(r=>r.id!==v);U.bal=null;render();},
@@ -4844,11 +4881,11 @@ const ACT={
  balApply:()=>{if(U.bal&&U.bal.ok){S.recipe=U.bal.newRecipe;U.bal=null;render();toast(S.proc.serveFrom==='pote'?'Açúcares rebalanceados para '+f0(+S.proc.waitMin)+' min de espera':'Açúcares rebalanceados');}},
  balClose:()=>{U.bal=null;render();},
  defect:v=>{S.defect=v;render();},
- defMode:v=>{U.defMode=v;render();},
+ defMode:v=>{if(v==='risco'){U.sub=U.sub||{};U.sub.laudo='resumo';S.page='laudo';render();return;}U.defMode=v;U.sub=U.sub||{};U.sub.defeitos=v;render();},
  defSym:v=>{const a=U.defSym||[];U.defSym=a.includes(v)?a.filter(x=>x!==v):a.concat(v);U.defPick=null;render();},
  defClr:()=>{U.defSym=[];U.defPick=null;render();},
  defOpen:v=>{U.defPick=v;render();},
- defOpenB:v=>{U.defMode='banco';U.defCat='';S.defect=v;scrollTopAll();render();},
+ defOpenB:v=>{U.defMode='banco';U.sub=U.sub||{};U.sub.defeitos='banco';S.page='defeitos';U.defCat='';S.defect=v;scrollTopAll();render();},
  defCat:v=>{U.defCat=v;const L=DEFECTS.filter(x=>!v||x.cat===v);if(L.length&&!L.some(x=>x.id===S.defect))S.defect=L[0].id;render();},
  brixReset:v=>{delete S.brix[v];render();},
  load:v=>{const l=LIB.find(x=>x.id==v);if(!l)return;Object.assign(S,JSON.parse(JSON.stringify(l.st)));S.proc=Object.assign({},PROC0,S.proc);S.libId=String(l.id);S.execId=null;S.page='bancada';U.bal=null;render();toast(l.name+' aberta');},
@@ -5009,7 +5046,7 @@ function importBackup(file){const fr=new FileReader();fr.onload=()=>{try{const d
 /* toda ação passa pela checagem do perfil (o servidor também recusa o que o perfil não pode) */
 const denied=()=>toast('Seu perfil não tem acesso a esta função.');
 /* ações que não mexem na receita não entram no desfazer */
-const NO_UNDO=new Set(['go','defMode','defSym','defClr','defOpen','defCat','fam','palOpen','palClose','palRun','undo','copy','chk','unchk','libTab','libAuthor','libMore','libTipo','libVitF','simOpen','simClose','cmpToggle','cmpClear','histOpen','lotOpen','crTab','crSub','atGoal','setSw','navTog','toTop','flowOpen','flowView','flowNotify','flowNext','flowBack','flowDisc','flowColor','flowStart','flowLot','procGo','procPlay','atSel','atPick','atCard','atExplore','nxGoal','sazM','del','delNo','meltTimer','panelSet','panelStart','panelNext','panelCancel','panelReveal','panelReset','testRun','syncNow','age','pick']);
+const NO_UNDO=new Set(['go','sub','defMode','defSym','defClr','defOpen','defCat','fam','palOpen','palClose','palRun','undo','copy','chk','unchk','libTab','libAuthor','libMore','libTipo','libVitF','simOpen','simClose','cmpToggle','cmpClear','histOpen','lotOpen','crTab','crSub','atGoal','setSw','navTog','toTop','flowOpen','flowView','flowNotify','flowNext','flowBack','flowDisc','flowColor','flowStart','flowLot','procGo','procPlay','atSel','atPick','atCard','atExplore','nxGoal','sazM','del','delNo','meltTimer','panelSet','panelStart','panelNext','panelCancel','panelReveal','panelReset','testRun','syncNow','age','pick']);
 function runAct(k,v,t){if(NO_UNDO.has(k))return ACT[k](v,t);const before=undoSnap();undoMark();const r=ACT[k](v,t);
  if(r&&typeof r.then==='function')return r;if(undoSnap()===before)undoSettle();else if(UNDO_TOAST.has(k))toastUndo();return r;}
 document.addEventListener('click',e=>{const t=e.target.closest('[data-a]');if(!t)return;e.preventDefault();const k=t.dataset.a;if(!ACT[k])return;if(!can.act(k))return denied();runAct(k,t.dataset.v,t);});
