@@ -228,6 +228,8 @@ button.chip{cursor:pointer}
 .find p{margin:0;color:var(--t2);max-width:80ch}
 .find .fix{margin-top:8px;padding:9px 12px;border-radius:var(--r1);background:var(--raise);color:var(--t1);max-width:80ch}
 .find .fix b{color:var(--ice);font:600 12.5px var(--fb);margin-right:6px}
+.find .acts .btn{white-space:normal;text-align:left;max-width:100%;height:auto;line-height:1.3;padding-top:7px;padding-bottom:7px}
+.find>div{min-width:0}.find .acts .btn{box-sizing:border-box}
 .find .acts{margin-top:8px}
 .bar.crit{background:var(--crit)}.bar.warn{background:var(--warn)}.bar.info{background:var(--info)}.bar.ok{background:var(--ok)}
 
@@ -1171,7 +1173,7 @@ function analyzeRaw(st){
 
 /* análise com memória: a chave inclui a versão do banco de ingredientes, da calibração e do estoque */
 const _MEMO=new Map();
-function analyze(st){let key;try{key=JSON.stringify([st.tipo,st.vit,st.recipe,st.proc,st.brix,st.costs,CAL.on?CAL.ver:-1,ING_VER,INVVER]);}catch(e){return analyzeRaw(st);}
+function analyze(st){let key;try{key=JSON.stringify([st.tipo,st.vit,st.recipe,st.proc,st.brix,st.costs,CAL.on?CAL.ver:-1,ING_VER,INVVER,DEX_FORM()]);}catch(e){return analyzeRaw(st);}
  const hit=_MEMO.get(key);if(hit)return hit;const m=analyzeRaw(st);_MEMO.set(key,m);if(_MEMO.size>400)_MEMO.delete(_MEMO.keys().next().value);return m;}
 
 /* ---------- INCERTEZA ----------
@@ -1369,6 +1371,11 @@ function chemistry(m,st){const A=m.A,T=A.tot||1;
 /* ---------- LAUDO ---------- */
 function findInRecipe(st,ids){for(const id of ids){const r=(st.recipe||[]).find(x=>x.id===id&&+x.g>0);if(r)return r;}return null;}
 
+/* forma da dextrose para sugestões quando a receita não tem nenhuma (preferência do usuário; monoidratada é a do mercado) */
+var DEX_OVR=null;
+/* dextrose para sugestões: a que já está na receita; senão a forma preferida */
+const dexPref=st=>{const r=(st&&st.recipe)||[];return r.some(x=>x.id==='dextrosem')?'dextrosem':r.some(x=>x.id==='dextrose')?'dextrose':(DEX_FORM()==='anid'?'dextrose':'dextrosem');};
+function DEX_FORM(){if(DEX_OVR)return DEX_OVR;try{return(typeof S!=='undefined'&&S&&S.dexForm)||'mono';}catch(e){return'mono';}}
 /* laudo e índice ficam guardados no próprio resultado da análise (que já é memorizado pelo conteúdo da receita) */
 function diagnose(st,m){return m._F||(m._F=Object.freeze(diagnoseCore(st,m)));}
 function diagnoseCore(st,m){
@@ -1381,48 +1388,62 @@ function diagnoseCore(st,m){
  else if(Math.abs(dz)<=3){add('ok','Térmico','Equilíbrio de congelamento correto','A '+fT(m.vit)+' °C, '+f0(m.fzVit)+'% da água está congelada (alvo '+fRg(P.fz)+'%). Textura espatulável, que se serve com bola ou espátula sem quebrar.','');}
  else{
   const hard=dz>0;const dAbs=m.dPacAbs;
-  /* PAC é g×coeficiente/100: trocar 1 g de sacarose (100) por dextrose anidra (≈189) soma 0,89; acrescentar 1 g de dextrose soma 1,89;
-     trocar 1 g de sacarose por maltodextrina DE 19 (≈36) tira 0,64. */
+  /* PAC é g×coeficiente/100. A dextrose usada é a que já está na receita; se não houver, a forma preferida (S.dexForm:
+     monoidratada por padrão, a do mercado; 91% de glicose → PAC 173/g; anidra 99,5% → 189/g). Trocar 1 g de sacarose por
+     dextrose soma (k−1); acrescentar soma k; trocar 1 g de sacarose por maltodextrina DE 19 (≈36) tira 0,64.
+     As gramagens são calculadas uma vez (com o ajuste fino do modo pote) e o texto e os botões saem dos mesmos números. */
   const gfmt=x=>x<1?'menos de 1':f0(Math.max(1,x));
-  const swapDex=Math.abs(dAbs)/.89, addDex=Math.abs(dAbs)/1.89, swapMalto=Math.abs(dAbs)/.64;
   const suc=findInRecipe(st,['sacarose']),dex=findInRecipe(st,['dextrose','dextrosem']);
-  let fix;
-  if(hard){const sg=suc?+suc.g:0;let swapTxt;
-   if(sg>=swapDex)swapTxt='troque '+gfmt(swapDex)+' g de sacarose por dextrose anidra (mantém os sólidos, reduz um pouco a doçura)';
-   else if(sg>0){const rest=(Math.abs(dAbs)-sg*.89)/1.89;swapTxt='troque toda a sacarose ('+f0(sg)+' g) por dextrose anidra e acrescente mais '+gfmt(rest)+' g de dextrose';}
-   else swapTxt='não há sacarose para trocar';
-   fix='Faltam ≈ '+f0(Math.abs(m.dPacKg))+' de PAC por kg ('+f0(Math.abs(dAbs))+' no lote de '+f0(T)+' g). Opções: '+swapTxt+'; ou acrescente '+gfmt(addDex)+' g de dextrose (sobe sólidos e doçura). Para servir sem mexer na receita, use a vitrine a '+f1(m.serveT)+' °C.';}
-  else{const dg=dex?+dex.g:0;let swapTxt;
-   if(dg>=swapDex)swapTxt='troque '+gfmt(swapDex)+' g de dextrose por sacarose';
-   else if(dg>0){const rest=(Math.abs(dAbs)-dg*.89)/.64;swapTxt=rest<=(suc?+suc.g:0)+dg?'troque toda a dextrose ('+f0(dg)+' g) por sacarose e mais '+gfmt(rest)+' g de sacarose por maltodextrina DE 19':'nem trocando toda a dextrose ('+f0(dg)+' g) e toda a sacarose por maltodextrina o excesso some: reduza os açúcares ou a parte que mais baixa o congelamento (álcool, sal, frutose)';}
-   else swapTxt='não há dextrose para trocar';
-   fix='Sobram ≈ '+f0(Math.abs(m.dPacKg))+' de PAC por kg ('+f0(Math.abs(dAbs))+' no lote de '+f0(T)+' g). Opções: '+swapTxt+'; ou troque '+gfmt(swapMalto)+' g de sacarose por maltodextrina DE 19 (mantém sólidos e corpo, reduz doçura). Ou sirva mais frio: '+f1(m.serveT)+' °C.';}
-  /* ações estruturadas: cada opção é uma lista de [ingrediente, Δg] aplicável pelo botão "Aplicar" e verificada pela bateria de testes */
+  const did=dex?dex.id:(DEX_FORM()==='anid'?'dextrose':'dextrosem');const kD=((ING_BY[did]&&ING_BY[did].c.glu)||99.5)/100*1.9;
+  const dName=did==='dextrosem'?'dextrose monoidratada':'dextrose anidra';
+  const A0=Math.abs(dAbs),swapDex=A0/(kD-1),addDex=A0/kD,swapMalto=A0/.64,sid=suc?suc.id:'sacarose';
   const acts=[];const r1=x=>Math.round(x*10)/10;
-  if(hard){const sg=suc?+suc.g:0,sid=suc?suc.id:'sacarose',did=dex?dex.id:'dextrose';
-   if(sg>=swapDex)acts.push({t:'Trocar '+gfmt(swapDex)+' g de sacarose por dextrose',ops:[[sid,-r1(swapDex)],[did,r1(swapDex)]]});
-   else if(sg>0){const rest=(Math.abs(dAbs)-sg*.89)/1.89;acts.push({t:'Trocar toda a sacarose por dextrose (+'+gfmt(rest)+' g)',ops:[[sid,-sg],[did,r1(sg+rest)]]});}
-   acts.push({t:'Acrescentar '+gfmt(addDex)+' g de dextrose',ops:[[did,r1(addDex)]]});}
-  else{const dg=dex?+dex.g:0,sid=suc?suc.id:'sacarose';
-   if(dg>=swapDex)acts.push({t:'Trocar '+gfmt(swapDex)+' g de dextrose por sacarose',ops:[[dex.id,-r1(swapDex)],[sid,r1(swapDex)]]});
-   else if(dg>0&&(Math.abs(dAbs)-dg*.89)/.64<=(suc?+suc.g:0)+dg){const rest=(Math.abs(dAbs)-dg*.89)/.64;acts.push({t:'Trocar a dextrose por sacarose e '+gfmt(rest)+' g de sacarose por maltodextrina',ops:[[dex.id,-dg],[sid,r1(dg-rest)],['malto',r1(rest)]]});}
-   if(suc&&+suc.g>=swapMalto)acts.push({t:'Trocar '+gfmt(swapMalto)+' g de sacarose por maltodextrina',ops:[[suc.id,-r1(swapMalto)],['malto',r1(swapMalto)]]});}
-  if(m.alc>2&&!hard)fix+=' O álcool ('+f1(m.alc)+'%) é o principal responsável — reduza a dose ou adicione no momento de servir.';
+  if(hard){const sg=suc?+suc.g:0;
+   if(sg>=swapDex)acts.push({k:'swapSD',ops:[[sid,-r1(swapDex)],[did,r1(swapDex)]]});
+   else if(sg>0){const rest=(A0-sg*(kD-1))/kD;acts.push({k:'allSD',rest,ops:[[sid,-sg],[did,r1(sg+rest)]]});}
+   acts.push({k:'addD',ops:[[did,r1(addDex)]]});}
+  else{const dg=dex?+dex.g:0;
+   if(dex&&dg>=swapDex)acts.push({k:'swapDS',ops:[[dex.id,-r1(swapDex)],[sid,r1(swapDex)]]});
+   else if(dex&&dg>0&&(A0-dg*(kD-1))/.64<=(suc?+suc.g:0)+dg){const rest=(A0-dg*(kD-1))/.64;acts.push({k:'allDSM',rest,ops:[[dex.id,-dg],[sid,r1(dg-rest)],['malto',r1(rest)]]});}
+   if(suc&&+suc.g>=swapMalto)acts.push({k:'swapSM',ops:[[suc.id,-r1(swapMalto)],['malto',r1(swapMalto)]]});}
   /* modo pote: cada ação muda a curva de aquecimento; ajusta a gramagem até a colher ficar no ponto de verdade */
-  if(m.pr.serveFrom==='pote'){acts.forEach(ac=>{const mags=ac.ops.map(o=>Math.abs(o[1]));if(!(ac.ops.length===1||(ac.ops.length===2&&Math.abs(mags[0]-mags[1])<.05)))return;
-    const errAt=k=>{const rec=(st.recipe||[]).map(r=>({...r}));ac.ops.forEach(([id,d])=>{const r=rec.find(x=>x.id===id);const dd=d*k;if(r)r.g=Math.max(0,+r.g+dd);else if(dd>0)rec.push({id,g:dd});});const s2=stReal({...st,recipe:rec});const mm=analyze(s2);return mm.fzVit-mm.fzMid;};
-    let k0=1,e0=errAt(1);if(Math.abs(e0)<.15)return;let k1=1.15,e1=errAt(k1);
-    for(let i=0;i<4&&Math.abs(e1)>.15&&Math.abs(e1-e0)>1e-6;i++){const k2=clamp(k1-e1*(k1-k0)/(e1-e0),.3,3);k0=k1;e0=e1;k1=k2;e1=errAt(k1);}
-    if(Math.abs(e1)<Math.abs(errAt(1))){const x=Math.round(mags[0]*k1*10)/10;ac.ops=ac.ops.map(([id,d])=>[id,Math.sign(d)*x]);ac.t=ac.t.replace(/(menos de 1|\d[\d.]*(?:,\d+)?)(?= g)/,gfmt(x));}});
-   const pt=poteModel(m,m.pr);if(pt){const tw=pt.timeTo(m.serveT);fix=fix.replace(/ Para servir sem mexer na receita, use a vitrine a [^.]*\.| Ou sirva mais frio: [^.]*\./,tw==null?' Sem mexer na receita, ela não chega ao ponto em 40 min fora do freezer.':' Sem mexer na receita: '+(hard?'espere ':'sirva com ')+f0(tw)+' min fora do freezer.');}}
-  add(Math.abs(dz)>8?'crit':'warn','Térmico',(m.pr.serveFrom==='pote'?(hard?'Gelato duro na hora de servir':'Gelato mole na hora de servir'):hard?'Gelato duro na vitrine':'Gelato mole na vitrine'),(m.pr.serveFrom==='pote'?'Depois de '+fT(+m.pr.waitMin)+' min fora do freezer a colher pega o gelato a ':'A ')+fT(m.vit)+' °C, '+f1(m.fzVit)+'% da água congela (alvo '+fRg(P.fz)+'%). '+(hard?'Fica duro, difícil de espatular, e o sabor aparece menos.':'Escorre na espátula, perde forma e derrete rápido na casquinha.'),fix);F[F.length-1].acts=acts;
+  let poteTxt=null;
+  if(m.pr.serveFrom==='pote'){acts.forEach(ac=>{
+    /* mk(k) monta as operações com a parte variável multiplicada por k */
+    const o0=ac.ops.map(o=>o.slice());let mk;
+    if(ac.k==='allSD'){const sg=-o0[0][1];mk=k=>[[o0[0][0],-sg],[o0[1][0],r1(sg+ac.rest*k)]];}
+    else if(ac.k==='allDSM'){const dg=-o0[0][1];mk=k=>[[o0[0][0],-dg],[o0[1][0],r1(dg-ac.rest*k)],['malto',r1(ac.rest*k)]];}
+    else{const mags=o0.map(o=>Math.abs(o[1]));if(!(o0.length===1||(o0.length===2&&Math.abs(mags[0]-mags[1])<.05)))return;mk=k=>o0.map(([id,d])=>[id,Math.sign(d)*Math.round(mags[0]*k*10)/10]);}
+    const lim=ac.k==='allSD'?Infinity:ac.k==='allDSM'?(dex?+dex.g:0)/ac.rest:ac.k==='swapSD'||ac.k==='swapSM'?(suc?+suc.g:0)/Math.abs(o0[0][1]):ac.k==='swapDS'?(dex?+dex.g:0)/Math.abs(o0[0][1]):Infinity;
+    const errAt=k=>{const rec=(st.recipe||[]).map(r=>({...r}));mk(k).forEach(([id,d])=>{const r=rec.find(x=>x.id===id);if(r)r.g=Math.max(0,+r.g+d);else if(d>0)rec.push({id,g:d});});const s2=stReal({...st,recipe:rec});const mm=analyze(s2);return mm.fzVit-mm.fzMid;};
+    let k0=1,e0=errAt(1);if(Math.abs(e0)<.15)return;let k1=Math.min(1.15,lim),e1=errAt(k1);
+    for(let i=0;i<5&&Math.abs(e1)>.15&&Math.abs(e1-e0)>1e-6;i++){const k2=clamp(k1-e1*(k1-k0)/(e1-e0),.3,Math.min(3,lim));k0=k1;e0=e1;k1=k2;e1=errAt(k1);}
+    if(Math.abs(e1)<Math.abs(errAt(1))){ac.ops=mk(k1);if(ac.rest!=null)ac.rest=ac.rest*k1;}});
+   const pt=poteModel(m,m.pr);if(pt){const tw=pt.timeTo(m.serveT);poteTxt=tw==null?' Sem mexer na receita, ela não chega ao ponto em 40 min fora do freezer.':' Sem mexer na receita: '+(hard?'espere ':'sirva com ')+f0(tw)+' min fora do freezer.';}}
+  /* texto e títulos a partir das gramagens finais */
+  const gOf=ac=>Math.abs(ac.ops[0][1]);const mono=did==='dextrosem';
+  const desc=ac=>ac.k==='swapSD'?'troque '+gfmt(gOf(ac))+' g de sacarose pelo mesmo peso de '+dName+(mono?' (quase os mesmos sólidos; reduz um pouco a doçura)':' (mantém os sólidos, reduz um pouco a doçura)')
+   :ac.k==='allSD'?'troque toda a sacarose ('+f0(gOf(ac))+' g) por '+dName+' e acrescente mais '+gfmt(ac.rest)+' g'
+   :ac.k==='addD'?'acrescente '+gfmt(gOf(ac))+' g de '+dName+' (sobe sólidos e doçura)'
+   :ac.k==='swapDS'?'troque '+gfmt(gOf(ac))+' g de '+dName+' por sacarose'
+   :ac.k==='allDSM'?'troque toda a '+dName+' ('+f0(gOf(ac))+' g) por sacarose e mais '+gfmt(ac.rest)+' g de sacarose por maltodextrina DE 19'
+   :'troque '+gfmt(gOf(ac))+' g de sacarose por maltodextrina DE 19 (mantém sólidos e corpo, reduz doçura)';
+  const dShort=mono?'dextrose mono':'dextrose anidra';
+  acts.forEach(ac=>{ac.t=ac.k==='swapSD'?'Trocar '+gfmt(gOf(ac))+' g de sacarose por '+dShort:ac.k==='allSD'?'Trocar toda a sacarose por '+dShort+' (+'+gfmt(ac.rest)+' g)':ac.k==='addD'?'Acrescentar '+gfmt(gOf(ac))+' g de '+dShort
+   :ac.k==='swapDS'?'Trocar '+gfmt(gOf(ac))+' g de '+dName+' por sacarose':ac.k==='allDSM'?'Trocar a '+dName+' por sacarose e '+gfmt(ac.rest)+' g de sacarose por maltodextrina':'Trocar '+gfmt(gOf(ac))+' g de sacarose por maltodextrina';});
+  let fix;
+  if(hard)fix='Faltam ≈ '+f0(Math.abs(m.dPacKg))+' de PAC por kg ('+f0(A0)+' no lote de '+f0(T)+' g). Opções: '+(acts.length?acts.map(desc).join('; ou '):'não há sacarose para trocar')+'.'+(poteTxt||' Para servir sem mexer na receita, use a vitrine a '+f1(m.serveT)+' °C.');
+  else fix='Sobram ≈ '+f0(Math.abs(m.dPacKg))+' de PAC por kg ('+f0(A0)+' no lote de '+f0(T)+' g). Opções: '+(acts.length?acts.map(desc).join('; ou '):'reduza os açúcares ou a parte que mais baixa o congelamento (álcool, sal, frutose)')+'.'+(poteTxt||' Ou sirva mais frio: '+f1(m.serveT)+' °C.');
+  const dexPick=!dex&&acts.some(ac=>ac.ops.some(o=>o[0]===did));
+  if(m.alc>2&&!hard)fix+=' O álcool ('+f1(m.alc)+'%) é o principal responsável — reduza a dose ou adicione no momento de servir.';
+  add(Math.abs(dz)>8?'crit':'warn','Térmico',(m.pr.serveFrom==='pote'?(hard?'Gelato duro na hora de servir':'Gelato mole na hora de servir'):hard?'Gelato duro na vitrine':'Gelato mole na vitrine'),(m.pr.serveFrom==='pote'?'Depois de '+fT(+m.pr.waitMin)+' min fora do freezer a colher pega o gelato a ':'A ')+fT(m.vit)+' °C, '+f1(m.fzVit)+'% da água congela (alvo '+fRg(P.fz)+'%). '+(hard?'Fica duro, difícil de espatular, e o sabor aparece menos.':'Escorre na espátula, perde forma e derrete rápido na casquinha.'),fix);F[F.length-1].acts=acts;if(dexPick)F[F.length-1].dexPick=did;
  }
  if(m.hfKg>25){add(m.hfKg>110?'warn':'info','Térmico','Fator de dureza (HF) de '+f0(m.hfKg)+' por kg','Manteiga de cacau, sólidos de cacau e gordura de oleaginosas endurecem o gelato além do que o PAC indica. O motor já desconta esse efeito: PAC efetivo '+f0(m.pacEffKg)+' por kg.','Compense com açúcares de PAC alto (dextrose, invertido) — o cálculo térmico acima já inclui o HF.');}
  /* ---- 2. Doçura ---- */
  if(m.pod<P.pod[0]-.5)add(m.pod<P.pod[0]-3?'warn':'info','Doçura','Doçura baixa (POD '+f1(m.pod)+'%)','Abaixo do alvo de '+fRg(P.pod)+'%. O frio reduz a percepção de doce; o sabor fica apagado.','Troque parte da dextrose por sacarose ou adicione um pouco de sacarose; o balanceador calcula a combinação exata sem desequilibrar o congelamento.');
  else if(m.pod>P.pod[1]+.5)add(m.pod>P.pod[1]+3?'warn':'info','Doçura','Doçura alta (POD '+f1(m.pod)+'%)','Acima do alvo de '+fRg(P.pod)+'%. Doçura em excesso cansa o paladar e mascara o ingrediente principal.','Substitua parte da sacarose por dextrose (menos doce, mesmo efeito anticongelante) ou por maltodextrina DE 19 (quase sem doçura). Use o balanceador.');
  else add('ok','Doçura','Doçura no ponto (POD '+f1(m.pod)+'%)','Dentro de '+fRg(P.pod)+'% para '+P.n.toLowerCase()+'.','');
- if(m.dexShare>45)add('warn','Doçura','Dextrose domina os açúcares ('+f0(m.dexShare)+'%)','Muita dextrose deixa o gelato pegajoso, com doçura curta e textura que "afunda" na vitrine.','Mantenha a dextrose abaixo de ~35% dos açúcares; complete o PAC com açúcar invertido ou trealose.');
+ if(m.dexShare>45)add('warn','Doçura','Dextrose domina os açúcares ('+f0(m.dexShare)+'%)','Muita dextrose deixa o gelato pegajoso, com doçura curta e textura que "afunda" na vitrine.','Referência prática (não é limite de norma): manter a dextrose em até ~35–40% dos açúcares. Para completar o PAC, açúcar invertido; para baixar doçura sem perder corpo, trealose ou maltodextrina.');
  if(m.fruShare>25)add('warn','Doçura','Frutose acima de 25% dos açúcares','A frutose tem doçura forte e PAC alto; em excesso o gelato fica mole e com doçura enjoativa.','Troque parte da frutose por sacarose.');
  /* ---- 3. Sólidos ---- */
  if(m.sol<P.sol[0])add(m.sol<P.sol[0]-4?'crit':'warn','Sólidos','Sólidos totais baixos ('+f1(m.sol)+'%)','Alvo '+fRg(P.sol)+'%. Água livre em excesso forma cristais grandes: textura gelada e granulosa.',st.tipo==='sorbetto'?'Aumente a fruta, troque parte da água por polpa ou adicione '+gq((P.sol[0]-m.sol)/100*T*1.1)+' g de maltodextrina/inulina.':'Adicione '+gq((P.sol[0]-m.sol)/100*T*1.08)+' g de leite em pó desnatado (se a lactose permitir) ou maltodextrina DE 19.');
@@ -1467,7 +1488,7 @@ function diagnoseCore(st,m){
  /* ---- 7. Ingredientes específicos ---- */
  if(kp.lec>.6)add('warn','Ingredientes','Lecitina em excesso','Acima de 0,5% aparece sabor de feijão/gordura.','Reduza para '+f1(.4/100*T)+' g.');
  if(m.A.ery/T*100>6)add('warn','Ingredientes','Eritritol acima de 6%','O eritritol tem baixa solubilidade a frio: recristaliza (textura arenosa) e dá sensação refrescante de menta.','Limite a ~5% e complete com alulose, inulina ou maltitol.');
- if((m.A.sor+m.A.xyl+m.A.mlt)/T*100>6)add('warn','Ingredientes','Polióis laxativos acima de 6%','Sorbitol, xilitol e maltitol em doses altas têm efeito laxativo e exigem advertência no rótulo.','Reduza e combine com eritritol ou fibras.');
+ if((m.A.sor+m.A.xyl+m.A.mlt)/T*100>6)add('warn','Ingredientes','Polióis laxativos acima de 6%','Sorbitol, xilitol e maltitol têm efeito laxativo dose-dependente; uma porção de gelato com mais de 6% já pode incomodar. A advertência de rótulo é obrigatória na UE acima de 10% de polióis adicionados (Reg. 1169/2011, anexo III) — no Brasil, confira a regra vigente da ANVISA para o seu produto.','Reduza e combine com eritritol ou fibras.');
  if(m.A.gly/T*100>2)add('warn','Ingredientes','Glicerol acima de 2%','Dá sabor amargo/quente e textura escorregadia.','Use no máximo 1–1,5%.');
  if((m.A.inu+m.A.fos)/T*100>5)add('warn','Ingredientes','Fibras solúveis acima de 5%','Inulina/FOS em excesso causam desconforto intestinal e textura gomosa.','Reduza para 3–4%.');
  if(m.alc>3.5)add('crit','Ingredientes','Álcool acima de 3,5% ('+f1(m.alc)+'% etanol)','O etanol tem o PAC mais alto da receita (740): o gelato não firma na vitrine.','Reduza o destilado ou sirva como "affogato" sobre o gelato.');
@@ -1507,7 +1528,8 @@ function diagnoseCore(st,m){
  if(m.fat>11&&pr.drawMin>12)add('warn','Processo','Risco de amanteigar','Gordura alta com mantecação longa forma grumos de manteiga.','Reduza o tempo ou a gordura.');
  if(pr.hardAuto&&pr.serveFrom==='pote'){const hm=hardenModel(m,pr);if(hm&&hm.tDone!=null){const h5=f1(hm.tDone/60),big=+pr.poteMl>500;
   add(hm.tDone>300?'warn':'info','Processo','Endurecimento no freezer: centro a '+fT(hm.target)+' °C em '+h5+' h','Pote de '+f0(+pr.poteMl)+' mL saindo a '+fT(pr.drawT)+' °C'+(+pr.turboMin>0?', com Turbo ('+fT(pr.blastT)+' °C) por '+f0(+pr.turboMin)+' min':'')+' e freezer a '+fT(pr.storeT)+' °C. A camada de servir firma em '+f0(hm.tFirm||0)+' min. Sem abatedor, o endurecimento lento faz cristais maiores que no profissional (60–90 min).',big?'Divida em potes de 500 mL ou menos: o centro chega a −18 °C bem antes.':'Para provar no mesmo dia, espere ao menos '+h5+' h; o ideal é servir no dia seguinte.');}}
- else if(pr.blastT>-25||pr.hardMin>90)add('warn','Processo','Abatimento lento','O gelato deve chegar a −18 °C no núcleo em até 60–90 min para fixar cristais pequenos.','Abatedor a −35/−40 °C, cubas rasas.');
+ else if(pr.blastT>-25||pr.hardMin>240)add('warn','Processo','Abatimento lento','Quanto mais rápido o núcleo chega a −18 °C, menores ficam os cristais. Em abatedor a −35/−40 °C com cubas rasas isso leva 60–90 min; acima de ~4 h (menos de ~1–2 °C/h no núcleo) o cristal cresce de forma perceptível.','Abatedor a −35/−40 °C, cubas rasas, sem empilhar.');
+ else if(pr.hardMin>90)add('info','Processo','Abatimento pode ser mais rápido','Endurecer em '+f1(pr.hardMin/60)+' h funciona, mas 60–90 min em abatedor a −35/−40 °C dá cristais menores e textura mais lisa.','Cubas rasas e abatedor bem frio encurtam o tempo.');
  {const cap=m.mach.batchMax||m.mach.batch;if(cap&&T>cap)add('warn','Processo','Lote acima da capacidade da máquina','A '+m.mach.n+' processa até '+cap+' g por ciclo; o lote tem '+f0(T)+' g.','Divida em '+Math.ceil(T/(m.mach.batch||cap))+' ciclos de ~'+f0(T/Math.ceil(T/(m.mach.batch||cap)))+' g.');
   else if(m.mach.batchMax&&m.mach.batch&&T>m.mach.batch*1.15)add('info','Processo','Ciclo mais longo que o de referência','Com '+f0(T)+' g por ciclo a '+m.mach.n.split(' (')[0]+' leva mais tempo para congelar (veja Processo › Maestro nesta receita): cristais um pouco maiores.','Para o melhor resultado, ciclos de até ~'+m.mach.batch+' g.');}
  const shock=Math.abs(pr.storeT-m.vit);
@@ -1574,7 +1596,7 @@ function solve3(a,b){const d=x=>x[0][0]*(x[1][1]*x[2][2]-x[1][2]*x[2][1])-x[0][1
 function solve2(a,b){const D=a[0][0]*a[1][1]-a[0][1]*a[1][0];if(Math.abs(D)<1e-9)return null;return[(b[0]*a[1][1]-a[0][1]*b[1])/D,(a[0][0]*b[1]-b[0]*a[1][0])/D];}
 function balanceExact(st){
  const P=PROF[st.tipo];if(!P||st.tipo==='gastro'||st.tipo==='semacucar')return{ok:false,msg:'O balanceador automático trabalha com açúcares convencionais (crema, frutta, sorbetto e vegano).'};
- const dexId=(st.recipe||[]).some(r=>r.id==='dextrosem')?'dextrosem':'dextrose';
+ const dexId=dexPref(st);
  const ctrl=['sacarose',dexId,'malto'];
  const rest={...st,recipe:(st.recipe||[]).filter(r=>!ctrl.includes(r.id))};
  const m0=analyze(rest);if(m0.empty)return{ok:false,msg:'Adicione a base da receita primeiro.'};
@@ -1631,7 +1653,7 @@ function nnlsSmall(cols,b,w){const n=cols.length,m=b.length;let best=null;
 function gaussSolve(M,v){const n=v.length,A=M.map((r,i)=>[...r,v[i]]);for(let c=0;c<n;c++){let p=c;for(let r=c+1;r<n;r++)if(Math.abs(A[r][c])>Math.abs(A[p][c]))p=r;if(Math.abs(A[p][c])<1e-12)return null;[A[c],A[p]]=[A[p],A[c]];
   for(let r=0;r<n;r++){if(r===c)continue;const f=A[r][c]/A[c][c];for(let k=c;k<=n;k++)A[r][k]-=f*A[c][k];}}return A.map((r,i)=>r[n]/r[i]);}
 function balanceRobust(st){
- const dexId=(st.recipe||[]).some(r=>r.id==='dextrosem')?'dextrosem':'dextrose';
+ const dexId=dexPref(st);
  /* açúcares estruturais que a receita já usa também podem subir ou descer */
  const sug=[...new Set(['sacarose',dexId,'malto',...(st.recipe||[]).map(r=>r.id).filter(id=>BAL_SUG.has(id))])];const D=sug.length;
  /* líquido da base para diluir quando a receita já tem anticongelante demais */
@@ -2090,7 +2112,7 @@ function nnls(A,b){const n=A[0].length;const x=new Array(n).fill(0);const P=new 
 const GEN_VARS={crema:['leite','creme35','lpd','sacarose','dextrose'],frutta:['leite','creme35','lpd','sacarose','dextrose'],gastro:['leite','creme35','lpd','dextrose'],semacucar:['leite','creme35','lpd','eritritol','inulina'],sorbetto:['agua','sacarose','dextrose','malto'],vegan:['agua','cococreme','sacarose','dextrose','malto']};
 const GEN_TOL={fat:.6,msnf:.6,pod:1,sol:1.2};
 function generate(o){
- const P=PROF[o.tipo]||PROF.crema,B=+o.batch||1000,VARS=GEN_VARS[o.tipo]||GEN_VARS.crema,proc=o.proc||{};
+ const P=PROF[o.tipo]||PROF.crema,B=+o.batch||1000,VARS=(GEN_VARS[o.tipo]||GEN_VARS.crema).map(id=>id==='dextrose'&&DEX_FORM()!=='anid'?'dextrosem':id),proc=o.proc||{};
  const fixed=[];(o.fixed||[]).forEach(f=>{if(!f.id||!ING_BY[f.id]||!(+f.g>0))return;const e=fixed.find(x=>x.id===f.id);if(e)e.g+=+f.g;else fixed.push({id:f.id,g:+f.g});});
  if(o.stabId&&ING_BY[o.stabId]&&+o.stabGkg>0)fixed.push({id:o.stabId,g:B*o.stabGkg/1000});
  const F0={w:0,fat:0,msnf:0,pac:0,pod:0,sol:0,hf:0,mass:0};fixed.forEach(f=>{const c=contrib(f.id);F0.mass+=f.g;for(const k in c)F0[k]+=c[k]*f.g;});
@@ -2181,6 +2203,16 @@ function runTests(opt){opt=opt||{};const t0=(typeof performance!=='undefined'?pe
  T('Receitas','Laudo, índice e defeitos com texto válido',()=>{const bad=[];recs.forEach(r=>TEST_VITS.forEach(v=>{const st=stTest(r,v);const m=analyze(st);const F=diagnose(st,m);const sc=score(st,m,F);if(!(sc.total>=0&&sc.total<=100))bad.push(r.name+': índice '+sc.total);F.forEach(f=>{if(badText(f.title+f.why+f.fix))bad.push(r.name+': '+f.title);});DEFECTS.forEach(d=>rankDefect(d,m).forEach(x=>{if(badText(x.txt+x.fix))bad.push(r.name+': defeito '+d.id);}));}));return{ok:!bad.length,detail:bad.slice(0,3).join('; ')};});
  T('Receitas','Nenhuma sugestão de "0 g" ou gramas negativas',()=>{const bad=[];recs.forEach(r=>TEST_VITS.forEach(v=>{const st=stTest(r,v);const m=analyze(st);diagnose(st,m).forEach(f=>{const s=(f.fix||'')+(f.acts||[]).map(a=>a.t).join(' ');if(/(^|[^\d,])0 g\b|−\d+ g de|-\d+ g de/.test(s))bad.push(r.name+' '+v+': '+f.title);});}));return{ok:!bad.length,detail:bad.slice(0,3).join('; ')};});
  /* ---- 4. as soluções do laudo funcionam ---- */
+ T('Soluções','Texto da solução e botões mostram as mesmas gramas (vitrine e pote, dextrose mono e anidra)',()=>{let n=0;const bad=[];
+  try{['mono','anid'].forEach(df=>{DEX_OVR=df;recs.forEach(r=>[-14.5,-18].forEach(v=>['vitrine','pote'].forEach(sf=>{const st=stReal(stTest(r,v,{serveFrom:sf}));const m=analyze(st);diagnose(st,m).filter(f=>f.acts&&f.acts.length).forEach(f=>f.acts.forEach(a=>{n++;(a.t.match(/(\d+|menos de 1) g/g)||[]).forEach(x=>{if(f.fix.indexOf(x)<0)bad.push(r.name+' '+v+' '+sf+': "'+a.t+'" ≠ texto');});
+    const ing=a.ops.map(o=>o[0]).find(id=>id==='dextrose'||id==='dextrosem');if(ing){const nm=ing==='dextrosem'?'mono':'anidra';if(a.t.indexOf(nm)<0||f.fix.indexOf(nm)<0)bad.push(r.name+': nome da dextrose não bate com o ingrediente');
+     if(!r.recipe.some(x=>x.id==='dextrose'||x.id==='dextrosem')&&ing!==(df==='anid'?'dextrose':'dextrosem'))bad.push(r.name+': ignorou a preferência de dextrose');}}));})));});}
+  finally{DEX_OVR=null;}
+  return{ok:!bad.length,detail:bad.slice(0,3).join('; ')||n+' botões conferidos com o texto'};});
+ T('Soluções','Ajustes térmicos também resolvem no modo pote e com dextrose monoidratada',()=>{let n=0;const bad=[];
+  try{DEX_OVR='mono';recs.forEach(r=>[-14.5,-18].forEach(v=>['vitrine','pote'].forEach(sf=>{const s0=stTest(r,v,{serveFrom:sf}),st=stReal(s0);const m=analyze(st);diagnose(st,m).filter(f=>f.acts).forEach(f=>f.acts.forEach(a=>{n++;const m2=analyze(stReal({...s0,recipe:applyOps(s0.recipe,a.ops)}));const dz=m2.fzVit-m2.fzMid;if(Math.abs(dz)>3.2)bad.push(r.name+' '+v+' '+sf+' · '+a.t+' → '+f1(m2.fzVit)+'%');}));})));}
+  finally{DEX_OVR=null;}
+  return{ok:!bad.length,detail:bad.slice(0,3).join('; ')||n+' ajustes verificados'};});
  T('Soluções','Cada ajuste térmico sugerido leva à faixa de congelamento',()=>{let n=0;const bad=[];recs.forEach(r=>TEST_VITS.forEach(v=>{const st=stTest(r,v);const m=analyze(st);diagnose(st,m).filter(f=>f.acts).forEach(f=>f.acts.forEach(a=>{n++;const m2=analyze({...st,recipe:applyOps(st.recipe,a.ops)});const dz=m2.fzVit-m2.fzMid;if(Math.abs(dz)>3.2)bad.push(r.name+' '+v+' °C · '+a.t+' → '+f1(m2.fzVit)+'%');if(a.ops.some(([id,d])=>{const x=st.recipe.find(y=>y.id===id);return d<0&&(!x||+x.g+d<-1e-6);}))bad.push(r.name+': retira mais do que existe');}));}));return{ok:!bad.length,detail:bad.slice(0,3).join('; ')||n+' ajustes verificados'};});
  T('Soluções','Balanceador de açúcares não piora o congelamento',()=>{let n=0;const bad=[];recs.forEach(r=>TEST_VITS.forEach(v=>{const st=stTest(r,v);const b=balance(st);if(!b.ok)return;n++;const m0=analyze(st),m1=analyze({...st,recipe:b.newRecipe});const d0=Math.abs(m0.fzVit-m0.fzMid),d1=Math.abs(m1.fzVit-m1.fzMid);if(d1>Math.max(3,d0)+.3)bad.push(r.name+' '+v+': '+f1(d0)+' → '+f1(d1));if(b.newRecipe.some(x=>!(x.g>=0)))bad.push(r.name+': grama negativa');}));return{ok:!bad.length,detail:bad.slice(0,3).join('; ')||n+' balanceamentos'};});
  T('Soluções','Gerador por alvo: congelamento e sólidos na faixa em todos os tipos',()=>{const fx={sorbetto:[{id:'manga',g:450}],frutta:[{id:'morango',g:350}],gastro:[{id:'gorgonzola',g:80}]};const bad=[];Object.keys(GEN_DEF).forEach(t=>{[-11,-14.5].forEach(v=>{const g=generate({tipo:t,batch:1000,fixed:fx[t]||[{id:'pistache',g:100}],...GEN_DEF[t],stabId:'nx_fredolin',stabGkg:t==='sorbetto'?4:25,vit:v});if(!g.ok){bad.push(t+' '+v+': '+g.msg);return;}const dz=g.m.fzVit-g.m.fzMid;if(Math.abs(dz)>3.2)bad.push(t+' '+v+': '+f1(g.m.fzVit)+'%');const rs=g.m.P.sol;if(g.m.sol<rs[0]-1.5||g.m.sol>rs[1]+1.5)bad.push(t+' '+v+': sólidos '+f1(g.m.sol)+'%');});});return{ok:!bad.length,detail:bad.join('; ')};});
@@ -2270,7 +2302,7 @@ let S=LS.get(KEY)||fromPreset(PRESETS[0]);
 /* garante todos os campos do estado; roda no boot e antes de cada render (estados antigos ou importados) */
 function normalizeState(){
  try{if(!S.sets||!S.sets.art||!S.sets.pro)setsInit();}catch(e){}
- {const pr0=S.proc||{};S.proc=Object.assign({},PROC0,pr0,pr0.load==null&&pr0.machine==='maqp1'?{load:1100,preChill:0}:{});}for(const k in PROC_LIM){const v=+S.proc[k];S.proc[k]=isFinite(v)?clamp(v,PROC_LIM[k][0],PROC_LIM[k][1]):PROC0[k];}if(!isFinite(+S.vit))S.vit=-13;S.brix=S.brix||{};S.costs=S.costs||{};S.page=S.page||'bancada';S.defect=S.defect||'duro';
+ {const pr0=S.proc||{};S.proc=Object.assign({},PROC0,pr0,pr0.load==null&&pr0.machine==='maqp1'?{load:1100,preChill:0}:{});}for(const k in PROC_LIM){const v=+S.proc[k];S.proc[k]=isFinite(v)?clamp(v,PROC_LIM[k][0],PROC_LIM[k][1]):PROC0[k];}if(!isFinite(+S.vit))S.vit=-13;if(S.dexForm!=='anid')S.dexForm='mono';S.brix=S.brix||{};S.costs=S.costs||{};S.page=S.page||'bancada';S.defect=S.defect||'duro';
  if(!Array.isArray(S.recipe)||S.recipe.some(r=>!r||!SAFE_ID.test(String(r.id))||typeof r.g!=='number'||!isFinite(r.g)))S.recipe=cleanRecipe(S.recipe);
  /* ingrediente repetido na receita vira uma linha só (somando as gramas) */
  if(new Set(S.recipe.map(r=>r.id)).size!==S.recipe.length){const by=new Map();S.recipe.forEach(r=>{const e=by.get(r.id);if(e)e.g=Math.round((+e.g+ +r.g)*10)/10;else by.set(r.id,{id:r.id,g:+r.g});});S.recipe=[...by.values()];}
@@ -2303,7 +2335,7 @@ function rbar(v,r,min,max){if(!r)return'';const sc=x=>clamp((x-min)/(max-min)*10
 const stCls=(v,r)=>!r?'':v>=r[0]&&v<=r[1]?'c-ok':(v<r[0]-(r[1]-r[0])*.5||v>r[1]+(r[1]-r[0])*.5)?'c-crit':'c-warn';
 function ring(v,size=96){const r=size/2-7,c=2*Math.PI*r,col={ok:'var(--ok)',warn:'var(--warn)',crit:'var(--crit)'}[scoreCls(v)];
  return`<svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}" role="img" aria-label="Índice ${v} de 100"><circle cx="${size/2}" cy="${size/2}" r="${r}" fill="none" stroke="var(--line)" stroke-width="7"/><circle cx="${size/2}" cy="${size/2}" r="${r}" fill="none" stroke="${col}" stroke-width="7" stroke-linecap="round" stroke-dasharray="${c*v/100} ${c}" transform="rotate(-90 ${size/2} ${size/2})"/><text x="50%" y="52%" text-anchor="middle" dominant-baseline="middle" fill="${col}" style="font:800 ${size*.3}px var(--fd)">${v}</text></svg>`;}
-function findHTML(f){return`<div class="find"><div class="bar ${f.sev}"></div><div><div class="area">${SEVN[f.sev]} · ${esc(f.area)}</div><h3>${esc(f.title)}</h3>${f.why?`<p>${esc(f.why)}</p>`:''}${f.fix?`<div class="fix"><b>Solução</b>${esc(f.fix)}</div>`:''}${f.acts&&f.acts.length?`<div class="row acts">${f.acts.map(x=>`<button class="btn sm okb" data-a="applyAct" data-v="${esc(x.ops.map(o=>o.join(':')).join(';'))}">Aplicar: ${esc(x.t)}</button>`).join('')}</div>`:''}</div></div>`;}
+function findHTML(f){return`<div class="find"><div class="bar ${f.sev}"></div><div><div class="area">${SEVN[f.sev]} · ${esc(f.area)}</div><h3>${esc(f.title)}</h3>${f.why?`<p>${esc(f.why)}</p>`:''}${f.fix?`<div class="fix"><b>Solução</b>${esc(f.fix)}</div>`:''}${f.acts&&f.acts.length?`${f.dexPick?`<div class="row" style="gap:6px;align-items:center;margin:8px 0 4px;font-size:12.5px"><span class="t2">Sua dextrose:</span><button class="btn sm${f.dexPick==='dextrosem'?' okb':''}" data-a="dexForm" data-v="mono">Monoidratada</button><button class="btn sm${f.dexPick==='dextrose'?' okb':''}" data-a="dexForm" data-v="anid">Anidra</button></div>`:''}<div class="row acts">${f.acts.map(x=>`<button class="btn sm okb" data-a="applyAct" data-v="${esc(x.ops.map(o=>o.join(':')).join(';'))}">Aplicar: ${esc(x.t)}</button>`).join('')}</div>`:''}</div></div>`;}
 function fieldNum(id,label,val,step,hint,attrs=''){return`<label class="field"><span class="lbl">${label}</span><input type="number" id="${id}" data-i="proc" data-k="${id.slice(2)}" value="${val}" step="${step}" ${attrs}>${hint?`<span class="hint">${hint}</span>`:''}</label>`;}
 
 /* ---------- utilidades de receita e gráficos ---------- */
@@ -2391,7 +2423,7 @@ const isMac=()=>{try{return /Mac|iPhone|iPad/.test(navigator.platform||navigator
 const kbd=k=>`<kbd>${isMac()?'⌘':'Ctrl '}${k}</kbd>`;
 
 /* ---------- marca ---------- */
-const VERSION='v17.10';
+const VERSION='v17.11';
 const brandHTML=()=>`<div class="brand"><div class="hex"></div><div><b>Il <span>Fredolin</span></b><small>Gelato Lab ${VERSION}${APP_MODE==='app'&&ME.email?' · '+ROLE_N[ROLE]:''}</small></div></div>`;
 
 /* ---------- termômetro da receita: vitrine, serviço ideal (com faixa de incerteza) e freezer numa régua só ---------- */
@@ -3717,8 +3749,8 @@ function labLevers(st){const rec=st.recipe||[];const has=id=>rec.some(r=>r.id===
  const add=(id,kind,lo,hi,sc)=>{if(ING_BY[id]&&!L.some(l=>l.id===id))L.push({id,kind,lo:lo||0,hi:hi!=null?hi:tot*.45,sc:sc||1});};
  const dairy=rec.some(r=>ING_BY[r.id]&&ING_BY[r.id].cat==='Lácteos');
  if(st.tipo==='semacucar'){['eritritol','alulose','fibramilho'].forEach(id=>add(id,'sug'));rec.forEach(r=>{if(LAB_POLY.includes(r.id))add(r.id,'sug');});add(has('stevia')?'stevia':'sucralose','hi',0,tot*.0006,.004);}
- else if(st.tipo==='gastro'){['dextrose','trealose','glicose38'].forEach(id=>add(id,'sug'));if(has('sacarose'))add('sacarose','sug');add('sal','salt',0,tot*.008,.08);}
- else{add('sacarose','sug');add(has('dextrosem')?'dextrosem':'dextrose','sug');add('glicose38','sug');}
+ else if(st.tipo==='gastro'){[dexPref(st),'trealose','glicose38'].forEach(id=>add(id,'sug'));if(has('sacarose'))add('sacarose','sug');add('sal','salt',0,tot*.008,.08);}
+ else{add('sacarose','sug');add(dexPref(st),'sug');add('glicose38','sug');}
  rec.forEach(r=>{if(BAL_SUG.has(r.id)&&st.tipo!=='semacucar')add(r.id,'sug');});
  if(dairy&&st.tipo!=='vegan')add('lpd','sol',0,tot*.08);else if(st.tipo!=='semacucar')add('malto','sol',0,tot*.12);
  rec.forEach(r=>{const i=ING_BY[r.id];if(i&&(i.c.alc||0)>0)add(r.id,'alc',+r.g*.55,+r.g);});
@@ -4400,7 +4432,7 @@ function equipCard(m){const cur=S.proc.equip||'';const E=EQUIP[cur];
    Recalcula a proposta de açúcares meio segundo depois da última mudança (sem pesar na digitação) para o modo atual:
    vitrine, freezer ou em casa (espera no pote). */
 const LIVE={key:null,res:null,pending:null,t:0};
-function liveKey(){try{return JSON.stringify([S.tipo,S.vit,S.recipe,S.proc,S.brix,S.comps||[],!!S.compBal,can.cost()?+S.costCap||0:0,S.costs||{},CAL.on?CAL.ver:-1,ING_VER]);}catch(e){return null;}}
+function liveKey(){try{return JSON.stringify([S.tipo,S.vit,S.recipe,S.proc,S.brix,S.comps||[],!!S.compBal,can.cost()?+S.costCap||0:0,S.costs||{},CAL.on?CAL.ver:-1,ING_VER,S.dexForm]);}catch(e){return null;}}
 function liveRun(){try{let st=can.cost()&&+S.costCap>0?{...S,costCap:+S.costCap}:S;if(S.compBal&&S.proc.serveFrom!=='pote'){const R=compServe(analyze(S));if(R&&Math.abs(R.d)>=.1){st={...st,vit:Math.round((+S.vit-R.d)*10)/10};const r=balanceBest(st);if(r)r.compShift=R.d;return r;}}return balanceBest(st);}catch(e){return{ok:false,msg:'Não foi possível calcular agora.'};}}
 function liveBalance(){if(!(S.recipe||[]).length)return null;const key=liveKey();if(!key)return null;
  if(LIVE.key===key)return LIVE.res;
@@ -5202,6 +5234,7 @@ const ACT={
  /* bases: carregam a receita mantendo processo, freezer, vitrine, lab e custos do usuário */
  preset:v=>{const p=PRESETS[+v];loadRecipe(p.name,p.tipo,p.vit,recFromPairs(p.recipe));render();toast(p.name+' carregada');},
  /* aplica uma opção estruturada do laudo ("id:Δg;id:Δg") */
+ dexForm:v=>{S.dexForm=v==='anid'?'anid':'mono';},
  applyAct:v=>{String(v).split(';').forEach(op=>{const[id,d]=op.split(':');if(!ING_BY[id])return;const r=S.recipe.find(x=>x.id===id);if(r)r.g=Math.max(0,Math.round((+r.g+ +d)*10)/10);else if(+d>0)S.recipe.push({id,g:Math.round(+d*10)/10});});S.recipe=S.recipe.filter(r=>+r.g>0);U.bal=null;render();toast('Ajuste aplicado');},
  genAddFx:()=>{S.lab.gen.fixed.push({id:'morango',g:100});U.gen=null;render();},
  genRmFx:v=>{S.lab.gen.fixed.splice(+v,1);U.gen=null;render();},
