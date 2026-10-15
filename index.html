@@ -408,6 +408,14 @@ body.auth .app{grid-template-columns:minmax(0,1fr);grid-template-areas:"hdr" "ma
 .fdet{border-top:1px solid var(--line);padding-top:8px}.flog{list-style:none;padding:0;margin:6px 0;font-size:12px;color:var(--t2)}.flog li{padding:2px 0}
 .flabel{white-space:pre-wrap;font:11.5px/1.45 var(--fm);background:var(--bg);border:1px dashed var(--line2);border-radius:8px;padding:8px;margin:8px 0 0;color:var(--t1)}
 @media (max-width:900px){.fkpis{grid-template-columns:repeat(3,minmax(0,1fr))}.fboard{grid-template-columns:repeat(6,minmax(78vw,1fr))}}
+.rrow{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.setsw{display:inline-flex;border:1px solid var(--line2);border-radius:99px;padding:2px;background:var(--bg);gap:2px}
+.setsw button{all:unset;cursor:pointer;padding:3px 11px;border-radius:99px;display:flex;flex-direction:column;line-height:1.1;color:var(--t3)}
+.setsw button b{font-size:12px;font-weight:650}.setsw button small{font-size:9.5px;opacity:.8}
+.setsw button[aria-checked=true]{background:var(--ice-a);color:var(--ice);box-shadow:0 0 0 1px rgba(125,211,252,.45) inset}
+.setsw button:focus-visible{outline:2px solid var(--ice)}
+.setcmp{border:1px solid var(--line);border-radius:var(--r2);padding:10px 12px;margin-top:8px}.setcmp.on{border-color:rgba(125,211,252,.45);background:rgba(125,211,252,.04)}
+@media (max-width:720px){.setsw button small{display:none}.setsw button{padding:4px 10px}}
 </style>
 </head>
 <body>
@@ -1752,6 +1760,7 @@ function fromPreset(p){return{name:p.name,tipo:p.tipo,vit:p.vit,recipe:p.recipe.
 let S=LS.get(KEY)||fromPreset(PRESETS[0]);
 /* garante todos os campos do estado; roda no boot e antes de cada render (estados antigos ou importados) */
 function normalizeState(){
+ try{if(!S.sets||!S.sets.art||!S.sets.pro)setsInit();}catch(e){}
  S.proc=Object.assign({},PROC0,S.proc||{});for(const k in PROC_LIM){const v=+S.proc[k];S.proc[k]=isFinite(v)?clamp(v,PROC_LIM[k][0],PROC_LIM[k][1]):PROC0[k];}if(!isFinite(+S.vit))S.vit=-13;S.brix=S.brix||{};S.costs=S.costs||{};S.page=S.page||'bancada';S.defect=S.defect||'duro';
  if(!Array.isArray(S.recipe)||S.recipe.some(r=>!r||!SAFE_ID.test(String(r.id))||typeof r.g!=='number'||!isFinite(r.g)))S.recipe=cleanRecipe(S.recipe);
  /* ingrediente repetido na receita vira uma linha só (somando as gramas) */
@@ -1771,7 +1780,7 @@ function normalizeState(){
  if(S.proc.hardAuto&&Array.isArray(S.recipe)&&S.recipe.length){try{const hm=hardenModel(analyze(S),S.proc);if(hm&&hm.tDone!=null){const v=clamp(Math.round(hm.tDone/5)*5,5,480);if(v!==S.proc.hardMin)S.proc.hardMin=v;}}catch(e){}}
  if(S.proc.serveFrom==='pote'&&Array.isArray(S.recipe)&&S.recipe.length){try{S.vit=poteServeTemp(S);}catch(e){}}
 }
-{const v=VITS[0]||LS.get(K10.vit);if(v)S.vitrine={temp:v.temp,items:v.items||[]};}
+{const v=VITS.find(x=>x.id==='main')||VITS.find(x=>!x.kind)||LS.get(K10.vit);if(v)S.vitrine={temp:v.temp,items:v.items||[]};}
 normalizeState();
 const U={q:'',sel:null,addG:100,scaleG:'',prodG:'',checks:{},bal:null,del:null,copy:null,gen:null,libQ:'',sens:null,nxTest:null,cq:'',days:0,aging:false,gp:null,np:null,trail:[],test:null};
 
@@ -1857,7 +1866,7 @@ const isMac=()=>{try{return /Mac|iPhone|iPad/.test(navigator.platform||navigator
 const kbd=k=>`<kbd>${isMac()?'⌘':'Ctrl '}${k}</kbd>`;
 
 /* ---------- marca ---------- */
-const VERSION='v17.3';
+const VERSION='v17.4';
 const brandHTML=()=>`<div class="brand"><div class="hex"></div><div><b>Il <span>Fredolin</span></b><small>Gelato Lab ${VERSION}${APP_MODE==='app'&&ME.email?' · '+ROLE_N[ROLE]:''}</small></div></div>`;
 
 /* ---------- termômetro da receita: vitrine, serviço ideal (com faixa de incerteza) e freezer numa régua só ---------- */
@@ -1919,7 +1928,7 @@ function hdr(m,sc,F){F=F||[];
   return`<div class="hbrand">${brandHTML()}</div><div class="rcp"><span class="r-lbl">Receita em execução</span><output class="rname ro">${ex?esc(ex.name)+' <span class="muted">v'+ex.v+'</span>':'Escolha uma receita em "Em execução"'}</output></div><div class="hright">${find}<button class="btn sm ghost" data-a="logout">Sair</button></div>`;}
  return`<div class="hbrand">${brandHTML()}</div>
  <div class="rcp"><input type="text" id="nm" class="rname" data-i="name" value="${esc(S.name)}" maxlength="60" aria-label="Nome da receita" placeholder="Receita sem nome">
-  <select id="tipo" class="rtype" data-c="tipo" aria-label="Tipo de gelato">${Object.entries(PROF).map(([k,p])=>`<option value="${k}"${k===S.tipo?' selected':''}>${p.n}</option>`).join('')}</select></div>
+  <div class="rrow"><select id="tipo" class="rtype" data-c="tipo" aria-label="Tipo de gelato">${Object.entries(PROF).map(([k,p])=>`<option value="${k}"${k===S.tipo?' selected':''}>${p.n}</option>`).join('')}</select>${setSwitchHTML()}</div></div>
  ${thermo(m)}
  <div class="hright">${scoreBtn(m,sc,F)}${find}</div>`;}
 
@@ -2030,6 +2039,7 @@ function pgBancada(m,F,sc){
    <input type="number" id="scaleG" data-i="scaleG" value="${U.scaleG}" placeholder="peso do lote" style="width:130px" aria-label="Novo peso do lote em gramas"><button class="btn sm" data-a="scale">Escalar lote</button></div>${pairChips()}</div></div><div class="bcol">
  ${S.proc.serveFrom==='pote'?poteCard(m,true):''}
  ${liveBalCard(m)}
+ ${setCompareCard(m)}
  ${approveCard(m,F,sc)}
  ${top.length?`<div class="card"><div class="row"><h2 style="margin:0">Pontos que pedem ajuste</h2><span class="sp"></span><button class="btn sm pri" data-a="go" data-v="laudo">Abrir laudo completo</button></div>${top.map(findHTML).join('')}</div>`:(m.empty?'':`<div class="card"><h2>Laudo</h2><p class="c-ok" style="margin:0">Nenhum erro ou alerta. A receita está equilibrada para ${P.n.toLowerCase()} a ${f1(S.vit)} °C.</p></div>`)}
  </div></div></div>`;}
@@ -2113,6 +2123,7 @@ function pgProcesso(m,F){
  const p=S.proc,PF=F.filter(f=>f.area==='Processo'||f.area==='Segurança');
  const sel=(id,label,opts,val,hint)=>`<label class="field"><span class="lbl">${label}</span><select id="p-${id}" data-c="proc" data-k="${id}">${opts.map(([v,n])=>`<option value="${v}"${String(v)===String(val)?' selected':''}>${n}</option>`).join('')}</select>${hint?`<span class="hint">${hint}</span>`:''}</label>`;
  return`<div class="pg"><div><h1>Processo</h1><p class="lead">Pasteurização, maturação, mantecação e abatimento mudam o resultado tanto quanto a fórmula. Ajuste os valores reais da sua produção.</p></div>
+ ${setGearCard()}
  ${equipCard(m)}
  <div class="card"><h2>Pasteurização e resfriamento</h2><div class="form">
   ${fieldNum('p-pastT','Temperatura (°C)',p.pastT,1,'Alta 85 °C · baixa 65 °C')}
@@ -3100,7 +3111,9 @@ function balanceLab(st,maxE){maxE=maxE||900;const rec=(st.recipe||[]).filter(r=>
  const L=labLevers(st);const tot=rec.reduce((a,r)=>a+ +r.g,0);const ids=new Set(L.map(l=>l.id));const base=rec.filter(r=>!ids.has(r.id));
  const x0=L.map(l=>{const r=rec.find(q=>q.id===l.id);return r?+r.g:0;});
  const build=x=>base.concat(L.map((l,i)=>({id:l.id,g:l.sc<.05?Math.round(x[i]*1000)/1000:Math.round(x[i]*10)/10})).filter((r,i)=>r.g>=(L[i]&&L[i].sc<1?.001:.3)));
- let evals=0;const f=x=>{evals++;const s2={...st,recipe:build(x)};const m=analyze(s2);if(m.empty)return 1e9;return labLoss(m,diagnose(s2,m),x0,x,tot,L);};
+ /* na busca, o modo pote vira vitrine na mesma temperatura (mesmo congelamento; sem as simulações térmicas do pote, que não mudam com os açúcares) */
+ const stF=st.proc&&(st.proc.serveFrom==='pote'||st.proc.hardAuto)?{...st,proc:{...st.proc,serveFrom:'vitrine',hardAuto:0}}:st;
+ let evals=0;const f=x=>{evals++;const s2={...stF,recipe:build(x)};const m=analyze(s2);if(m.empty)return 1e9;return labLoss(m,diagnose(s2,m),x0,x,tot,L);};
  let x=x0.slice(),best=f(x);const l0=best;let step=tot*.04;
  while(step>tot*.0006&&evals<maxE){let imp=false;
   for(let i=0;i<L.length;i++)for(const dir of[1,-1]){const y=x.slice();y[i]=clamp(y[i]+dir*step*L[i].sc,L[i].lo,L[i].hi);if(y[i]===x[i])continue;const v=f(y);if(v<best-1e-6){best=v;x=y;imp=true;}}
@@ -3773,14 +3786,17 @@ function liveBalCard(m){if(m.empty||!can.edit())return'';const r=liveBalance();i
 /* Panasonic NR-BB53GV3WB · refrigerador com controle Mín/Méd/Máx. Temperaturas típicas de cada posição
    (estimativa até você medir; o valor medido substitui). */
 const FRIDGE={min:{n:'Mín',T:6.5},med:{n:'Méd',T:4.5},max:{n:'Máx',T:2.5}};
+/* set Professionale: a temperatura é o setpoint do processo (Maturação °C); o maturador agita e troca calor pela parede */
+const MAT_PRO={maturador:{n:'Maturador com agitação',sd:.3,tau:.25},camara:{n:'Câmara fria',sd:.7,tau:null},geladeira:{n:'Geladeira comercial',sd:1,tau:null}};
 const FRIDGE_POS={porta:{n:'Porta',d:2.5},sup:{n:'Prateleira de cima',d:.8},meio:{n:'Prateleira do meio',d:0},inf:{n:'Prateleira de baixo, no fundo',d:-.7}};
 const MAT0={fridge:'med',pos:'meio',reads:'',entryT:10,probe:'',fruitIn:0};
-function matState(){const x=Object.assign({},MAT0,S.mat||{});if(!FRIDGE[x.fridge])x.fridge='med';if(!FRIDGE_POS[x.pos])x.pos='meio';x.entryT=clamp(+x.entryT||10,0,40);
+function matState(){const x=Object.assign({},MAT0,S.mat||{});if(!FRIDGE[x.fridge]&&!MAT_PRO[x.fridge])x.fridge='med';if(!FRIDGE_POS[x.pos])x.pos='meio';x.entryT=clamp(+x.entryT||10,0,40);
  x.reads=String(x.reads||'').slice(0,200);x.probe=String(x.probe||'').slice(0,40);x.fruitIn=x.fruitIn?1:0;return x;}
 const parseReads=s=>String(s||'').split(/[;\s]+/).filter(v=>v.trim()!=='').map(v=>+v.replace(',','.')).filter(v=>isFinite(v)&&v>-5&&v<20).slice(0,30);
 /* temperatura do ar onde a calda fica: medida (média e desvio) ou estimada pelo ajuste + posição */
 function fridgeT(ms){const r=parseReads(ms.reads);
  if(r.length){const mu=r.reduce((a,b)=>a+b,0)/r.length;const sd=r.length>1?Math.sqrt(r.reduce((a,b)=>a+(b-mu)*(b-mu),0)/(r.length-1)):.6;return{mu,sd:Math.max(.3,sd),src:'medida',n:r.length};}
+ if(MAT_PRO[ms.fridge]){const sp=+((S&&S.proc&&S.proc.matT)||4);return{mu:sp+(ms.fridge==='maturador'?0:FRIDGE_POS[ms.pos].d),sd:MAT_PRO[ms.fridge].sd,src:'setpoint',n:0};}
  return{mu:FRIDGE[ms.fridge].T+FRIDGE_POS[ms.pos].d,sd:1,src:'estimada',n:0};}
 /* constante de tempo do pote (h): massa × cp / (h × área), convecção natural na geladeira */
 function potTau(m){const kg=Math.max(.05,(m.tot||1000)/1000),V=kg/((m.rhoMix||1.08)*1000);const A=6*Math.pow(V,2/3)*.85;return kg*3300/(9*A)/3600;}
@@ -3841,7 +3857,7 @@ function matPct(a,q){const v=a.filter(x=>x!=null&&isFinite(x)).sort((x,y)=>x-y);
 /* modelo completo com incerteza (cache por receita + geladeira) */
 let _MAT={key:null,res:null};
 function matModel(st,m,N){if(!m||m.empty)return null;const ms=matState();const key=JSON.stringify([st.tipo,st.recipe,st.proc,ms,ING_VER,N]);if(_MAT.key===key)return _MAT.res;
- const C=matCtx({...st,mat:ms},m);const FT=fridgeT(ms);const tau0=potTau(m);const fit=probeFit(ms,FT.mu);const tau=fit!=null?clamp(fit,.2,12):tau0;
+ const C=matCtx({...st,mat:ms},m);const FT=fridgeT(ms);const tau0=MAT_PRO[ms.fridge]&&MAT_PRO[ms.fridge].tau?MAT_PRO[ms.fridge].tau:potTau(m);const fit=probeFit(ms,FT.mu);const tau=fit!=null?clamp(fit,.2,12):tau0;
  const base=matRun(C,{Tf:FT.mu,tau,T0:ms.entryT,fatK:1,hydK:1,micro:1});
  const rnd=atRng(7+(m.tot|0)+Math.round(FT.mu*10));const gauss=()=>{let u=0;for(let i=0;i<6;i++)u+=rnd();return(u-3)*Math.SQRT2;};
  const runs=[];N=N||120;
@@ -3898,8 +3914,9 @@ function matCard(st,m,compact){if(m.empty)return'';const R=matModel(st,m);if(!R)
   <p class="note" style="margin:8px 0">Com o tempo atual do processo (${fT(cur)} h): <b class="${pCur>=.8?'c-ok':pCur>=.5?'c-warn':'c-crit'}">${f0(pCur*100)}% de chance de estar no ponto</b>.${cur>(R.tMax[0]||1e9)?' <b class="c-crit">Acima do máximo.</b>':''}</p>
   ${matChart(R)}
   <div class="g2" style="gap:18px;margin-top:14px"><div><span class="lbl">Linha do tempo</span><ol class="mattl">${ev.map(([t,tt,d])=>`<li><span class="mono">${t<1?f0(t*60)+' min':fT(Math.round(t*10)/10)+' h'}</span><div><b>${esc(tt)}</b><p>${esc(d)}</p></div></li>`).join('')}</ol></div>
-   <div><span class="lbl">Sua geladeira (Panasonic NR-BB53)</span>
-    <div class="chips" style="margin:6px 0 8px" role="group" aria-label="Ajuste do refrigerador">${Object.entries(FRIDGE).map(([k,f])=>`<button data-a="matFridge" data-v="${k}" aria-pressed="${ms.fridge===k}">${f.n} · ~${fT(f.T)} °C</button>`).join('')}</div>
+   <div>${S.set==='pro'?`<span class="lbl">Maturação no laboratório (set Professionale)</span>
+    <div class="chips" style="margin:6px 0 8px" role="group" aria-label="Equipamento de maturação">${Object.entries(MAT_PRO).map(([k,f])=>`<button data-a="matFridge" data-v="${k}" aria-pressed="${ms.fridge===k}">${f.n}</button>`).join('')}</div><p class="note" style="margin:0 0 8px">Setpoint: ${fT(+S.proc.matT)} °C (campo "Temperatura" da maturação).</p>`:`<span class="lbl">Sua geladeira (Panasonic NR-BB53)</span>
+    <div class="chips" style="margin:6px 0 8px" role="group" aria-label="Ajuste do refrigerador">${Object.entries(FRIDGE).map(([k,f])=>`<button data-a="matFridge" data-v="${k}" aria-pressed="${ms.fridge===k}">${f.n} · ~${fT(f.T)} °C</button>`).join('')}</div>`}
     <div class="form" style="grid-template-columns:repeat(2,minmax(0,1fr))">
      <label class="field"><span class="lbl">Onde fica a calda</span><select id="mat-pos" data-c="matPos">${Object.entries(FRIDGE_POS).map(([k,p])=>`<option value="${k}"${ms.pos===k?' selected':''}>${p.n}</option>`).join('')}</select></label>
      <label class="field"><span class="lbl">Calda entra a (°C)</span><input type="number" id="mat-entry" data-i="mat" data-k="entryT" value="${ms.entryT}" step=".5"></label>
@@ -3910,7 +3927,7 @@ function matCard(st,m,compact){if(m.empty)return'';const R=matModel(st,m);if(!R)
     <div class="kv"><span><b>Esta receita</b></span><span style="font-size:12px;text-align:right"><b class="c-ok">${fT(Math.round(R.tIdeal[1]*2)/2)} h</b> a ${fT(Math.round(FT.mu*10)/10)} °C</span></div>
     <p class="note">As escolas divergem porque as receitas divergem: o tempo longo serve à gordura do leite sem emulsificante, à gelatina e às infusões; com gomas hidratadas a 85 °C, gema ou mono-diglicerídeos e calda que entra bem fria, poucas horas já entregam quase tudo. O modelo calcula isso para a sua receita.</p></div></div></div>`;}
 const MAT_ACT={
- matFridge:v=>{if(!FRIDGE[v])return;S.mat={...matState(),fridge:v};render();},
+ matFridge:v=>{if(!FRIDGE[v]&&!MAT_PRO[v])return;S.mat={...matState(),fridge:v};render();},
  matApply:()=>{const m=analyze(S);const R=matModel(S,m);if(!R)return;S.proc.matH=Math.round(R.tIdeal[1]*2)/2;S.proc.matT=Math.round(R.FT.mu*10)/10;render();toast('Processo: maturar '+fT(S.proc.matH)+' h a '+fT(S.proc.matT)+' °C');}};
 const MAT_INP={mat:(v,t)=>{const k=t.dataset.k;const ms=matState();if(k==='entryT'){if(v===''||!isFinite(+v))return;ms.entryT=clamp(+v,0,40);}else if(k==='reads')ms.reads=String(v).slice(0,200);else if(k==='probe')ms.probe=String(v).slice(0,40);else return;S.mat=ms;render();}};
 const MAT_CHG={matPos:t=>{const ms=matState();if(FRIDGE_POS[t.value])ms.pos=t.value;S.mat=ms;},matFruit:t=>{const ms=matState();ms.fruitIn=t.value==='1'?1:0;S.mat=ms;}};
@@ -4070,7 +4087,7 @@ function syncRegistry(){const keepC=new Set(CUST.map(c=>c.id)),keepN=new Set(NXL
 const STORE={backend:null,status:'local',msg:'Salvando somente neste aparelho.',tomb:LS.get(TOMBKEY)||{},
  saveLocal(c){LS.set(COLS[c].lk,COLS[c].get());},
  saveTomb(){LS.set(TOMBKEY,this.tomb);},
- after(c){if(c==='ings'||c==='nx')syncRegistry();if(c==='inv')invRecompute(INV);if(c==='lots')fitCalibration(LOTS);if(c==='vit'&&VITS[0])S.vitrine={temp:VITS[0].temp,items:VITS[0].items||[]};},
+ after(c){if(c==='ings'||c==='nx')syncRegistry();if(c==='inv')invRecompute(INV);if(c==='lots')fitCalibration(LOTS);if(c==='vit'){const v=VITS.find(x=>x.id==='main')||VITS.find(x=>!x.kind);if(v)S.vitrine={temp:v.temp,items:v.items||[]};if(typeof setsFromCloud==='function')setsFromCloud();}},
  setStatus(st,msg){this.status=st;this.msg=msg;render();},
  put(c,rec){const arr=COLS[c].get();const k=arr.findIndex(x=>String(x.id)===String(rec.id));
   /* receitas guardam de qual versão partiram (base): assim duas edições paralelas viram conflito, não perda */
@@ -4112,6 +4129,74 @@ async function saveFile(name,data){try{const d=window.claude&&typeof window.clau
  /* fora do artefato: download comum do navegador */
  try{if(APP_MODE==='app'){const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([data],{type:'application/octet-stream'}));a.download=name;document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove();},500);toast('Arquivo pronto');return;}}catch(e){}
  U.exp=data;render();}
+
+/* ==== 61-sets.js ==== */
+/* ===================== SETS: ARTIGIANALE × PROFESSIONALE =====================
+   O set é o conjunto de equipamentos onde a receita vai ser feita. A chave no cabeçalho troca o set inteiro:
+   mantecadora, saída, endurecimento, armazenamento, forma de servir, maturação (geladeira ou maturador)
+   e temperatura de serviço. A receita continua a mesma; o motor recalcula tudo na hora para o set escolhido.
+   • Artigianale: o set de casa (Maqp1 Maestro Gelatiere + Panasonic NR-BB53), guardado neste aparelho.
+   • Professionale: o laboratório da equipe. Fica guardado na nuvem da equipe (coleção "vit", registro set_pro),
+     então todos os aparelhos usam os mesmos equipamentos; Maestro e Chef atualizam quando chegar equipamento novo.
+   Campos do set (equipamento) × campos da receita (fruta antes/depois, perda no cozimento, porção, preço). */
+const SET_KEYS=['machine','drawT','drawMin','blastT','hardMin','hardAuto','turboMin','storeT','storeFluct','serveFrom','poteMl','ambT','waitMin','equip','matT','matH','coolMin','pastT','pastHold','pastHoldU'];
+const SETS={
+ art:{n:'Artigianale',sub:'Maestro + Panasonic',proc:Object.assign({},EQUIP.casa_mg_pan.proc,{pastT:85,pastHold:30,pastHoldU:'s'}),vit:-14.5,mat:{fridge:'med',pos:'meio',reads:'',entryT:10,probe:'',fruitIn:0},
+  gear:{past:'Panela + termômetro (85 °C)',matur:'Panasonic NR-BB53 (refrigerador)',mant:'Maqp1 Maestro Gelatiere',abat:'Freezer Panasonic com Turbo',vitr:'— (serviço do pote)',frz:'Panasonic NR-BB53 (freezer, Médio)'}},
+ pro:{n:'Professionale',sub:'laboratório da equipe',proc:{machine:'horiz',pastT:85,pastHold:30,pastHoldU:'s',coolMin:60,matT:4,matH:8,drawT:-9,drawMin:10,blastT:-35,hardMin:40,hardAuto:0,turboMin:0,storeT:-20,storeFluct:1,serveFrom:'vitrine',poteMl:500,ambT:23,waitMin:10,equip:''},vit:-13,
+  mat:{fridge:'maturador',pos:'meio',reads:'',entryT:4,probe:'',fruitIn:0},
+  gear:{past:'Pasteurizadora (a definir)',matur:'Maturador com agitação (a definir)',mant:'Mantecadora horizontal (a definir)',abat:'Abatedor −35 °C (a definir)',vitr:'Vitrine −13 °C (a definir)',frz:'Freezer de estoque −20 °C (a definir)'}}};
+const GEAR_N=[['past','Pasteurização'],['matur','Maturação'],['mant','Mantecadora'],['abat','Abatimento'],['vitr','Vitrine'],['frz','Armazenamento']];
+const plainSet=o=>JSON.parse(JSON.stringify(o));
+function setDefaults(k){const d=SETS[k];return{proc:plainSet(d.proc),vit:d.vit,mat:plainSet(d.mat),gear:plainSet(d.gear),at:0};}
+const pickSet=p=>{const o={};SET_KEYS.forEach(k=>{if(p&&p[k]!==undefined)o[k]=p[k];});return o;};
+/* estado inicial: quem já usava o conjunto de casa começa no Artigianale */
+function setsInit(){const old=S.sets&&typeof S.sets==='object'?S.sets:{};const nw={};for(const k of['art','pro']){const d=setDefaults(k);const c=old[k];
+  nw[k]=c&&typeof c==='object'?{proc:Object.assign(d.proc,pickSet(c.proc)),vit:isFinite(+c.vit)?+c.vit:d.vit,mat:Object.assign(d.mat,c.mat||{}),gear:Object.assign(d.gear,c.gear||{}),at:+c.at||0}:d;}
+ if(S.set!=='art'&&S.set!=='pro')S.set=S.proc&&S.proc.equip==='casa_mg_pan'?'art':'pro';S.sets=nw;
+ /* o set ativo nasce do que já estava no processo */
+ const cur=S.sets[S.set];if(!cur.at){cur.proc=Object.assign(cur.proc,pickSet(S.proc));cur.vit=+S.vit;if(S.mat)cur.mat=Object.assign(cur.mat,S.mat);cur.at=1;}}
+/* aplica o set ativo no estado (processo + temperatura de serviço + maturação) */
+function setApply(){const c=S.sets[S.set];Object.assign(S.proc,plainSet(c.proc));if(S.proc.serveFrom!=='pote')S.vit=c.vit;S.mat=plainSet(c.mat);}
+/* espelha o que o usuário ajusta no processo para o set ativo */
+function setMirror(){const c=S.sets&&S.sets[S.set];if(!c)return;c.proc=pickSet(S.proc);c.vit=+S.vit;if(S.mat)c.mat=plainSet(S.mat);}
+function setSwitch(k){if(!SETS[k]||k===S.set)return;setMirror();S.set=k;setApply();U.bal=null;U.atEx=null;if(typeof LIVE!=='undefined'){LIVE.key=null;LIVE.res=null;}}
+/* nuvem da equipe: o set Professionale é um registro compartilhado */
+let _setPush={last:null,t:null};
+function setsAfterRender(){if(!S.sets)return;setMirror();
+ if(S.set!=='pro'||!(ROLE==='maestro'||ROLE==='chef'))return;const c=S.sets.pro;const js=JSON.stringify({proc:c.proc,vit:c.vit,mat:c.mat,gear:c.gear});
+ if(_setPush.last===null){_setPush.last=js;return;}if(js===_setPush.last)return;_setPush.last=js;clearTimeout(_setPush.t);
+ _setPush.t=setTimeout(()=>{try{STORE.put('vit',{id:'set_pro',kind:'set',cfg:JSON.parse(js)});}catch(e){}},1500);}
+function setsFromCloud(){const r=(VITS||[]).find(v=>v.id==='set_pro'&&v.cfg);if(!r||!S.sets)return;const c=S.sets.pro;if((r.updatedAt||0)<=(c.at||0))return;
+ const cf=r.cfg;c.proc=Object.assign(setDefaults('pro').proc,pickSet(cf.proc));if(isFinite(+cf.vit))c.vit=+cf.vit;c.mat=Object.assign(setDefaults('pro').mat,cf.mat||{});c.gear=Object.assign(setDefaults('pro').gear,cf.gear||{});c.at=r.updatedAt;
+ _setPush.last=JSON.stringify({proc:c.proc,vit:c.vit,mat:c.mat,gear:c.gear});if(S.set==='pro')setApply();}
+/* carregar receita (biblioteca, mestres, execução, lotes) não troca o equipamento: o set ativo prevalece */
+const SET_LOADERS=['load','preset','master','execRun','histLoad','lotBench','varToBench','genToBench','sensApply','cmpLoad','libVar'];
+function setsWrap(A){SET_LOADERS.forEach(k=>{const f=A[k];if(typeof f!=='function')return;A[k]=function(...a){const r=f.apply(this,a);if(S.sets&&S.sets[S.set]){setApply();render();}return r;};});}
+function setSwitchHTML(){if(ROLE==='sous')return'';const cur=S.set||'art';
+ return`<div class="setsw" role="radiogroup" aria-label="Set de equipamentos">${['art','pro'].map(k=>`<button role="radio" data-a="setSw" data-v="${k}" aria-checked="${cur===k}" title="${esc(SETS[k].n+' · '+SETS[k].sub)}"><b>${SETS[k].n}</b><small>${SETS[k].sub}</small></button>`).join('')}</div>`;}
+/* a mesma receita nos dois sets, com o melhor balanceamento de cada um */
+let _SETCMP={key:null,res:null};
+function setCompare(){if(!S.sets||!S.sets.art||!S.sets.pro||!(S.recipe||[]).length)return null;const key=JSON.stringify([S.recipe,S.tipo,S.sets.art,S.sets.pro,S.brix,ING_VER]);if(_SETCMP.key===key)return _SETCMP.res;
+ if(typeof requestAnimationFrame==='function'&&!setCompare.now){if(_SETCMP.pend!==key){_SETCMP.pend=key;clearTimeout(_SETCMP.t);_SETCMP.t=setTimeout(()=>{if(_SETCMP.pend!==key)return;setCompare.now=1;try{setCompare();}finally{setCompare.now=0;}render();},500);}return _SETCMP.res||'pending';}
+ const res=['art','pro'].map(k=>{const c=S.sets[k];const st={...S,proc:Object.assign({},PROC0,S.proc,plainSet(c.proc)),vit:c.vit,mat:c.mat};const s2=stReal(st);const m=analyze(s2);if(m.empty)return null;const F=diagnose(s2,m);
+  /* balanceador clássico (rápido); o do laboratório roda só no set ativo, pelo cartão de balanceamento ao vivo */
+  let b=null;try{b=balance(s2);}catch(e){}
+  const s3=b&&b.ok?{...s2,recipe:b.newRecipe}:null;const m3=s3?analyze(s3):null;
+  return{k,serve:s2.vit,sc:score(s2,m,F).total,q:fineScore(s2,m,F),d:m.crystal,shelf:st.proc.serveFrom==='vitrine'?m.shelfVit:m.shelfStore,b,q3:m3?fineScore(s3,m3,diagnose(s3,m3)):null};});
+ _SETCMP={key,res};return res;}
+function setCompareCard(m){if(m.empty||ROLE==='sous')return'';const R=setCompare();if(R==='pending')return'<div class="card"><h2>Esta receita nos dois sets</h2><p class="note" style="margin:0">Calculando…</p></div>';if(!R||R.some(x=>!x))return'';
+ return`<div class="card"><h2>Esta receita nos dois sets</h2>${R.map(x=>{const on=x.k===S.set;const ch=x.b&&x.b.ok?x.b.prop.map((p,i)=>({id:p.id,a:x.b.cur[i],g:p.g})).filter(p=>Math.abs(p.g-p.a)>=1):[];
+  return`<div class="setcmp${on?' on':''}"><div class="row" style="justify-content:space-between"><b>${SETS[x.k].n}</b>${on?'<span class="chip ok">ativo</span>':`<button class="btn sm" data-a="setSw" data-v="${x.k}">Usar</button>`}</div>
+   <div class="kv"><span>Serviço</span><span class="mono">${fT(Math.round(x.serve*10)/10)} °C</span></div><div class="kv"><span>Índice · fino</span><span class="mono">${x.sc} · ${f1(x.q)}</span></div>
+   <div class="kv"><span>Cristal · vida ${x.k&&S.sets[x.k].proc.serveFrom==='vitrine'?'na vitrine':'no freezer'}</span><span class="mono">${f0(x.d)} µm · ${x.shelf>30?'30+':f0(x.shelf)} d</span></div>
+   <p class="note" style="margin:4px 0 0">${ch.length?'Melhor balanceamento: '+ch.map(p=>esc(ING_BY[p.id]?ING_BY[p.id].n.split(' (')[0]:p.id)+' '+f0(p.a)+'→'+f0(p.g)+' g').join(' · ')+(x.q3!=null?' (fino '+f1(x.q3)+')':''):'Já no melhor ponto para este set.'}</p></div>`;}).join('')}</div>`;}
+function setGearCard(){const k=S.set||'art',c=S.sets&&S.sets[k];if(!c)return'';const ed=k==='art'?can.edit():(ROLE==='maestro'||ROLE==='chef');
+ return`<div class="card"><div class="row"><h2 style="margin:0">Set ${SETS[k].n}</h2><span class="sp"></span>${setSwitchHTML()}</div>
+  <p class="note">${k==='pro'?'Equipamentos do laboratório da equipe. Fica salvo na nuvem da equipe: quando chegar um equipamento novo, atualize aqui e nos campos abaixo (mantecadora, saída, abatedor, vitrine, maturador) e todos os aparelhos passam a balancear para ele.':'Equipamentos de casa. Fica salvo neste aparelho.'}</p>
+  <div class="form" style="grid-template-columns:repeat(3,minmax(0,1fr))">${GEAR_N.map(([g,n])=>`<label class="field"><span class="lbl">${n}</span><input type="text" id="gear-${g}" data-i="gear" data-k="${g}" value="${esc(c.gear[g]||'')}" maxlength="60"${ed?'':' readonly'}></label>`).join('')}</div></div>`;}
+const SET_ACT={setSw:v=>{if(!SETS[v])return;setSwitch(v);render();toast('Set '+SETS[v].n+': processo e balanceamento recalculados');}};
+const SET_INP={gear:(v,t)=>{const k=t.dataset.k;if(!GEAR_N.some(g=>g[0]===k))return;const c=S.sets&&S.sets[S.set];if(!c)return;if(S.set==='pro'&&!(ROLE==='maestro'||ROLE==='chef'))return;c.gear[k]=String(v).slice(0,60);render();}};
 
 /* ==== 62-supabase.js ==== */
 /* ===================== IL FREDOLIN · NUVEM DA EQUIPE (Supabase) =====================
@@ -4363,7 +4448,7 @@ function renderNow(){
  const gh=document.getElementById('gsimHost'),nh=document.getElementById('nsimHost');
  if(gh){if(!GSIM)GSIM=new GelSim();GSIM.mount(gh);GSIM.set(U.gp);}
  if(nh&&U.np){if(!NSIM)NSIM=new NeuSim();NSIM.mount(nh);NSIM.set(U.np);}
- const js=JSON.stringify(S);if(js!==renderNow.saved){renderNow.saved=js;try{localStorage.setItem(KEY,js);}catch(e){}}
+ setsAfterRender();const js=JSON.stringify(S);if(js!==renderNow.saved){renderNow.saved=js;try{localStorage.setItem(KEY,js);}catch(e){}}
 }
 let _rq=false;
 function render(){if(typeof requestAnimationFrame!=='function'){renderNow();return;}if(_rq)return;_rq=true;requestAnimationFrame(()=>{_rq=false;renderNow();});}
@@ -4476,6 +4561,7 @@ const ACT={
  ...AT_ACT,
  ...MAT_ACT,
  ...FLOW_ACT,
+ ...SET_ACT,
  ...SHELL_ACT
 };
 
@@ -4483,6 +4569,7 @@ const ACT={
 /* número digitado → valor seguro: vazio/ inválido vira o padrão; fora da faixa vai para o limite */
 const num=(v,lo,hi,dflt)=>v===''||v==null||!isFinite(+v)?dflt:clamp(+v,lo,hi);
 const GEN_LIM={batch:[200,20000],fat:[0,30],msnf:[0,15],pod:[0,40],sol:[10,60],stabGkg:[0,30]};
+setsWrap(ACT);
 const INP={
  name:v=>{S.name=v;render();},
  q:v=>{U.q=v;U.sel=null;render();},
@@ -4513,6 +4600,7 @@ const INP={
  ...AT_INP,
  ...MAT_INP,
  ...FLOW_INP,
+ ...SET_INP,
  ...SHELL_INP
 };
 
@@ -4547,7 +4635,7 @@ function importBackup(file){const fr=new FileReader();fr.onload=()=>{try{const d
 /* toda ação passa pela checagem do perfil (o servidor também recusa o que o perfil não pode) */
 const denied=()=>toast('Seu perfil não tem acesso a esta função.');
 /* ações que não mexem na receita não entram no desfazer */
-const NO_UNDO=new Set(['go','fam','palOpen','palClose','palRun','undo','copy','chk','unchk','libTab','libAuthor','libMore','libTipo','libVitF','simOpen','simClose','cmpToggle','cmpClear','histOpen','lotOpen','crTab','crSub','atGoal','flowOpen','flowView','flowNotify','flowNext','flowBack','flowDisc','flowColor','flowStart','flowLot','procGo','procPlay','atSel','atPick','atCard','atExplore','nxGoal','sazM','del','delNo','meltTimer','panelSet','panelStart','panelNext','panelCancel','panelReveal','panelReset','testRun','syncNow','age','pick']);
+const NO_UNDO=new Set(['go','fam','palOpen','palClose','palRun','undo','copy','chk','unchk','libTab','libAuthor','libMore','libTipo','libVitF','simOpen','simClose','cmpToggle','cmpClear','histOpen','lotOpen','crTab','crSub','atGoal','setSw','flowOpen','flowView','flowNotify','flowNext','flowBack','flowDisc','flowColor','flowStart','flowLot','procGo','procPlay','atSel','atPick','atCard','atExplore','nxGoal','sazM','del','delNo','meltTimer','panelSet','panelStart','panelNext','panelCancel','panelReveal','panelReset','testRun','syncNow','age','pick']);
 function runAct(k,v,t){if(NO_UNDO.has(k))return ACT[k](v,t);const before=undoSnap();undoMark();const r=ACT[k](v,t);
  if(r&&typeof r.then==='function')return r;if(undoSnap()===before)undoSettle();else if(UNDO_TOAST.has(k))toastUndo();return r;}
 document.addEventListener('click',e=>{const t=e.target.closest('[data-a]');if(!t)return;e.preventDefault();const k=t.dataset.a;if(!ACT[k])return;if(!can.act(k))return denied();runAct(k,t.dataset.v,t);});
