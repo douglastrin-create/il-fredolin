@@ -364,6 +364,22 @@ body.auth .app{grid-template-columns:minmax(0,1fr);grid-template-areas:"hdr" "ma
 .member select{width:auto}
 /* iPhone: campos com 16px não dão zoom ao tocar; respeita o entalhe quando aberto como app */
 @supports (padding:env(safe-area-inset-top)){.app{padding-top:env(safe-area-inset-top);padding-bottom:env(safe-area-inset-bottom)}}
+.procbar{padding:12px 14px 14px;border-top:1px solid var(--line);background:var(--bg)}
+.procbar .chips button{padding:5px 10px;font-size:12px}
+.procrow{display:flex;align-items:center;gap:10px;margin:10px 0 6px}.procrow input[type=range]{flex:1}
+.atwheel{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);gap:12px;align-items:center}
+.atitem{display:grid;grid-template-columns:minmax(0,1fr) auto auto;gap:8px;align-items:center;padding:7px 0;border-bottom:1px solid var(--line)}
+.atitem.on .atname b{color:#fb923c}
+.atname{all:unset;cursor:pointer;display:flex;flex-direction:column;min-width:0}.atname b{font-weight:600;color:var(--t1);font-size:13px}.atname small{color:var(--t3);font-size:11.5px;line-height:1.35}
+.atname:focus-visible{outline:2px solid var(--ice);outline-offset:2px;border-radius:4px}
+.atpct{font-size:11px;color:var(--t3)}
+.atlist{display:flex;flex-direction:column;gap:4px;margin-top:10px}
+.atlist button{all:unset;cursor:pointer;font-size:12.5px;color:var(--t2);padding:6px 8px;border-radius:8px;border:1px solid transparent}
+.atlist button:hover{color:var(--t1);background:var(--surf)}.atlist button[aria-pressed=true]{border-color:rgba(125,211,252,.4);color:var(--t1);background:var(--ice-a)}
+.atlist button:focus-visible{outline:2px solid var(--ice)}
+.atcard{background:linear-gradient(135deg,rgba(125,211,252,.07),rgba(251,146,60,.06));border-color:rgba(125,211,252,.25)}
+.atcard h3{margin:8px 0 6px;font-size:19px;color:var(--t1)}.atcard p{margin:0;color:var(--t2);line-height:1.55;max-width:70ch}
+@media (max-width:720px){.atwheel{grid-template-columns:minmax(0,1fr)}}
 </style>
 </head>
 <body>
@@ -1717,7 +1733,7 @@ function normalizeState(){
  S.nxEdit=S.nxEdit||{id:null,name:'Neutro Il Fredolin',dose:25,dairy:true,parts:{...NEUTRO_PRESETS.find(n=>n.id==='nx_fredolin').parts},from:'nx_fredolin'};
  S.libTab=S.libTab||'mestres';S.libAuthor=S.libAuthor||'Todos';
  S.vitrine=S.vitrine||{temp:-13,items:[]};S.plan=S.plan||[];if(!S.famLast||typeof S.famLast!=='object')S.famLast={};if(!Array.isArray(S.comps))S.comps=[];
- S.creatorTab=S.creatorTab||'gelato';if(!['gerar','comparar','sens'].includes(S.crSub))S.crSub='gerar';
+ S.creatorTab=S.creatorTab||'gelato';if(!['atelie','gerar','comparar','sens'].includes(S.crSub))S.crSub='atelie';
  /* páginas antigas do Lab de P&D e do Lab de neutros vivem no Creator */
  if(S.page==='lab'){S.page='creator';S.creatorTab='gelato';}if(S.page==='neutros'){S.page='creator';S.creatorTab='neutros';}
  if(S.proc.serveFrom==='freezer')S.vit=+S.proc.storeT;
@@ -1812,7 +1828,7 @@ const isMac=()=>{try{return /Mac|iPhone|iPad/.test(navigator.platform||navigator
 const kbd=k=>`<kbd>${isMac()?'⌘':'Ctrl '}${k}</kbd>`;
 
 /* ---------- marca ---------- */
-const VERSION='v16.1';
+const VERSION='v17';
 const brandHTML=()=>`<div class="brand"><div class="hex"></div><div><b>Il <span>Fredolin</span></b><small>Gelato Lab ${VERSION}${APP_MODE==='app'&&ME.email?' · '+ROLE_N[ROLE]:''}</small></div></div>`;
 
 /* ---------- termômetro da receita: vitrine, serviço ideal (com faixa de incerteza) e freezer numa régua só ---------- */
@@ -2517,7 +2533,7 @@ function microModel(st,m,F,sc,days){
  const protOk=m.prot>=Math.max(.5,P.prot[0]-.5)||st.tipo==='sorbetto';const bubbleStable=protOk&&m.hydro>=P.stab[0]*.6;
  o.airD=AIR_D*(1+(bubbleStable?0:.05*days))*(m.ov>P.ov[1]+5?1.15:1);o.bubbleStable=bubbleStable;
  /* gordura e proteína (aglomerados ampliados para visibilidade) */
- o.nFat=Math.round(clamp(m.fat*7,0,90));o.destab=m.hasEmul?.38:.16;o.butter=m.fat>11.5||(m.keyPct.mono||0)>.35||(m.fat>10.5&&pr.drawMin>13);
+ o.nFat=Math.round(clamp(m.fat*7,0,90));o.destab=clamp((m.destab||0)/100,0,.9);o.butter=m.fat>11.5||(m.keyPct.mono||0)>.35||(m.fat>10.5&&pr.drawMin>13);
  o.nProt=Math.round(clamp(m.prot*9,0,50));
  o.nLac=m.lacW>9?Math.round((m.lacW-9)*5*(1+days/6)):(m.lacW>8.3&&days>6?Math.round((days-6)*.6):0);
  /* rede de estabilizante */
@@ -2547,15 +2563,17 @@ function microModel(st,m,F,sc,days){
 
 /* ===================== CREATOR — MODELO DA REDE DO NEUTRO ===================== */
 const NSTYLE={starch:{col:'#fde68a',glob:1},konj:{col:'#38bdf8',seg:12,L:11,w:2.4,branch:1},lbg:{col:'#7dd3fc',seg:11,L:11,w:2},guar:{col:'#6ee7b7',seg:11,L:11,w:2,branch:1},tara:{col:'#5eead4',seg:9,L:11,w:2,branch:.5},xan:{col:'#f6c90e',seg:8,L:12,w:2.6,stiff:1},carr:{col:'#a78bfa',seg:5,L:10,w:1.6,helix:2},cmc:{col:'#f472b6',seg:8,L:11,w:2},pect:{col:'#fb923c',seg:6,L:10,w:2},citf:{col:'#a3e635',seg:6,L:9,w:1.4,fiber:1},gel:{col:'#fda4af',seg:7,L:10,w:1.4,helix:3},acacia:{col:'#e2e8f0',glob:1},inu:{col:'#cbd5e1',glob:1},lec:{col:'#fbbf24',surf:1},mono:{col:'#fbbf24',surf:1}};
-function neutroModel(E,pastT){
- const b=analyzeBlend(E,E.dairy);const comps=[];
+function neutroModel(E,pastT,prIn){
+ const pr=Object.assign({},PROC0,prIn||(typeof S!=='undefined'&&S&&S.proc)||{},{pastT:+pastT});
+ const b=analyzeBlend(E,E.dairy);const comps=[];const keys={};for(const k in b.eff)if(NCOMP[k]&&NCOMP[k].dose&&b.eff[k]>0)keys[k]=b.eff[k];
+ const hy=Object.keys(keys).length?hydRun(keys,pr):null;const hOf=k=>hy&&hy.h[k]!=null?hy.h[k]:1;
  for(const k in b.eff){const nc=NCOMP[k];if(!nc||!nc.dose)continue;const mid=(nc.dose[0]+nc.dose[1])/2;const load=b.eff[k]/mid;
   const n=NSTYLE[k]&&(NSTYLE[k].glob||NSTYLE[k].surf)?Math.round(clamp(load*5,0,14)):Math.round(clamp(load*3.2,0,9));
-  if(n>0)comps.push({k,n,hydrated:pastT>=nc.hyd||nc.hyd<=20,load});}
+  if(n>0)comps.push({k,n,h:hOf(k),hydrated:hOf(k)>=.9,load});}
  const has=k=>(b.eff[k]||0)>0;
  const galacto=has('lbg')||has('guar')||has('tara');
  const floc=E.dairy&&galacto&&!has('carr')&&!(has('citf')&&b.eff.citf>.1)&&!has('cmc');
- const hydFrac=comps.length?comps.filter(c=>c.hydrated).reduce((a,c)=>a+c.load,0)/comps.reduce((a,c)=>a+c.load,0):0;
+ const hydFrac=comps.length?comps.reduce((a,c)=>a+c.load*c.h,0)/comps.reduce((a,c)=>a+c.load,0):0;
  const bound=clamp(((b.P.visc+b.P.anti)/2/100)*hydFrac*1.05,0,.95);
  const excess=b.hydro>.7||(b.eff.xan||0)>.18;const weak=b.hydro<.15;
  const iceD=Math.round(18+(1-bound)*60);
@@ -2568,11 +2586,11 @@ function neutroModel(E,pastT){
   ['Água imobilizada',f0(bound*100)+'%',st3(bound>=.5&&bound<=.85,bound>=.35)],
   ['Cristais previstos','≈'+iceD+' µm',st3(iceD<=42,iceD<=SENS_D)],
   ['Hidrocoloides',f2(b.hydro)+'% da mistura',st3(!excess&&!weak,b.hydro>.1)],
-  ['Hidratação',unhyd.length?'incompleta a '+pastT+' °C':'completa a '+pastT+' °C',st3(!unhyd.length,false)],
+  ['Hidratação',f0(hydFrac*100)+'% '+(unhyd.length?'· incompleta a '+pastT+' °C':'· completa a '+pastT+' °C'),st3(!unhyd.length,hydFrac>=.75)],
   ['Caseínas',E.dairy?(floc?'floculando':'dispersas'):'sem leite',E.dairy?st3(!floc,true):'ok'],
   ['Emulsificação','índice '+b.P.emul,st3(b.P.emul>=20||!E.dairy,true)]
  ];
- return{b,comps,floc,bound,excess,weak,iceD,unhyd,perfect,pills,hydFrac};
+ return{b,comps,floc,bound,excess,weak,iceD,unhyd,perfect,pills,hydFrac,hy};
 }
 
 /* ===================== MOTOR DE PARTÍCULAS ===================== */
@@ -2608,17 +2626,19 @@ class GelSim extends SimBase{
   this.P.forEach(q=>{if(q.ty==='ice')q.tr=rIce*(.7+q.v*.6);else if(q.ty==='air')q.tr=rAir*(.8+q.v*.4);else if(q.ty==='fat')q.tr=p.butter&&q.v<.35?3.6+q.v*6:1.9;else if(q.ty==='prot')q.tr=1.2;else q.tr=7+q.v*6;});
   const airs=this.P.filter(q=>q.ty==='air'&&!q.dying);this.P.filter(q=>q.ty==='fat').forEach((q,i)=>{q.anchor=airs.length&&q.v<p.destab?airs[i%airs.length]:null;});
   this.P.filter(q=>q.ty==='prot').forEach((q,i)=>{q.anchor=airs.length?airs[i%airs.length]:null;});}
- spawn(ty,inside){let x,y,vx=0,vy=0;if(inside){x=rnd(0,this.W);y=rnd(0,this.H);}else{const s=Math.floor(Math.random()*4);x=s===0?-10:s===1?this.W+10:rnd(0,this.W);y=s===2?-10:s===3?this.H+10:rnd(0,this.H);const ang=Math.atan2(this.H/2-y,this.W/2-x);vx=Math.cos(ang)*rnd(40,90);vy=Math.sin(ang)*rnd(40,90);if(ty==='ice'||ty==='air'||ty==='lac')this.ring(clamp(x,0,this.W),clamp(y,0,this.H),ty==='lac'?COL.crit:ty==='ice'?COL.ice:COL.air);}
+ spawn(ty,inside){let x,y,vx=0,vy=0;if(!inside&&ty==='ice'&&this.p&&this.p.stage==='mant'){x=3;y=rnd(0,this.H);vx=rnd(60,120);this.ring(4,y,COL.ice);}else if(inside){x=rnd(0,this.W);y=rnd(0,this.H);}else{const s=Math.floor(Math.random()*4);x=s===0?-10:s===1?this.W+10:rnd(0,this.W);y=s===2?-10:s===3?this.H+10:rnd(0,this.H);const ang=Math.atan2(this.H/2-y,this.W/2-x);vx=Math.cos(ang)*rnd(40,90);vy=Math.sin(ang)*rnd(40,90);if(ty==='ice'||ty==='air'||ty==='lac')this.ring(clamp(x,0,this.W),clamp(y,0,this.H),ty==='lac'?COL.crit:ty==='ice'?COL.ice:COL.air);}
   const q={ty,x,y,vx,vy,r:inside?0:0,tr:3,a:0,v:Math.random(),rot:rnd(0,6.28),vr:rnd(-.3,.3),ph:rnd(0,6.28),pts:Array.from({length:9},()=>rnd(.82,1.12))};this.P.push(q);return q;}
- step(dt){const p=this.p;if(!p)return;const agit=(p.perfect?5:8)+p.imbalance*55;const W=this.W,H=this.H;
+ step(dt){const p=this.p;if(!p)return;const amp=p.amp!=null?p.amp:.3;const agit=2+38*amp;const W=this.W,H=this.H;const sh=p.shear||0,cx=W/2,cy=H/2;this.ang=(this.ang||0)+sh*dt*1.4;
   const big=this.P.filter(q=>q.ty==='ice'||q.ty==='air');
   for(let i=0;i<big.length;i++){const a=big[i];for(let j=i+1;j<big.length;j++){const b=big[j];const dx=b.x-a.x,dy=b.y-a.y,d=Math.hypot(dx,dy)||.01,min=(a.r+b.r)*(p.hard&&a.ty==='ice'&&b.ty==='ice'?.92:1.02);if(d<min){const f=(min-d)/d*.5;a.x-=dx*f*.5;a.y-=dy*f*.5;b.x+=dx*f*.5;b.y+=dy*f*.5;}}}
   const clumps=p.butter?this.P.filter(q=>q.ty==='fat'&&q.v<.35):[];
   this.P.forEach(q=>{
    q.a+=((q.dying?0:1)-q.a)*Math.min(1,dt*3);q.r+=(q.tr*(q.dying?.3:1)-q.r)*Math.min(1,dt*2.2);
    if(q.anchor&&!q.anchor.dying&&q.anchor.a>.2){q.ph+=dt*(.25+q.v*.3);const R=q.anchor.r+(q.ty==='prot'?1:2.5);const tx=q.anchor.x+Math.cos(q.ph+q.v*9)*R,ty=q.anchor.y+Math.sin(q.ph+q.v*9)*R;q.x+=(tx-q.x)*Math.min(1,dt*4);q.y+=(ty-q.y)*Math.min(1,dt*4);return;}
-   const m=q.ty==='ice'?.5:q.ty==='air'?.7:q.ty==='lac'?.4:1.4;
+   /* Stokes-Einstein: difusão ∝ T/(η·r) — partículas grandes e fase viscosa se movem menos */
+   const m=1.6/(1+q.r*.18);
    q.vx+=(Math.random()-.5)*agit*m*dt*12;q.vy+=(Math.random()-.5)*agit*m*dt*12;
+   if(sh){const dx=q.x-cx,dy=q.y-cy;const tvx=-dy*.55,tvy=dx*.55;q.vx+=(tvx-q.vx)*Math.min(1,dt*1.5)*sh;q.vy+=(tvy-q.vy)*Math.min(1,dt*1.5)*sh;q.vx+=-dx*dt*.15*sh;q.vy+=-dy*dt*.15*sh;}
    if(p.butter&&q.ty==='fat'&&clumps.length){const c=clumps[Math.floor(q.v*clumps.length)];if(c&&c!==q){q.vx+=(c.x-q.x)*dt*.8;q.vy+=(c.y-q.y)*dt*.8;}}
    const damp=Math.pow(p.net>1.4?.05:.18,dt);q.vx*=damp;q.vy*=damp;q.x+=q.vx*dt;q.y+=q.vy*dt;q.rot+=q.vr*dt*(p.soft?2:.6);
    if(q.x<0){q.x=0;q.vx*=-.5;}if(q.x>W){q.x=W;q.vx*=-.5;}if(q.y<0){q.y=0;q.vy*=-.5;}if(q.y>H){q.y=H;q.vy*=-.5;}});
@@ -2638,7 +2658,7 @@ class GelSim extends SimBase{
    c.strokeStyle='rgba(255,255,255,.18)';c.beginPath();c.moveTo(q.x-q.r*.3,q.y-q.r*.2);c.lineTo(q.x+q.r*.1,q.y-q.r*.45);c.stroke();});
   if(p.hard){const ices=this.P.filter(q=>q.ty==='ice'&&q.a>.5);c.strokeStyle='rgba(125,211,252,.6)';c.lineWidth=3;c.beginPath();for(let i=0;i<ices.length;i++)for(let j=i+1;j<ices.length;j++){const a=ices[i],b=ices[j];if(Math.hypot(a.x-b.x,a.y-b.y)<(a.r+b.r)*1.05){c.moveTo(a.x,a.y);c.lineTo(b.x,b.y);}}c.stroke();}
   /* gordura e proteína */
-  this.P.filter(q=>q.ty==='fat').forEach(q=>{c.globalAlpha=q.a;c.fillStyle=COL.fat;c.beginPath();c.arc(q.x,q.y,q.r,0,7);c.fill();});
+  const fs=p.fatSolid!=null?p.fatSolid:1;this.P.filter(q=>q.ty==='fat').forEach(q=>{c.globalAlpha=q.a;c.beginPath();c.arc(q.x,q.y,q.r+(fs<.2?.6:0),0,7);if(fs<.2){c.fillStyle='rgba(246,201,14,.28)';c.fill();c.strokeStyle=COL.fat;c.lineWidth=1;c.stroke();}else{c.fillStyle=COL.fat;c.globalAlpha=q.a*(.55+.45*fs);c.fill();}});
   this.P.filter(q=>q.ty==='prot').forEach(q=>{c.globalAlpha=q.a*.9;c.fillStyle=COL.prot;c.fillRect(q.x-q.r,q.y-q.r,q.r*2,q.r*2);});
   /* lactose */
   this.P.filter(q=>q.ty==='lac').forEach(q=>{c.globalAlpha=q.a*(.75+.25*Math.sin(this.t*4+q.ph));c.save();c.translate(q.x,q.y);c.rotate(q.rot);c.fillStyle='rgba(255,255,255,.85)';c.beginPath();c.moveTo(-q.r,0);c.lineTo(0,-2.2);c.lineTo(q.r,0);c.lineTo(0,2.2);c.closePath();c.fill();c.restore();});
@@ -2653,6 +2673,14 @@ class GelSim extends SimBase{
   if(!p.bubbleStable){const a=this.P.find(q=>q.ty==='air'&&q.a>.6);if(a)labs.push([a.x,a.y,'bolhas instáveis',COL.warn]);}
   if(p.netExcess){const a=this.P.find(q=>q.ty==='air'&&q.a>.6&&q!==labs[0]);if(a)labs.push([a.x+a.r,a.y,'rede gomosa',COL.crit]);}
   labs.slice(0,3).forEach(l=>this.label(c,...l));
+  /* mantecação: parede fria do cilindro (nucleação) e pá raspadora */
+  if(p.stage==='mant'){const gw=c.createLinearGradient(0,0,26,0);gw.addColorStop(0,'rgba(125,211,252,.45)');gw.addColorStop(1,'rgba(125,211,252,0)');c.fillStyle=gw;c.fillRect(0,0,26,H);
+   c.save();c.translate(W/2,H/2);c.rotate(this.ang||0);c.strokeStyle='rgba(230,236,244,.10)';c.lineWidth=10;c.lineCap='round';c.beginPath();c.moveTo(-Math.min(W,H)*.42,0);c.lineTo(Math.min(W,H)*.42,0);c.stroke();c.restore();}
+  if(p.snap){c.font=(W<520?'500 10px':'500 11px')+' "DM Mono",ui-monospace,monospace';const L=[];const maxW=W-36;
+   procHUD(p.snap).forEach(t=>{let cur='';t.split(' · ').forEach(part=>{const nx=cur?cur+' · '+part:part;if(cur&&c.measureText(nx).width>maxW){L.push(cur);cur=part;}else cur=nx;});if(cur)L.push(cur);});
+   const w=Math.min(W-20,Math.max(...L.map(t=>c.measureText(t).width))+16);
+   c.fillStyle='rgba(7,11,19,.78)';c.fillRect(10,10,w,L.length*15+8);c.strokeStyle='rgba(125,211,252,.35)';c.lineWidth=1;c.strokeRect(10,10,w,L.length*15+8);
+   L.forEach((t,i)=>{c.fillStyle=i?'rgba(203,213,225,.92)':'#7dd3fc';c.fillText(t,18,24+i*15);});}
   /* escala */
   const u=this.ppu;c.fillStyle='rgba(230,236,244,.85)';c.fillRect(14,H-18,SENS_D*u,3);c.font='500 10.5px "DM Mono",ui-monospace,monospace';c.fillText('50 µm · limiar sensorial',14,H-24);
   c.textAlign='right';c.fillStyle='rgba(154,168,189,.9)';c.fillText('campo '+FIELD_UM+' µm',W-12,H-12);c.textAlign='left';
@@ -2674,7 +2702,7 @@ class NeuSim extends SimBase{
   for(const k in want){const st=NSTYLE[k],cur=this.ch.filter(c=>c.k===k&&!c.dying);const n=want[k].n;
    for(let i=cur.length;i<n;i++){const x0=first?rnd(40,W-40):(Math.random()<.5?-20:W+20),y0=rnd(30,H-30);const ang=rnd(0,6.28);const nodes=[];for(let s=0;s<st.seg;s++)nodes.push({x:x0+Math.cos(ang)*s*st.L,y:y0+Math.sin(ang)*s*st.L,vx:0,vy:0});this.ch.push({k,n:nodes,a:0,ph:rnd(0,6)});if(!first)this.ring(clamp(x0,0,W),y0,st.col);}
    for(let i=n;i<cur.length;i++)cur[i].dying=1;
-   this.ch.filter(c=>c.k===k).forEach(c=>c.hyd=want[k].hydrated);}
+   this.ch.filter(c=>c.k===k).forEach(c=>{c.hyd=want[k].hydrated;c.h=want[k].h;});}
   /* glóbulos e tensoativos */
   const wg=[];p.comps.forEach(c=>{if(NSTYLE[c.k].glob||NSTYLE[c.k].surf)for(let i=0;i<c.n;i++)wg.push(c.k);});
   while(this.glob.length<wg.length)this.glob.push({x:rnd(0,W),y:rnd(0,H),vx:0,vy:0,a:0,ph:rnd(0,6)});this.glob.length=wg.length;this.glob.forEach((g,i)=>g.k=wg[i]);}
@@ -2682,10 +2710,10 @@ class NeuSim extends SimBase{
   const jig=(q,amp)=>{q.vx+=(Math.random()-.5)*amp*dt*12;q.vy+=(Math.random()-.5)*amp*dt*12;};
   const wall=q=>{if(q.x<0){q.x=0;q.vx*=-.5;}if(q.x>W){q.x=W;q.vx*=-.5;}if(q.y<0){q.y=0;q.vy*=-.5;}if(q.y>H){q.y=H;q.vy*=-.5;}};
   /* cadeias: molas + flexão */
-  this.ch.forEach(c=>{c.a+=((c.dying?0:1)-c.a)*Math.min(1,dt*2);const st=NSTYLE[c.k];const L=c.hyd?st.L:st.L*.32;const n=c.n;
+  this.ch.forEach(c=>{c.a+=((c.dying?0:1)-c.a)*Math.min(1,dt*2);const st=NSTYLE[c.k];const L=st.L*(.32+.68*(c.h!=null?c.h:c.hyd?1:0));const n=c.n;
    for(let it=0;it<2;it++)for(let i=0;i<n.length-1;i++){const a=n[i],b=n[i+1];const dx=b.x-a.x,dy=b.y-a.y,d=Math.hypot(dx,dy)||.01,f=(d-L)/d*.5;a.x+=dx*f;a.y+=dy*f;b.x-=dx*f;b.y-=dy*f;
     if(st.stiff&&i<n.length-2){const e=n[i+2];const ex=e.x-a.x,ey=e.y-a.y,ed=Math.hypot(ex,ey)||.01,g=(ed-2*L)/ed*.25;a.x+=ex*g;a.y+=ey*g;e.x-=ex*g;e.y-=ey*g;}}
-   n.forEach(q=>{jig(q,agit*(c.hyd?1.2:.6));const d=Math.pow(visc,dt);q.vx*=d;q.vy*=d;q.x+=q.vx*dt;q.y+=q.vy*dt;wall(q);});});
+   n.forEach(q=>{jig(q,agit*(.6+.6*(c.h!=null?c.h:c.hyd?1:0)));const d=Math.pow(visc,dt);q.vx*=d;q.vy*=d;q.x+=q.vx*dt;q.y+=q.vy*dt;wall(q);});});
   this.ch=this.ch.filter(c=>!(c.dying&&c.a<.03));
   const segs=[];this.ch.forEach(c=>{if(c.hyd&&!c.dying)c.n.forEach(q=>segs.push(q));});
   /* água: livre corre, ligada fica presa perto das cadeias */
@@ -2709,7 +2737,7 @@ class NeuSim extends SimBase{
   /* micelas */
   this.mic.forEach(q=>{c.globalAlpha=q.a;c.fillStyle='rgba(240,236,228,.75)';c.beginPath();c.arc(q.x,q.y,4.2,0,7);c.fill();c.strokeStyle='rgba(255,255,255,.35)';c.stroke();});c.globalAlpha=1;
   /* cadeias */
-  this.ch.forEach(ch=>{const st=NSTYLE[ch.k],n=ch.n;c.globalAlpha=ch.a*(ch.hyd?1:.55);c.strokeStyle=st.col;c.lineWidth=st.w;c.lineCap='round';
+  this.ch.forEach(ch=>{const st=NSTYLE[ch.k],n=ch.n;c.globalAlpha=ch.a*(.55+.45*(ch.h!=null?ch.h:ch.hyd?1:0));c.strokeStyle=st.col;c.lineWidth=st.w;c.lineCap='round';
    const path=(off)=>{c.beginPath();n.forEach((q,i)=>{const ox=off?Math.sin(i*1.6+this.t*2+off)*2.6:0;i?c.lineTo(q.x+ox,q.y-ox):c.moveTo(q.x+ox,q.y-ox);});c.stroke();};
    if(st.helix){for(let h=0;h<st.helix;h++)path(h*2.1+.5);}else if(st.fiber){path(0);c.save();c.translate(0,3);path(0);c.restore();}else path(0);
    if(st.branch&&ch.hyd){c.lineWidth=1.2;for(let i=1;i<n.length-1;i+=st.branch>.7?2:3){const q=n[i],nx=n[i+1];const dx=nx.y-q.y,dy=q.x-nx.x,d=Math.hypot(dx,dy)||1;c.beginPath();c.moveTo(q.x,q.y);c.lineTo(q.x+dx/d*6,q.y+dy/d*6);c.stroke();}}
@@ -2722,7 +2750,7 @@ class NeuSim extends SimBase{
    else{c.fillStyle='rgba(203,213,225,.45)';for(let i=0;i<3;i++){c.beginPath();c.arc(q.x+Math.cos(i*2.1)*3,q.y+Math.sin(i*2.1)*3,2.6,0,7);c.fill();}}});
   c.globalAlpha=1;this.drawRings(c,this._dt||.016);
   const labs=[];if(p.floc&&this.mic[0])labs.push([this.mic[0].x,this.mic[0].y,'caseínas floculando · soro',COL.warn]);
-  const un=this.ch.find(x=>!x.hyd&&!x.dying);if(un)labs.push([un.n[0].x,un.n[0].y,NCOMP[un.k].n+' sem hidratar',COL.warn]);
+  const un=this.ch.find(x=>!x.hyd&&!x.dying);if(un)labs.push([un.n[0].x,un.n[0].y,NCOMP[un.k].n+' '+f0((un.h||0)*100)+'% hidratada',COL.warn]);
   if(p.excess&&this.ch[0])labs.push([this.ch[0].n[3]?this.ch[0].n[3].x:W/2,this.ch[0].n[3]?this.ch[0].n[3].y:H/2,'rede saturada · gomoso',COL.crit]);
   if(p.weak)labs.push([W*.5,H*.5,'rede fraca · água livre',COL.crit]);
   if(this.ice[0]&&p.iceD>45)labs.push([this.ice[0].x,this.ice[0].y,'cristal ≈'+p.iceD+' µm',COL.crit]);
@@ -2753,10 +2781,10 @@ function pgCreator(m,F,sc){
 function crGelato(m,F,sc){
  const days=+U.days||0;
  const q=norm((U.cq||'').trim());const res=q?ING.filter(i=>i.id!=='nx_tmp'&&norm(i.n+' '+i.cat).includes(q)).slice(0,10):[];
- const p=m.empty?null:microModel(S,m,F,sc.total,days);U.gp=p;
+ const u=U.procU!=null?clamp(+U.procU,0,6.99):PROC_SERV;const C=m.empty?null:procCtx(S,m);const p=m.empty?null:microAt(S,m,F,sc.total,days,u,C);U.gp=p;U._cr=m.empty?null:{m,F,sc:sc.total,C};
  const rows=(S.recipe||[]).map(r=>{const i=ING_BY[r.id];if(!i)return'';const step=r.g>=200?10:r.g>=20?5:r.g>=5?1:.5;
   return`<div class="crrow"><span class="nm">${esc(i.n)}<small>${esc(i.cat)} · ${m.tot?f1(r.g/m.tot*100):0}%</small></span><span class="stp"><button data-a="crStep" data-v="${r.id}|${-step}" aria-label="Menos ${step} g">−</button><input type="number" id="cg-${r.id}" data-i="g" data-id="${r.id}" value="${r.g}" min="0" step="${step}" aria-label="Gramas de ${esc(i.n)}"><button data-a="crStep" data-v="${r.id}|${step}" aria-label="Mais ${step} g">+</button></span><button class="btn del" data-a="rm" data-v="${r.id}" aria-label="Remover">✕</button></div>`;}).join('');
- const sub=S.crSub||'gerar';
+ const sub=S.crSub||'atelie';
  return`<div class="crgrid">
   <div class="card crleft"><h2>Formulação <span class="muted" style="text-transform:none;letter-spacing:0">${f0(m.tot)} g · ${esc(m.P.n)}</span></h2>
    <div class="search" style="margin-bottom:10px"><input type="text" id="cq" data-i="cq" value="${esc(U.cq||'')}" placeholder="Adicionar ingrediente…" autocomplete="off" aria-label="Adicionar ingrediente">${res.length?`<div class="res">${res.map(i=>`<button data-a="crAdd" data-v="${i.id}"><span>${esc(i.n)}</span><span class="tag">${esc(i.cat)}</span></button>`).join('')}</div>`:''}</div>
@@ -2766,16 +2794,16 @@ function crGelato(m,F,sc){
   </div>
   <div class="crcenter">
    <div class="card" style="padding:0;overflow:hidden"><div id="gsimHost" class="simhost"></div>
-    <div class="simbar"><span class="lbl">Dias de vitrine</span><input type="range" id="days" data-i="days" min="0" max="14" step="1" value="${days}" aria-label="Dias de vitrine"><output class="mono">${days} d</output><button class="btn sm" data-a="age">${U.aging?'Pausar':'▶ Envelhecer'}</button></div></div>
+    <div class="simbar"><span class="lbl">Dias de vitrine</span><input type="range" id="days" data-i="days" min="0" max="14" step="1" value="${days}" aria-label="Dias de vitrine"><output class="mono">${days} d</output><button class="btn sm" data-a="age">${U.aging?'Pausar':'▶ Envelhecer'}</button></div>${p?crProcess(S,m,u,C):''}</div>
    ${p?`<div class="card">${seal(p.perfect,'Equilíbrio atingido · padrão de alta gelateria italiana','Estrutura estável, cristais finos e todos os parâmetros na faixa de '+esc(m.P.n.toLowerCase())+' a '+f1(S.vit)+' °C.')}
     ${pills(p.pills)}
     <div class="g2" style="margin-top:12px;gap:16px"><div><span class="lbl">Mapa de equilíbrio</span>${phaseMap(m,p)}</div>
      <div><span class="lbl">Previsão de vida na vitrine</span><div class="big ${p.shelf>=7?'c-ok':p.shelf>=3?'c-warn':'c-crit'}" style="margin-top:6px">${p.shelf>30?'30+':f0(p.shelf)}<small class="muted" style="font-size:14px"> dias</small></div>
       <p class="note" style="margin:6px 0 0">Dias até o cristal médio passar de 50 µm (crescimento de Ostwald, d³ = d₀³ + K·t). Cristal inicial ${f0(p.d0)} µm; hoje (dia ${days}) ${f0(p.d)} µm. K multiplicado por ${f2(p.fStab)} (estabilizante) × ${f2(p.fShock)} (choque térmico) × ${f2(p.fSerum)} (cinética WLF, Tg′ ${f1(m.tg)} °C)${p.km!==1?' × '+f2(p.km)+' (calibração)':''}. No freezer a ${fT(m.pr.storeT)} °C: ${p.shelfStore>90?'90+':f0(p.shelfStore)} dias.</p></div></div></div>`:''}
   </div></div>
-  <div class="card flat"><p class="note" style="margin:0"><b style="color:var(--t2)">Como ler a simulação.</b> Contornos azuis: cristais de gelo, no tamanho e fração calculados (laranja acima de 42 µm, vermelho acima do limiar de 50 µm). Círculos claros: células de ar pelo overrun previsto. Pontos dourados: gordura (ampliada); os que contornam as bolhas são a gordura parcialmente coalescida que sustenta o ar. Quadrados verdes: proteína nas interfaces. Fios violeta: rede de hidrocoloides. Losangos brancos: lactose cristalizada. A agitação das partículas cresce com o desequilíbrio; com a receita equilibrada a cena se acalma e a moldura fica verde. Tudo é desenhado a partir do motor de cálculo; a fidelidade ao produto real depende da pesagem, da matéria-prima e da máquina, então valide sempre com um lote-teste.</p></div>
-  <div class="chips">${[['gerar','Criar por alvo'],['comparar','Comparar variações'],['sens','Simulação "e se"']].map(([k,n])=>`<button data-a="crSub" data-v="${k}" aria-pressed="${sub===k}">${n}</button>`).join('')}</div>
-  ${sub==='gerar'?labGerar():sub==='comparar'?labComparar(m):labSens(m)}`;}
+  <div class="card flat"><p class="note" style="margin:0"><b style="color:var(--t2)">Como ler a simulação.</b> Contornos azuis: cristais de gelo, no tamanho e fração calculados (laranja acima de 42 µm, vermelho acima do limiar de 50 µm). Círculos claros: células de ar pelo overrun previsto. Pontos dourados: gordura (ampliada); os que contornam as bolhas são a gordura parcialmente coalescida que sustenta o ar. Quadrados verdes: proteína nas interfaces. Fios violeta: rede de hidrocoloides. Losangos brancos: lactose cristalizada. O movimento é físico: difusão de Stokes-Einstein (proporcional a T/viscosidade e inversa ao tamanho), com a viscosidade da fase não congelada pela equação WLF a partir da Tg′; por isso a cena quase para na vitrine e corre na calda quente. Na linha do processo, cada etapa usa o estado calculado naquela temperatura: gelo pela curva de congelamento, ar pelo overrun da máquina, gordura sólida pelo SFC e desestabilização pelo modelo do motor; na mantecação o gelo nasce na parede fria do cilindro e é raspado para o centro. Com a receita equilibrada a moldura fica verde. Tudo é desenhado a partir do motor de cálculo; a fidelidade ao produto real depende da pesagem, da matéria-prima e da máquina, então valide sempre com um lote-teste.</p></div>
+  <div class="chips">${[['atelie','Ateliê criativo'],['gerar','Criar por alvo'],['comparar','Comparar variações'],['sens','Simulação "e se"']].map(([k,n])=>`<button data-a="crSub" data-v="${k}" aria-pressed="${sub===k}">${n}</button>`).join('')}</div>
+  ${sub==='atelie'?labAtelie(m,F,sc):sub==='gerar'?labGerar():sub==='comparar'?labComparar(m):labSens(m)}`;}
 
 function crNeutros(m){
  const E=S.nxEdit;const pastT=+S.proc.pastT;const p=neutroModel(E,pastT);U.np=p;const b=p.b;const T=U.nxTest;
@@ -2805,11 +2833,350 @@ function crNeutros(m){
     ${pills(p.pills)}
     <div style="margin-top:12px">${NFUN.map(([k,n])=>`<div style="margin-bottom:8px"><div class="row" style="justify-content:space-between"><span class="t2" style="font-size:12.5px">${n}</span><span class="mono" style="font-size:11px">${b.P[k]}</span></div>${rbar(b.P[k],[55,85],0,100)}</div>`).join('')}</div></div>
   </div></div>
+ ${hydCard(E,{...S.proc,pastT})}
+ ${nxDesignCard(E)}
  <div class="card"><h2>Avaliação do blend</h2>${b.notes.map(n=>findHTML({sev:n.sev,area:'Neutro',title:n.t,why:'',fix:n.fix})).join('')}</div>
  <div class="card"><div class="row"><h2 style="margin:0">Teste na receita da bancada</h2><span class="sp"></span><button class="btn pri" data-a="nxTest"${m.empty?' disabled':''}>Simular troca</button></div>
   ${T?`<div class="tw" style="margin-top:10px"><table class="tbl"><thead><tr><th>Parâmetro</th><th class="r">Atual</th><th class="r">Com o blend</th></tr></thead><tbody>
    ${[['Índice',x=>x.sc,0],['Estabilizantes (%)',x=>x.m.hydro,2],['Congelada na vitrine (%)',x=>x.m.fzVit,0],['Cristalização',x=>x.m.ci,0],['Derretimento',x=>x.m.melt,0],['Overrun (%)',x=>x.m.ov,0],...(can.cost()?[['Custo (R$/kg)',x=>x.m.costKg,2]]:[])].map(([n,fn,d])=>`<tr><td>${n}</td><td class="r mono">${d===2?f2(fn(T.a)):f0(fn(T.a))}</td><td class="r mono c-ice">${d===2?f2(fn(T.b)):f0(fn(T.b))}</td></tr>`).join('')}</tbody></table></div>`:'<p class="note">Troca os estabilizantes da receita da bancada por este blend na dose indicada e compara.</p>'}</div>
- <div class="card flat"><p class="note" style="margin:0"><b style="color:var(--t2)">Como ler a simulação.</b> Cada goma aparece como cadeia com a forma real da molécula: jataí e guar longas e flexíveis (guar ramificada), xantana rígida, carragena em dupla hélice ligando caseínas, gelatina em tripla hélice, fibra de citros em feixes, inulina e acácia como glóbulos, lecitina e mono-diglicerídeos como tensoativos em gotas de gordura. A quantidade de cadeias segue a dose real na calda; abaixo da temperatura de hidratação elas ficam enoveladas. Os pontos azuis fortes são a água imobilizada pela rede; os fracos, água livre que vira gelo. Os cristais nos cantos crescem até o tamanho previsto.</p></div>`;}
+ <div class="card flat"><p class="note" style="margin:0"><b style="color:var(--t2)">Como ler a simulação.</b> Cada goma aparece como cadeia com a forma real da molécula: jataí e guar longas e flexíveis (guar ramificada), xantana rígida, carragena em dupla hélice ligando caseínas, gelatina em tripla hélice, fibra de citros em feixes, inulina e acácia como glóbulos, lecitina e mono-diglicerídeos como tensoativos em gotas de gordura. A quantidade de cadeias segue a dose real na calda; o quanto cada uma se estende segue a cinética de hidratação (temperatura × tempo) do seu processo: abaixo da temperatura de hidratação elas ficam enoveladas. Os pontos azuis fortes são a água imobilizada pela rede; os fracos, água livre que vira gelo. Os cristais nos cantos crescem até o tamanho previsto.</p></div>`;}
+
+/* ==== 56-atelie.js ==== */
+/* ===================== CREATOR · LABORATÓRIO (v17) =====================
+   1. Processo: história térmica da calda até a boca, etapa por etapa, com a microestrutura calculada
+      pelo motor em cada temperatura (curva de congelamento, overrun, desestabilização da gordura,
+      gordura sólida por SFC, cristal na saída e no endurecimento, mobilidade molecular por WLF).
+   2. Cinética de hidratação dos hidrocoloides (temperatura × tempo, componente por componente).
+   3. Ateliê criativo: harmonização por famílias de compostos aromáticos, explorador de variações
+      balanceadas pelo motor e cartas de método criativo. */
+
+/* ---------- 1. HIDRATAÇÃO: fração hidratada por temperatura e tempo ----------
+   Gomas de hidratação a frio (guar, xantana, CMC, fibra de citros…) chegam perto de 100% em qualquer
+   temperatura acima de ~15 °C, mais devagar no frio (Q10 ≈ 2). As de hidratação a quente (jataí, tara,
+   carragena, pectina, amido, gelatina, konjac) têm uma fração solúvel a frio (c0) e o restante só
+   dissolve perto da sua temperatura (curva logística). Hidratação não volta atrás ao resfriar. */
+const HYD_C0={lbg:.25,tara:.45,carr:.3,pect:.35,gel:.15,starch:0,konj:.55,mono:.1};
+function hydMax(k,T){const nc=NCOMP[k];if(!nc)return 1;const Th=nc.hyd;if(Th<=20)return clamp(.9+.1*T/20,.85,1);
+ const c0=HYD_C0[k]!=null?HYD_C0[k]:.2;return c0+(1-c0)/(1+Math.exp(-(T-(Th-8))/2.5));}
+function hydTau(k,T){const nc=NCOMP[k];const Th=nc?Math.max(20,nc.hyd):20;const t90=(Th<=20?600:90)*Math.pow(2,(Th-T)/10);return clamp(t90,20,6*3600)/Math.LN10;}
+const holdS=pr=>Math.max(0,(+pr.pastHold||0)*(pr.pastHoldU==='min'?60:1));
+/* simula aquecimento (2 °C/min a partir de 25 °C), patamar, resfriamento e maturação */
+function hydRun(keys,prIn){const pr=Object.assign({},PROC0,prIn||{});
+ const past=+pr.pastT,matT=+pr.matT,T0=25;const ramp=past>T0?(past-T0)/2*60:0,cool=Math.max(0,+pr.coolMin||0)*60,mat=Math.max(0,+pr.matH||0)*3600;
+ const ph=[{n:'Aquecimento',d:ramp,T:f=>T0+(past-T0)*f},{n:'Patamar',d:holdS(pr),T:()=>past},{n:'Resfriamento',d:cool,T:f=>matT+(past-matT)*Math.exp(-4*f)},{n:'Maturação',d:mat,T:()=>matT}];
+ const h={};for(const k in keys)h[k]=0;const samp=[{i:0,f:0,T:T0,h:{...h}}];const ends=[];
+ ph.forEach((p,i)=>{const N=24;for(let s=1;s<=N;s++){const f=s/N,T=p.T(f),dt=p.d/N;
+   for(const k in h){const hm=hydMax(k,T);if(hm>h[k]&&dt>0)h[k]+=(hm-h[k])*(1-Math.exp(-dt/hydTau(k,T)));}
+   samp.push({i,f,T,h:{...h}});}ends.push({...h});});
+ let w=0,hw=0;for(const k in keys){w+=keys[k];hw+=keys[k]*h[k];}
+ return{h,samp,ph,ends,frac:w?hw/w:1,ramp,past};}
+/* menor temperatura de pasteurização (no patamar atual) que hidrata ≥ 95% de cada componente */
+function hydMinT(keys,pr){for(let T=40;T<=95;T++){const r=hydRun(keys,{...pr,pastT:T});if(Object.values(r.h).every(x=>x>=.95))return T;}return null;}
+/* componentes de estabilização de uma receita (pela chave do ingrediente ou pelo blend) */
+const NEUTRO_STD={lbg:.5,guar:.35,carr:.15};
+function recipeHydKeys(st){const o={};const add=(k,w)=>{if(NCOMP[k]&&NCOMP[k].dose&&w>0)o[k]=(o[k]||0)+w;};
+ (st.recipe||[]).forEach(r=>{const i=ING_BY[r.id];if(!i||!(+r.g>0))return;
+  if(i.blend&&i.blend.parts){const sh=blendShares(i.blend.parts);for(const k in sh)add(k,+r.g*sh[k]/100);}
+  else if(i.key==='neutro'){const f=i.id==='neutrod'?.5:1;for(const k in NEUTRO_STD)add(k,+r.g*f*NEUTRO_STD[k]);}
+  else if(i.key&&NCOMP[i.key])add(i.key,+r.g);});
+ return o;}
+
+/* ---------- 2. PROCESSO: estado físico em cada etapa ---------- */
+const PSTG=[['mix','Mistura'],['past','Pasteurização'],['mat','Maturação'],['mant','Mantecação'],['hard','Endurecimento'],['serv','Serviço'],['boca','Na boca']];
+const PROC_SERV=5;
+/* mobilidade molecular relativa a 45 °C: WLF a partir de Tg′ e Stokes-Einstein (D ∝ T/η) */
+function mobility(m,T){const L=x=>{const d=x-m.tg;return d<=0?0:17.44*d/(51.6+d);};return Math.pow(10,L(T)-L(45))*(T+273.15)/318.15;}
+/* viscosidade da calda acima de 0 °C (Andrade, B ≈ 2400 K, a partir do valor do motor a 4 °C) */
+const viscAt=(m,T)=>(m.visc||30)*Math.exp(2400*(1/(T+273.15)-1/277.15));
+function procCtx(st,m){const pr=m.pr;const pote=pr.serveFrom==='pote';const H=pote?hardenModel(m,pr):null;
+ const keys=recipeHydKeys(st);const hy=Object.keys(keys).length?hydRun(keys,pr):null;
+ const hAt=i=>{if(!hy)return 1;const e=hy.ends[i];let w=0,hw=0;for(const k in keys){w+=keys[k];hw+=keys[k]*e[k];}return w?hw/w:1;};
+ const hMix=hy?(()=>{const s=hy.samp.find(x=>x.T>=45)||hy.samp[0];let w=0,hw=0;for(const k in keys){w+=keys[k];hw+=keys[k]*s.h[k];}return w?hw/w:1;})():1;
+ return{pr,pote,H,keys,hy,hyd:[hMix,hAt(1),hAt(3)],dDraw:24+clamp((45-m.fzDraw)*.3,0,10)};}
+function procSnap(st,m,u,C){C=C||procCtx(st,m);const pr=C.pr;const i=clamp(Math.floor(u),0,6),f=i===6&&u>=7?1:clamp(u-i,0,1),k=PSTG[i][0];
+ const past=+pr.pastT,matT=+pr.matT,drawT=+pr.drawT,vit=+st.vit,fp=Math.min(-.5,m.fp||-2.5);
+ const o={i,k,f,stage:PSTG[i][1],ov:0,destab:0,d:C.dDraw,shear:0,hyd:1,sfcK:1};
+ if(k==='mix'){o.T=20+25*f;o.hyd=C.hyd[0]*f;o.t='dispersão a '+f0(o.T)+' °C';}
+ else if(k==='past'){o.T=f<.7?45+(past-45)*f/.7:past;o.hyd=C.hyd[0]+(C.hyd[1]-C.hyd[0])*clamp(f/.85,0,1);o.t=f<.7?'aquecendo':'patamar '+fT(past)+' °C';}
+ else if(k==='mat'){o.T=f<.25?matT+(past-matT)*Math.exp(-4*f/.25):matT;o.hyd=C.hyd[1]+(C.hyd[2]-C.hyd[1])*f;o.sfcK=f<.25?0:1-Math.exp(-(f-.25)/.75*(+pr.matH||0)*60/45);o.t=f<.25?'resfriando':'maturando · '+fT((+pr.matH||0)*(f-.25)/.75)+' h';}
+ else if(k==='mant'){o.T=f<.3?matT+(fp-matT)*f/.3:fp+(drawT-fp)*Math.pow((f-.3)/.7,1.3);const e=(1-Math.exp(-4*f))/(1-Math.exp(-4));o.ov=m.ov*e;o.destab=m.destab*f*f;o.shear=1;o.d=C.dDraw*(.75+.25*f);o.t=f<.3?'resfriando até o ponto de congelamento':'gelo nucleando na parede do cilindro';}
+ else if(k==='hard'){o.ov=m.ov;o.destab=m.destab;
+  if(C.H&&C.H.tDone){const tm=f*C.H.tDone,cv=C.H.curve;let p=cv[cv.length-1];for(let j=1;j<cv.length;j++)if(cv[j].t>=tm){const a=cv[j-1],b=cv[j],g=(tm-a.t)/((b.t-a.t)||1);p={core:a.core+(b.core-a.core)*g};break;}o.T=p.core;}
+  else{const tg=-18;o.T=drawT+(tg-drawT)*(1-Math.exp(-3*f))/(1-Math.exp(-3));}
+  o.d=C.dDraw+(m.crystal-C.dDraw)*Math.sqrt(f);o.t='congelando a água restante';}
+ else if(k==='serv'){o.T=vit;o.ov=m.ov;o.destab=m.destab;o.d=m.crystal;o.t=C.pote?'colher após '+f0(+pr.waitMin)+' min fora do freezer':'vitrine';}
+ else{o.T=vit+(37-vit)*f;o.ov=m.ov*(1-.55*f);o.destab=m.destab;o.d=m.crystal*(1-.6*f);o.t=f<.5?'gelo fundindo na língua':'gordura derretendo · aroma liberado';}
+ if(i>=3&&k!=='mant')o.hyd=C.hyd[2];if(k==='mant')o.hyd=C.hyd[2];
+ o.fz=o.T<0?m.fz(o.T):0;
+ o.sfc=m.sfcAt?m.sfcAt(o.T)*(k==='mat'?o.sfcK:k==='mix'||k==='past'?1:1):0;
+ o.mob=mobility(m,o.T);o.visc=o.T>0?viscAt(m,o.T):null;
+ return o;}
+/* microestrutura na etapa: no Serviço é exatamente o modelo da vitrine; nas outras, o estado do processo */
+function microAt(st,m,F,sc,days,u,C){const base=microModel(st,m,F,sc,days);if(u==null)u=PROC_SERV;C=C||procCtx(st,m);const s=procSnap(st,m,u,C);
+ const o=Object.assign({},base);o.snap=s;o.stage=s.k;o.T=s.T;o.shear=s.shear;o.amp=clamp(Math.pow(s.mob,.11),.06,1.2);o.hydNet=s.hyd;o.net=base.net*clamp(s.hyd,0,1);
+ o.fatSolid=clamp(s.sfc/100,0,1);
+ if(s.k==='serv')return o;
+ const phiAir=s.ov/(100+s.ov),iceVol=(m.wat/100)*(s.fz/100)/.917;o.phiAir=phiAir;o.phiIce=clamp(iceVol*m.rhoMix*(1-phiAir),0,.75);
+ o.d=s.d;o.airD=AIR_D*(s.k==='mant'?.7+.3*s.f:s.k==='boca'?1+.8*s.f:1);o.destab=s.destab/100;
+ o.butter=base.butter&&(s.k==='hard'||s.k==='boca'||(s.k==='mant'&&s.f>.7));o.nLac=s.k==='hard'?Math.round(base.nLac*.3):0;
+ o.soft=s.k==='boca';o.hard=false;o.big=o.d>45;o.perfect=false;o.imbalance=0;o.bubbleStable=s.k==='boca'?false:base.bubbleStable;
+ return o;}
+/* texto do que acontece fisicamente, com os números do motor */
+function procDesc(st,m,s,C){const pr=C.pr;const r=[];
+ if(s.k==='mix')r.push('Os sólidos se dispersam na fase aquosa. Gordura em gotas líquidas ('+f0(s.sfc)+'% sólida a '+f0(s.T)+' °C); gomas de hidratação a frio já começam a prender água.');
+ if(s.k==='past'){r.push('A '+fT(+pr.pastT)+' °C as gomas de hidratação a quente se desenrolam: rede '+f0(C.hyd[1]*100)+'% hidratada ao fim do patamar.');if(+pr.pastT>=72)r.push('As proteínas do soro começam a desnaturar e passam a reter mais água.');r.push('Gordura toda líquida.');}
+ if(s.k==='mat')r.push('No frio, a gordura cristaliza ('+f0(m.sfcAt?m.sfcAt(+pr.matT):0)+'% sólida a '+fT(+pr.matT)+' °C, alcançada em ~'+f0(Math.min(+pr.matH||0,2.5))+' h), as proteínas migram para a superfície das gotas e a viscosidade sobe para ≈'+f0(viscAt(m,+pr.matT))+' mPa·s. É isso que prepara a gordura para segurar o ar.');
+ if(s.k==='mant')r.push('A calda atinge o ponto de congelamento ('+fT(m.fp)+' °C) e o gelo nucleia na parede fria do cilindro; a pá raspa os cristais para o centro. O ar entra até '+f0(m.ov)+'% de overrun e a agitação desestabiliza '+f0(m.destab)+'% da gordura, que forma a rede ao redor das bolhas. Na saída a '+fT(+pr.drawT)+' °C: '+f0(m.fzDraw)+'% da água congelada, cristais ≈'+f0(C.dDraw)+' µm.');
+ if(s.k==='hard')r.push('Sem agitação, a água restante congela sobre os cristais existentes (eles crescem em vez de nuclear): '+f0(m.fz(-18))+'% congelada a −18 °C, cristal médio ≈'+f0(m.crystal)+' µm.'+(C.H&&C.H.tDone?' No pote de '+f0(+pr.poteMl)+' mL o centro chega a '+fT(C.H.target)+' °C em '+fT(C.H.tDone/60)+' h.':''));
+ if(s.k==='serv')r.push('A '+fT(+st.vit)+' °C: '+f0(m.fzVit)+'% da água congelada, fase não congelada com '+f0(m.SE/(1-m.fzVit/100))+' de sólidos equivalentes. Mobilidade molecular ≈10^'+f1(Math.log10(Math.max(1e-12,s.mob)))+' da calda a 45 °C: é ela que governa a velocidade do crescimento dos cristais.');
+ if(s.k==='boca')r.push('Na língua o gelo funde, a gordura sólida derrete ('+f0(m.sfcAt?m.sfcAt(35):0)+'% sólida a 35 °C) e as bolhas colapsam. Cristais abaixo de 50 µm não são percebidos; a gordura coalescida dá a sensação de creme e libera os aromas lipossolúveis.');
+ return r.join(' ');}
+function procDur(st,m,i,C){const pr=C.pr;
+ return['~10 min',fT(+pr.pastT)+' °C · '+fT(holdS(pr))+' s',fT(+pr.matT)+' °C · '+fT(+pr.matH)+' h',f0(+pr.drawMin)+' min → '+fT(+pr.drawT)+'°',
+  C.H&&C.H.tDone?fT(Math.round(C.H.tDone/6)/10)+' h':f0(+pr.hardMin)+' min',fT(+st.vit)+' °C','37 °C'][i];}
+/* faixa da história térmica: temperatura × etapa, com cursor */
+function procStrip(st,m,u,C){const W=640,H=132,L=34,R=8,T=18,B=30;const t0=-26,t1=Math.max(90,+C.pr.pastT+4);const n=7,sw=(W-L-R)/n;
+ const sx=v=>L+v*sw,sy=v=>T+(1-(clamp(v,t0,t1)-t0)/(t1-t0))*(H-T-B);
+ let g='';for(let i=0;i<n;i++){const on=Math.floor(u)===i;g+=`<rect x="${sx(i)+1}" y="${T}" width="${sw-2}" height="${H-T-B}" rx="6" fill="${on?'rgba(125,211,252,.10)':'rgba(255,255,255,.02)'}" data-a="procGo" data-v="${i}" style="cursor:pointer"/>`;
+  g+=`<text x="${sx(i)+sw/2}" y="12" text-anchor="middle" font-size="10.5" fill="${on?'var(--ice)':'var(--t2)'}">${PSTG[i][1]}</text><text x="${sx(i)+sw/2}" y="${H-16}" text-anchor="middle" font-size="9" fill="var(--t3)">${esc(procDur(st,m,i,C))}</text>`;}
+ [0,-18,+C.pr.pastT].forEach(v=>{g+=`<line x1="${L}" x2="${W-R}" y1="${sy(v)}" y2="${sy(v)}" stroke="var(--line2)" stroke-dasharray="2 4"/><text x="${L-4}" y="${sy(v)+3}" text-anchor="end" font-size="9" fill="var(--t3)">${f0(v)}°</text>`;});
+ const pts=[];for(let i=0;i<n;i++)for(let s=0;s<=12;s++){const p=procSnap(st,m,i+s/12,C);pts.push(sx(i+s/12).toFixed(1)+','+sy(p.T).toFixed(1));}
+ g+=`<polyline points="${pts.join(' ')}" fill="none" stroke="url(#thg)" stroke-width="2.2" stroke-linejoin="round"/>`;
+ const cur=procSnap(st,m,u,C);g+=`<g id="procCur" transform="translate(${sx(u).toFixed(1)},0)"><line x1="0" x2="0" y1="${T}" y2="${H-B}" stroke="var(--ice)" stroke-width="1.2"/><circle id="procDot" cx="0" cy="${sy(cur.T).toFixed(1)}" r="4.5" fill="var(--ice)"/></g>`;
+ return`<svg viewBox="0 0 ${W} ${H}" style="width:100%;height:auto;display:block" role="img" aria-label="História térmica do processo"><defs><linearGradient id="thg" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="#fb923c"/><stop offset=".55" stop-color="#e6ecf4"/><stop offset="1" stop-color="#7dd3fc"/></linearGradient></defs>${g}</svg>`;}
+function procHUD(s){return[s.stage+' · '+fT(s.T)+' °C · '+s.t,(s.fz>0?'gelo '+f0(s.fz)+'% da água · ':'')+(s.ov>0?'ar '+f0(s.ov)+'% · ':'')+(s.fz>0?'cristal '+f0(s.d)+' µm':s.visc?'calda ≈'+f0(s.visc)+' mPa·s':''),
+ 'gordura sólida '+f0(s.sfc)+'%'+(s.destab>0?' · desestabilizada '+f0(s.destab)+'%':'')+' · rede '+f0(s.hyd*100)+'% hidratada'];}
+
+/* ---------- 3. AROMA: famílias de compostos por ingrediente (0–3) ----------
+   Perfil aproximado pela literatura de química do sabor (compostos de impacto de cada matéria-prima),
+   não é uma análise de cromatografia. Ordem das famílias em AFAM. */
+const AFAM=[['lact','Lácteo · lactonas','δ-decalactona, diacetil'],['frut','Frutado · ésteres','acetato de isoamila, butirato de etila'],['citr','Cítrico','limoneno, citral'],['flor','Floral','linalol, geraniol, β-ionona'],['verd','Verde · herbáceo','hexanal, (Z)-3-hexenol'],['torr','Torrado','pirazinas, guaiacol'],['cara','Caramelo','furaneol, maltol, sotolon'],['baun','Baunilha · fenólico','vanilina, cumarina'],['espe','Especiado','eugenol, cinamaldeído'],['sulf','Sulfurado · umami','metional, tióis, glutamato'],['ferm','Fermentado · queijo','ácido butírico, metilcetonas'],['noz','Amendoado','benzaldeído']];
+const AROMA_S={leite:'200000000000',leite15:'200000000000',cabra:'200000000020',ovelha:'200000000020',lpd:'200000100000',lpi:'200000100000',evaporado:'200000200000',cond:'300000200000',doceleite:'200001300000',
+ creme35:'300000000000',creme45:'300000000000',creme40:'300000000000',creme20:'300000000000',manteiga:'300000100010',mascarpone:'300000000000',ricota:'200000000010',iogurte:'200000000020',grego:'200000000020',iogurte0:'200000000020',
+ creamcheese:'200000000020',cremefr:'200000000020',burrata:'300000000000',stracchino:'200000000010',gorgonzola:'110000000131',roquefort:'110000000131',parmigiano:'110001100232',queijoovelha:'110000000231',
+ gema:'200000000100',gemap:'200000000100',
+ mascavo:'000001310000',demerara:'000000210000',mel:'010200210000',caramelo:'100001300000',toffee:'200001300001',agave:'000110100000',garapa:'000010100000',
+ morango:'130110200000',framboesa:'020310100000',limao:'003110000000',laranja:'013100000000',sanguinea:'023100000000',manga:'121110001100',maracuja:'031100000200',banana:'030000011000',
+ abacaxi:'031000200100',pessego:'320100000001',mirtilo:'020110001000',cereja:'020100010002',caqui:'110000100000',goiaba:'031020001200',cupuacu:'130000100110',acai:'100011001010',
+ figo:'110000200001',pompelmo:'003010000100',cristal:'003000100000',butia:'131100000000',jabuticaba:'020010001010',cambuci:'022020000000',uvaia:'021100000000',cocopure:'300000010001',
+ abacate:'100020000001',amora:'020110000010',cassis:'020110000300',groselha:'021010000000',damasco:'220200000001',lima:'003020000000',tangerina:'013100000000',tangerinaconc:'013100100000',
+ melancia:'010020000000',melao:'020020000100',pera:'030010000000',maca:'020020000000',macasuco:'020020000000',marmelo:'020200100000',tamara:'010000300000',geleialaranja:'012000200000',
+ frutaliof:'020200100000',mojitopure:'002030000000',acerola:'021010000000',caju:'020010001100',graviola:'131000000100',caja:'021010000100',pitanga:'010120002000',umbu:'022010000000',
+ carambola:'021020000000',pitaya:'010010000000',lichia:'021300000000',mamao:'010100000110',cacaupolpa:'032100000000',bacuri:'120200000000',mangaba:'120000000010',uva:'030200000000',seriguela:'021000000000',
+ pistache:'000012000003',pistachea:'000012100003',avela:'000003100003',amendoa:'000001010003',amendoim:'000003000102',macadamia:'100001000002',tahine:'000003000102',cocoralado:'200001000002',torrone:'000102200003',
+ cacau:'010003101010',cacau10:'000003101010',choc70:'010003211010',choc64:'010003211010',choc55:'110003210010',choc80:'010003101010',massacacau:'010003101010',chocleite:'200002210000',chocbranco:'300000120000',gianduia:'100003200003',
+ cococreme:'300000000001',cocoleite:'300000000001',cocooleo:'200000000001',azeite:'010030001001',aveia:'000001100001',amendoab:'000000000002',soja:'000011000001',
+ rum:'010000211000',limoncello:'003000000000',vinsanto:'010000200002',vinho:'020000001010',espresso:'000003200110',cafesol:'000003200110',extratocafe:'000003200110',baunilhaext:'000100130000',fava:'000100130000',
+ matcha:'000031000100',ervas:'001130001000',especiaria:'001100003000',espumante:'020000000010',cerveja:'000003200010',tonica:'002000000000',cointreau:'003000000000',licorfruta:'020000000000',baileys:'200000110000',
+ vinhodoce:'020100100000',eiswein:'030100100000',
+ salmao:'000001000210',tomate:'010020000100',alho:'000000000300',orapronobis:'000030000000',cenoura:'000110001000',pepino:'000030000000',milho:'100002100100',cogumelo:'000000000220',alhonegro:'000001300110',
+ azuki:'000001100001',alfarroba:'000001200000',biscoito:'200001110000',foiegras:'200000000100',camarao:'000001000200',ouricomar:'000000000310',ostra:'000010000200',balsamico:'010000200020'};
+/* bases neutras não entram como sugestão (não criam sabor novo) */
+const ABASE=new Set(['leite','leite15','leite0','lpd','lpi','evaporado','creme35','creme45','creme40','creme20','gemap','cocooleo','cocoleite','amendoab','soja','aveia','agua']);
+const AROMA={};for(const k in AROMA_S)AROMA[k]=AROMA_S[k].split('').map(Number);
+/* impacto aromático por grama (extratos e especiarias são muito mais potentes que leite ou fruta) */
+const AIMP_ID={baunilhaext:40,fava:60,especiaria:60,ervas:25,matcha:12,espresso:3,cafesol:20,extratocafe:15,alho:30,cacau:3,cacau10:3,massacacau:2.5,balsamico:6,alhonegro:5,gorgonzola:3,roquefort:3,parmigiano:3,ouricomar:4,salmao:3,cristal:3,frutaliof:4,rum:4,cointreau:4,limoncello:2,azeite:4,tahine:2};
+const AIMP_CAT={'Lácteos':.12,'Ovos':.2,'Açúcares':.6,'Frutas':1,'Oleaginosas':1.6,'Cacau':1.8,'Vegetais e gorduras':.5,'Bebidas e aromas':1.5,'Gastronômicos':1.6};
+const aImp=i=>AIMP_ID[i.id]!=null?AIMP_ID[i.id]:AIMP_CAT[i.cat]||0;
+/* dose de teste (g por kg de calda) de um ingrediente novo */
+const ADOSE_ID={baunilhaext:4,fava:1.5,especiaria:1.5,ervas:6,matcha:12,sal:2,alho:3,espresso:120,cafesol:10,extratocafe:15,rum:25,limoncello:40,cointreau:25,cacau:30,cacau10:30,balsamico:15,alhonegro:30,tonica:100,cerveja:120,vinho:120,espumante:120,eiswein:100,vinhodoce:100,vinsanto:80,
+ gorgonzola:50,roquefort:40,parmigiano:40,salmao:30,ouricomar:25,ostra:30,camarao:50,foiegras:60,azeite:40,tahine:60,gema:40,cristal:30,geleialaranja:60,tamara:60,frutaliof:20,toffee:40,caramelo:60,doceleite:120,mascavo:40,mel:40,biscoito:50,torrone:60};
+const ADOSE_CAT={'Frutas':150,'Oleaginosas':70,'Cacau':45,'Lácteos':80,'Açúcares':40,'Bebidas e aromas':30,'Gastronômicos':40,'Vegetais e gorduras':40,'Ovos':40};
+const aDose=i=>ADOSE_ID[i.id]||ADOSE_CAT[i.cat]||30;
+/* perfil aromático da receita: soma ponderada por massa × impacto, com compressão psicofísica (log) */
+function aromaProfile(recipe){const raw=AFAM.map(()=>0);let any=0;
+ (recipe||[]).forEach(r=>{const i=ING_BY[r.id],v=AROMA[r.id];if(!i||!v||!(+r.g>0))return;const w=+r.g*aImp(i);v.forEach((x,k)=>{raw[k]+=x*w;});any+=w;});
+ if(!any)return null;const tot=(recipe||[]).reduce((a,r)=>a+(+r.g||0),0)||1;const p=raw.map(x=>Math.log1p(x/tot*40));const mx=Math.max(...p)||1;return p.map(x=>x/mx);}
+const vNorm=v=>{const n=Math.hypot(...v)||1;return v.map(x=>x/n);};
+const vCos=(a,b)=>{const x=vNorm(a),y=vNorm(b);return x.reduce((s,v,k)=>s+v*y[k],0);};
+/* pontes (compostos em comum) e contrastes com ponte (família nova + ao menos uma família em comum) */
+function aromaPairs(recipe,limit){const R=aromaProfile(recipe);if(!R)return null;const inRec=new Set((recipe||[]).map(r=>r.id));const lim=limit||6;
+ const fam=v=>v.map((x,k)=>[x,k]);const out=[];
+ for(const id in AROMA){if(inRec.has(id)||!ING_BY[id]||ABASE.has(id)||(id==='gema'&&inRec.has('gemap')))continue;const v=AROMA[id];const c=v.map(x=>x/3);const sim=vCos(R,c);
+  const shared=fam(c).filter(([x,k])=>x>=.33&&R[k]>=.35).sort((a,b)=>b[0]*R[b[1]]-a[0]*R[a[1]]).map(([,k])=>k);
+  const fresh=fam(c).filter(([x,k])=>x>=.66&&R[k]<.25).map(([,k])=>k);
+  const bridge=shared.length?Math.max(...shared.map(k=>Math.min(c[k],R[k]))):0;
+  out.push({id,sim,shared,fresh,bridge,contrast:fresh.length&&shared.length?(1-sim)*.6+bridge*.4+fresh.length*.05:0});}
+ /* no máximo 2 por categoria em cada lista (variedade de caminhos) */
+ const div=L=>{const c={},r=[];for(const x of L){const k=ING_BY[x.id].cat;if((c[k]||0)>=2)continue;c[k]=(c[k]||0)+1;r.push(x);if(r.length>=lim)break;}return r;};
+ const harm=div(out.filter(x=>x.shared.length).sort((a,b)=>b.sim-a.sim));
+ const cont=div(out.filter(x=>x.contrast>0&&!harm.includes(x)).sort((a,b)=>b.contrast-a.contrast));
+ return{R,harm,cont};}
+function aromaWheel(R,C){const S0=220,c=S0/2,r0=78;const n=AFAM.length;const pt=(k,v)=>{const a=-Math.PI/2+k/n*2*Math.PI;return[c+Math.cos(a)*r0*v,c+Math.sin(a)*r0*v];};
+ let g='';[.33,.66,1].forEach(v=>{g+=`<polygon points="${AFAM.map((_,k)=>pt(k,v).map(x=>x.toFixed(1)).join(',')).join(' ')}" fill="none" stroke="var(--line)" stroke-width="1"/>`;});
+ AFAM.forEach((f,k)=>{const[x,y]=pt(k,1.18);const[x2,y2]=pt(k,1);g+=`<line x1="${c}" y1="${c}" x2="${x2}" y2="${y2}" stroke="var(--line)"/><text x="${x}" y="${y+3}" text-anchor="middle" font-size="8.6" fill="${R&&R[k]>.5?'var(--t1)':'var(--t3)'}">${f[1].split(' · ')[0]}</text>`;});
+ if(R)g+=`<polygon points="${R.map((v,k)=>pt(k,Math.max(.03,v)).map(x=>x.toFixed(1)).join(',')).join(' ')}" fill="rgba(125,211,252,.22)" stroke="var(--ice)" stroke-width="1.6"/>`;
+ if(C)g+=`<polygon points="${C.map((v,k)=>pt(k,Math.max(.03,v)).map(x=>x.toFixed(1)).join(',')).join(' ')}" fill="rgba(251,146,60,.12)" stroke="#fb923c" stroke-width="1.6" stroke-dasharray="4 3"/>`;
+ return`<svg viewBox="-14 -6 ${S0+28} ${S0+12}" style="width:100%;max-width:300px;height:auto;display:block;margin:auto" role="img" aria-label="Roda aromática da receita">${g}</svg>`;}
+
+/* ---------- 4. EXPLORADOR DE VARIAÇÕES ----------
+   Gera variações por operadores de criação (troca de açúcares, gordura, proteína, laticínio fermentado,
+   acento aromático, minimalismo, sal), balanceia cada uma no motor e avalia com o índice completo. */
+function atRng(seed){let s=(seed>>>0)||1;return()=>{s=(s+0x6D2B79F5)>>>0;let t=s;t=Math.imul(t^(t>>>15),t|1);t^=t+Math.imul(t^(t>>>7),t|61);return((t^(t>>>14))>>>0)/4294967296;};}
+const SUG_SWAP=['dextrose','trealose','invertido','mel','mascavo','glicose38','isomaltulose','alulose'];
+function recShares(rec){const t=rec.reduce((a,r)=>a+(+r.g||0),0)||1;const o={};rec.forEach(r=>o[r.id]=(o[r.id]||0)+(+r.g||0)/t);return o;}
+function novelty(a,b){const x=recShares(a),y=recShares(b);let d=0;new Set([...Object.keys(x),...Object.keys(y)]).forEach(k=>d+=Math.abs((x[k]||0)-(y[k]||0)));return d/2;}
+function exploreGelato(st,n,seed){
+ const R=(st.recipe||[]).filter(r=>ING_BY[r.id]&&+r.g>0).map(r=>({id:r.id,g:+r.g}));if(R.length<2)return null;
+ const tot=R.reduce((a,r)=>a+r.g,0);const pote=st.proc&&st.proc.serveFrom==='pote';const vit=pote?poteServeTemp(st):+st.vit;
+ const rnd=atRng(seed);const pick=a=>a[Math.floor(rnd()*a.length)];const nm=id=>ING_BY[id]?ING_BY[id].n.split(' (')[0]:id;
+ const AP=aromaPairs(R,8);const accents=AP?[...AP.harm.slice(0,5).map(x=>[x.id,'ponte']),...AP.cont.slice(0,5).map(x=>[x.id,'contraste'])]:[];
+ const find=(rec,f)=>rec.filter(r=>ING_BY[r.id]&&f(ING_BY[r.id],r));
+ const ops=[
+  rec=>{const s=find(rec,(i,r)=>r.id==='sacarose')[0]||find(rec,i=>i.cat==='Açúcares').sort((a,b)=>b.g-a.g)[0];if(!s)return null;const to=pick(SUG_SWAP.filter(x=>x!==s.id&&ING_BY[x]));const p=.25+rnd()*.25;const g=s.g*p;s.g-=g;const ex=rec.find(r=>r.id===to);if(ex)ex.g+=g;else rec.push({id:to,g});return f0(p*100)+'% da '+nm(s.id).toLowerCase()+' → '+nm(to).toLowerCase();},
+  rec=>{const c=find(rec,i=>/^creme/.test(i.id))[0],l=find(rec,i=>/^leite/.test(i.id))[0];if(!c||!l)return null;const up=rnd()<.5;const d=c.g*(up?.3:.25);if(!up&&c.g-d<1)return null;c.g+=up?d:-d;l.g=Math.max(0,l.g+(up?-d:d));return'gordura '+(up?'+':'−')+' (creme '+(up?'+30':'−25')+'%)';},
+  rec=>{const p=rec.find(r=>r.id==='lpd');if(p){const up=rnd()<.5;p.g*=up?1.35:.65;return'leite em pó '+(up?'+35':'−35')+'%';}if(!find(rec,i=>i.cat==='Lácteos').length)return null;rec.push({id:'lpd',g:tot*.02});return'+ leite em pó 2% (corpo)';},
+  rec=>{const c=find(rec,i=>/^creme/.test(i.id))[0];if(!c)return null;const to=pick(['mascarpone','cremefr','grego','ricota','iogurte']);if(!ING_BY[to])return null;const g=c.g*.4;c.g-=g;const ex=rec.find(r=>r.id===to);if(ex)ex.g+=g;else rec.push({id:to,g});return'40% do creme → '+nm(to).toLowerCase();},
+  rec=>{if(!accents.length)return null;const[id,kind]=pick(accents);if(rec.some(r=>r.id===id))return null;rec.push({id,g:aDose(ING_BY[id])*tot/1000});return'+ '+nm(id).toLowerCase()+' ('+kind+')';},
+  rec=>{if(rec.length<=4)return null;const c=rec.filter(r=>{const i=ING_BY[r.id];return i&&!['Estabilizantes','Açúcares','Meus neutros'].includes(i.cat)&&!/^leite$|^agua$/.test(r.id)&&r.g<tot*.04;}).sort((a,b)=>a.g-b.g)[0];if(!c)return null;rec.splice(rec.indexOf(c),1);return'− '+nm(c.id).toLowerCase()+' (minimalismo)';},
+  rec=>{if(rec.some(r=>r.id==='sal')||!ING_BY.sal)return null;rec.push({id:'sal',g:tot*.0015});return'+ sal 0,15% (realça doçura e aroma)';}];
+ const out=[],seen=new Set();
+ for(let tries=0;tries<n*5&&out.length<n;tries++){
+  const rec=R.map(r=>({...r}));const labs=[];const k=rnd()<.45?2:1;
+  for(let j=0;j<k;j++){const l=pick(ops)(rec);if(l&&!labs.includes(l))labs.push(l);}
+  if(!labs.length)continue;const key=labs.slice().sort().join('|');if(seen.has(key))continue;seen.add(key);
+  rec.forEach(r=>r.g=Math.round(r.g*10)/10);const rc=rec.filter(r=>r.g>0);
+  let fin=rc,ok=false;try{const b=balance({...st,recipe:rc,vit});if(b&&b.ok){fin=b.newRecipe;ok=true;}}catch(e){}
+  const s3=stReal({...st,recipe:fin});const m=analyze(s3);if(m.empty)continue;const F=diagnose(s3,m),sc=score(s3,m,F).total;
+  out.push({labs,recipe:fin,ok,sc,pod:m.pod,sol:m.sol,fat:m.fat,fz:m.fzVit,d:m.crystal,shelf:m.shelfVit,melt:m.melt,cost:m.costKg,nov:novelty(R,fin),prof:aromaProfile(fin)});}
+ const s0=stReal(st),m0=analyze(s0),F0=diagnose(s0,m0);
+ return{seed,base:{sc:score(s0,m0,F0).total,pod:m0.pod,sol:m0.sol,fat:m0.fat,fz:m0.fzVit,d:m0.crystal,shelf:m0.shelfVit,melt:m0.melt,cost:m0.costKg},list:out.sort((a,b)=>b.sc-a.sc||b.nov-a.nov)};}
+function exploreMap(E,sel){const W=360,H=236,L=36,R=10,T=22,B=30;const all=[E.base,...E.list];
+ const xs=all.map(x=>x.fat),ys=all.map(x=>x.sol);let x0=Math.min(...xs)-.8,x1=Math.max(...xs)+.8,y0=Math.min(...ys)-.8,y1=Math.max(...ys)+.8;
+ const sx=v=>L+(v-x0)/(x1-x0)*(W-L-R),sy=v=>T+(1-(v-y0)/(y1-y0))*(H-T-B);
+ let g='';for(let k=0;k<=4;k++){const v=x0+(x1-x0)*k/4,w=y0+(y1-y0)*k/4;g+=`<text x="${sx(v)}" y="${H-12}" text-anchor="middle" font-size="9" fill="var(--t3)">${f1(v)}</text><text x="${L-4}" y="${sy(w)+3}" text-anchor="end" font-size="9" fill="var(--t3)">${f1(w)}</text><line x1="${L}" x2="${W-R}" y1="${sy(w)}" y2="${sy(w)}" stroke="var(--line)" stroke-dasharray="2 4"/>`;}
+ g+=`<text x="${W-R}" y="${H-1}" text-anchor="end" font-size="9" fill="var(--t3)">gordura % →</text><text x="4" y="10" font-size="9" fill="var(--t3)">sólidos % ↑</text>`;
+ E.list.forEach((x,i)=>{const col=x.sc>=90?'var(--ok)':x.sc>=75?'var(--warn)':'var(--crit)';const r=4+x.nov*28;
+  g+=`<circle cx="${sx(x.fat).toFixed(1)}" cy="${sy(x.sol).toFixed(1)}" r="${clamp(r,4,12).toFixed(1)}" fill="${col}" fill-opacity="${i===sel?.9:.35}" stroke="${col}" stroke-width="${i===sel?2.5:1}" data-a="atPick" data-v="${i}" style="cursor:pointer"><title>${esc(x.labs.join(' · '))} · índice ${x.sc}</title></circle>`;});
+ g+=`<circle cx="${sx(E.base.fat)}" cy="${sy(E.base.sol)}" r="7" fill="none" stroke="var(--t1)" stroke-width="2"/><text x="${sx(E.base.fat)+10}" y="${sy(E.base.sol)+3}" font-size="9.5" fill="var(--t1)">atual</text>`;
+ return`<svg viewBox="0 0 ${W} ${H}" style="width:100%;height:auto;display:block" role="img" aria-label="Mapa das variações: gordura × sólidos; cor = índice, tamanho = ousadia">${g}</svg>`;}
+
+/* ---------- 5. CARTAS DE MÉTODO CRIATIVO ---------- */
+const ACARDS=[
+ ['Terroir de 100 km','Faça o sabor só com o que nasce perto de você. Troque a fruta importada por uma nativa (cambuci, uvaia, butiá, jabuticaba) e deixe o motor ajustar o açúcar à acidez dela.','Sazonal'],
+ ['Mudança de contexto','Leve um sabor salgado à vitrine: tomate, milho assado, parmigiano, azeite. O motor trata o sal e a gordura extra como trata qualquer sólido.','Gastronômicos'],
+ ['Sal como lente','0,1–0,3% de sal realça a doçura percebida e abre o aroma. Teste em caramelo, chocolate e pistache, e compare às cegas no Painel.','Degustação'],
+ ['Ácido como espinha','Um sorbetto sem acidez fica plano. Busque uma acidez perceptível com fruta ácida ou cítrico; o açúcar precisa subir junto (veja POD).','Frutas'],
+ ['Gordura aromática','Troque parte do creme por uma gordura que carrega aroma: azeite, manteiga noisette, tahine, manteiga de cacau. Olhe o SFC: ele muda o corpo no frio.','Vegetais e gorduras'],
+ ['Infusão a frio','Ervas, café ou chá em infusão durante a maturação (12 h a 4 °C) extraem aroma sem amargor. Coe antes de mantecar.','Maturação'],
+ ['Desconstrução','Pegue uma sobremesa clássica (tiramisù, torta de limão, pão de mel) e separe as camadas em base, variegato e crocante. A base precisa se sustentar sozinha.','Clássicos'],
+ ['Minimalismo','No máximo três ingredientes de sabor além de açúcares e neutro. Use o Explorador: a opção "minimalismo" mostra o que o motor ainda segura sem cada um.','Explorador'],
+ ['Ponte aromática','Una dois ingredientes improváveis por uma família de compostos em comum (lactonas no pêssego e no creme, pirazinas no café e no gergelim). Use o Mapa aromático.','Aroma'],
+ ['Fermentação','Iogurte, kefir, crème fraîche ou queijo de ovelha trazem ácidos e metilcetonas que dão profundidade. Cuidado com a lactose: o motor avisa.','Lácteos'],
+ ['Caramelização controlada','Leve parte do açúcar a caramelo seco: perde poder adoçante e ganha amargor e sotolon. Use o ingrediente Caramelo e rebalanceie.','Açúcares'],
+ ['Amargo nobre','Café, cacau 100%, toranja ou chicória. Equilibre o amargor com gordura e com açúcares de menor doçura (glicose, trealose), não com mais sacarose.','Amargos'],
+ ['Doçura discreta','Baixe o POD em 3–4 pontos trocando sacarose por glicose ou trealose, e deixe o ingrediente principal falar mais alto.','Açúcares'],
+ ['Umami no doce','Missô, parmigiano, cogumelo ou alho negro em dose de tempero (1–3%) aprofundam caramelo e chocolate.','Gastronômicos'],
+ ['Cor como pista falsa','Uma cor que engana a expectativa (pitaya, matcha, ora-pro-nóbis) muda o que o cliente sente antes de provar.','Visual'],
+ ['Memória afetiva','Um sabor de infância (curau, quindim, paçoca, doce de leite de corte) traduzido para a técnica italiana: mesma estrutura, outra lembrança.','Clássicos'],
+ ['Temperatura como ingrediente','O mesmo gelato a −11 °C e a −14 °C são dois produtos. Mude a temperatura de serviço no termômetro e veja como os aromas e a dureza respondem.','Térmico'],
+ ['Textura dupla','Um variegato com PAC mais alto que a base fica macio no freezer; um crocante envolto em gordura fica seco. Contraste é tão importante quanto sabor.','Textura']];
+
+/* ---------- 6. NEUTRO POR OBJETIVO ---------- */
+const NX_GOALS={
+ vitrine:{n:'Vitrine longa',tgt:{anti:[75,94],corpo:[60,85],derr:[55,85],visc:[50,85]}},
+ empratado:{n:'Derretimento lento',tgt:{derr:[82,98],corpo:[65,90],anti:[60,92]}},
+ frio:{n:'Base a frio',cold:1,tgt:{anti:[60,90],corpo:[55,85],visc:[45,82]}},
+ limpo:{n:'Rótulo limpo',pool:['lbg','guar','tara','citf','inu','acacia','pect','starch'],tgt:{anti:[60,90],corpo:[60,85],derr:[50,85]}},
+ vegano:{n:'Vegano / sorbetto',dairy:0,noAnimal:1,tgt:{anti:[65,92],corpo:[55,85],derr:[50,85]}}};
+function nxDesign(goal,dairy,prIn){const G=NX_GOALS[goal];if(!G)return null;const pr=Object.assign({},PROC0,prIn||{});if(G.cold)pr.pastT=20;
+ const dy=G.dairy!=null?!!G.dairy:!!dairy;
+ const pool=(G.pool||Object.keys(NCOMP).filter(k=>NCOMP[k].dose&&!['mono','inu'].includes(k))).filter(k=>NCOMP[k]&&!(G.noAnimal&&NCOMP[k].animal)&&!(!dy&&k==='carr'));
+ const rnd=atRng([...goal].reduce((a,c)=>a*31+c.charCodeAt(0),7)+(dy?1:0)+(+pr.pastT));
+ const evalB=(parts,dose)=>{const b=analyzeBlend({parts,dose},dy);let pen=0;
+  for(const f in G.tgt){const[a,z]=G.tgt[f],v=b.P[f];if(v<a)pen+=(a-v)*(a-v)/40;else if(v>z)pen+=(v-z)*(v-z)/40;}
+  pen+=b.notes.filter(x=>x.sev==='warn').length*8;if(b.hydro<.2)pen+=(.2-b.hydro)*400;if(b.hydro>.5)pen+=(b.hydro-.5)*400;
+  const keys={};for(const k in parts)if(k!=='dex'&&NCOMP[k].dose)keys[k]=+parts[k];const hy=hydRun(keys,pr);Object.values(hy.h).forEach(h=>{if(h<.9)pen+=(.9-h)*120;});
+  pen+=Object.keys(keys).length*3+Math.max(0,dose-8)*2;return{pen,b,hy};};
+ const rand=()=>{const n=2+Math.floor(rnd()*3);const ks=[];while(ks.length<n&&ks.length<pool.length){const k=pool[Math.floor(rnd()*pool.length)];if(!ks.includes(k))ks.push(k);}
+  const parts={};let A=0;ks.forEach(k=>{const g=Math.round(5+rnd()*(k==='starch'?300:k==='citf'||k==='acacia'?120:70));parts[k]=g;A+=g;});parts.dex=Math.max(0,500-A);return{parts,dose:Math.round((3+rnd()*6)*2)/2};};
+ let pop=[];for(let i=0;i<900;i++){const c=rand();pop.push({...c,...evalB(c.parts,c.dose)});}
+ pop.sort((a,b)=>a.pen-b.pen);
+ /* refino local dos melhores */
+ pop=pop.slice(0,12).map(c=>{let best=c;for(let it=0;it<70;it++){const p={...best.parts};const ks=Object.keys(p).filter(k=>k!=='dex');const k=ks[Math.floor(rnd()*ks.length)];
+   p[k]=Math.max(1,Math.round(p[k]*(.75+rnd()*.5)));let A=0;ks.forEach(x=>A+=p[x]);p.dex=Math.max(0,500-A);const dose=clamp(Math.round((best.dose+(rnd()-.5))*2)/2,2,12);
+   const e=evalB(p,dose);if(e.pen<best.pen)best={parts:p,dose,...e};}return best;}).sort((a,b)=>a.pen-b.pen);
+ const res=[],sigs=new Set();for(const c of pop){const sig=Object.keys(c.parts).filter(k=>k!=='dex').sort().join('+');if(sigs.has(sig))continue;sigs.add(sig);res.push(c);if(res.length>=3)break;}
+ return{goal,dairy:dy,pastT:pr.pastT,list:res.map(c=>({parts:c.parts,dose:c.dose,P:c.b.P,hydro:c.b.hydro,pen:c.pen,h:c.hy.h}))};}
+
+/* ===================== INTERFACE ===================== */
+function crProcess(st,m,u,C){const s=procSnap(st,m,u,C);
+ return`<div class="procbar"><div class="chips" role="group" aria-label="Etapas do processo">${PSTG.map(([k,n],i)=>`<button data-a="procGo" data-v="${i}" aria-pressed="${Math.floor(u)===i}">${n}</button>`).join('')}</div>
+  <div class="procrow"><button class="btn sm" data-a="procPlay" aria-label="${U.procPlay?'Pausar':'Reproduzir o processo'}">${U.procPlay?'❚❚ Pausar':'▶ Processo'}</button><input type="range" id="procU" data-i="procU" min="0" max="6.99" step=".01" value="${u}" aria-label="Posição no processo"></div>
+  ${procStrip(st,m,u,C)}
+  <p class="note" id="procTxt" style="margin:6px 0 0">${esc(procDesc(st,m,s,C))}</p></div>`;}
+function labAtelie(m,F,sc){
+ if(m.empty)return'<div class="card"><p class="muted">Monte uma receita para abrir o ateliê.</p></div>';
+ const AP=aromaPairs(S.recipe,6);const selV=U.atSel&&AROMA[U.atSel]?AROMA[U.atSel].map(x=>x/3):null;const nm=id=>esc(ING_BY[id].n);
+ const fams=ks=>ks.map(k=>AFAM[k][1].split(' · ')[0].toLowerCase()).join(', ');
+ const item=(x,kind)=>`<div class="atitem${U.atSel===x.id?' on':''}"><button class="atname" data-a="atSel" data-v="${x.id}"><b>${nm(x.id)}</b><small>${kind==='h'?'partilham '+fams(x.shared.slice(0,3)):'ponte: '+fams(x.shared.slice(0,2))+' · traz '+fams(x.fresh.slice(0,2))}</small></button><span class="mono atpct">${f0((kind==='h'?x.sim:x.contrast)*100)}</span><button class="btn sm" data-a="atTry" data-v="${x.id}" title="Adiciona ${f0(aDose(ING_BY[x.id]))} g/kg e rebalanceia os açúcares">Testar</button></div>`;
+ const top=AP?AP.R.map((v,k)=>[v,k]).sort((a,b)=>b[0]-a[0]).slice(0,3).map(([,k])=>AFAM[k]):[];
+ const E=U.atEx&&U.atEx.sig===JSON.stringify(S.recipe)+S.tipo+S.vit?U.atEx:null;const pk=E&&E.list[U.atPick]?E.list[U.atPick]:null;
+ const card=ACARDS[(+U.atCard||0)%ACARDS.length];
+ const dl=(a,b,d,inv)=>{const x=b-a;const good=inv?x<0:x>0;return Math.abs(x)<(d?.05:.5)?'':`<span class="${good?'c-ok':'c-warn'}" style="font-size:11px"> ${x>0?'+':''}${d?f2(x):f1(x)}</span>`;};
+ return`<div class="g2 atgrid">
+  <div class="card"><h2>Mapa aromático</h2><p class="note" style="margin-top:0">Harmonização por compostos compartilhados: ingredientes que têm as mesmas famílias aromáticas tendem a combinar (pontes). Contrastes trazem uma família nova, mas mantêm uma ponte com a receita.</p>
+   ${AP?`<div class="atwheel">${aromaWheel(AP.R,selV)}<div class="atleg"><span class="lbl">Assinatura da receita</span>${top.map(f=>`<div class="kv"><span>${f[1]}</span><span class="muted" style="font-size:11px">${f[2]}</span></div>`).join('')}${U.atSel&&ING_BY[U.atSel]?`<p class="note" style="margin:8px 0 0"><span style="color:#fb923c">- - -</span> ${nm(U.atSel)}</p>`:''}</div></div>
+   <div class="g2" style="gap:14px;margin-top:10px"><div><span class="lbl">Pontes (harmonia)</span>${AP.harm.map(x=>item(x,'h')).join('')}</div><div><span class="lbl">Contrastes com ponte</span>${AP.cont.length?AP.cont.map(x=>item(x,'c')).join(''):'<p class="muted" style="font-size:12.5px">Sem contraste com ponte para esta receita.</p>'}</div></div>`
+   :'<p class="muted">A receita ainda não tem ingredientes de sabor com perfil aromático. Adicione uma fruta, um cacau, uma oleaginosa ou um aroma.</p>'}
+   <p class="note" style="margin-bottom:0">Perfil por famílias de compostos de impacto descritas na literatura de química do sabor (intensidade 0–3, ponderada pela dose). Não substitui a prova: use como bússola, não como veredito.</p></div>
+  <div class="card"><div class="row"><h2 style="margin:0">Explorador de variações</h2><span class="sp"></span><button class="btn sm pri" data-a="atExplore">${E?'Nova rodada':'Explorar 24 variações'}</button></div>
+   <p class="note">Cada ponto é uma receita nova criada por operadores de criação (açúcares, gordura, proteína, laticínio fermentado, acento aromático, minimalismo, sal), <b>balanceada pelo motor</b> e avaliada com o índice completo${S.proc.serveFrom==='pote'?' no modo pote':''}. O mapa mostra a textura (gordura × sólidos; a doçura fica no alvo porque cada variação é rebalanceada). Cor: índice. Tamanho: ousadia (distância da receita atual).</p>
+   ${E?`${E.list.length?exploreMap(E,+U.atPick):'<p class="muted">Nenhuma variação viável nesta rodada.</p>'}
+    ${pk?`<div class="card flat" style="margin-top:10px"><b style="color:var(--t1)">${esc(pk.labs.join(' · '))}</b>${pk.ok?'':' <span class="c-warn" style="font-size:12px">(não balanceou por completo)</span>'}
+     <div class="kv"><span>Índice</span><span class="mono">${pk.sc}${dl(E.base.sc,pk.sc)}</span></div><div class="kv"><span>Doçura POD</span><span class="mono">${f1(pk.pod)}%${dl(E.base.pod,pk.pod)}</span></div>
+     <div class="kv"><span>Sólidos · gordura</span><span class="mono">${f1(pk.sol)} · ${f1(pk.fat)}%</span></div><div class="kv"><span>Cristal · vida na vitrine</span><span class="mono">${f0(pk.d)} µm · ${pk.shelf>30?'30+':f0(pk.shelf)} d</span></div>
+     <div class="kv"><span>Ousadia</span><span class="mono">${f0(pk.nov*100)}%</span></div>${$cost(`<div class="kv"><span>Custo</span><span class="mono">R$ ${f2(pk.cost)}/kg${dl(E.base.cost,pk.cost,1,1)}</span></div>`)}
+     <div class="row" style="margin-top:8px"><button class="btn sm okb" data-a="atAdopt" data-v="${U.atPick}">Levar para a bancada</button><button class="btn sm" data-a="atToLab" data-v="${U.atPick}">Comparar</button></div></div>`:''}
+    <div class="atlist">${E.list.slice(0,8).map((x,i)=>`<button data-a="atPick" data-v="${i}" aria-pressed="${+U.atPick===i}"><span class="mono ${x.sc>=90?'c-ok':x.sc>=75?'c-warn':'c-crit'}">${x.sc}</span> ${esc(x.labs.join(' · '))}</button>`).join('')}</div>`
+   :'<p class="muted" style="font-size:12.5px">Toque em Explorar para gerar as variações da receita atual.</p>'}</div></div>
+ <div class="card atcard"><div class="row"><span class="lbl" style="margin:0">Carta de método · ${esc(card[2])}</span><span class="sp"></span><button class="btn sm" data-a="atCard">Tirar outra carta</button></div><h3>${esc(card[0])}</h3><p>${esc(card[1])}</p></div>`;}
+function hydCard(E,pr){const keys={};const sh=blendShares(E.parts);for(const k in sh)if(NCOMP[k]&&NCOMP[k].dose)keys[k]=sh[k];if(!Object.keys(keys).length)return'';
+ const hy=hydRun(keys,pr);const W=600,H=170,L=32,R=8,T=14,B=34;const n=4,sw=(W-L-R)/n;const sx=(i,f)=>L+(i+f)*sw,sy=v=>T+(1-v)*(H-T-B);
+ let g='';hy.ph.forEach((p,i)=>{g+=`<rect x="${sx(i,0)+1}" y="${T}" width="${sw-2}" height="${H-T-B}" rx="5" fill="rgba(255,255,255,.02)"/><text x="${sx(i,.5)}" y="${H-18}" text-anchor="middle" font-size="9.5" fill="var(--t2)">${p.n}</text><text x="${sx(i,.5)}" y="${H-6}" text-anchor="middle" font-size="9" fill="var(--t3)">${i===0?f0(p.d/60)+' min → '+fT(+pr.pastT)+' °C':i===1?fT(p.d)+' s':i===2?f0(p.d/60)+' min → '+fT(+pr.matT)+' °C':fT(p.d/3600)+' h'}</text>`;});
+ [0,.5,.9,1].forEach(v=>g+=`<line x1="${L}" x2="${W-R}" y1="${sy(v)}" y2="${sy(v)}" stroke="var(--line)" stroke-dasharray="${v===.9?'4 3':'2 4'}"/><text x="${L-4}" y="${sy(v)+3}" text-anchor="end" font-size="9" fill="var(--t3)">${f0(v*100)}</text>`);
+ for(const k in keys){const col=NSTYLE[k]?NSTYLE[k].col:'#e6ecf4';g+=`<polyline points="${hy.samp.map(s=>sx(s.i,s.f).toFixed(1)+','+sy(s.h[k]).toFixed(1)).join(' ')}" fill="none" stroke="${col}" stroke-width="1.8"/>`;}
+ const minT=hydMinT(keys,pr);const bad=Object.keys(keys).filter(k=>hy.h[k]<.9);
+ return`<div class="card"><h2>Cinética de hidratação</h2><p class="note" style="margin-top:0">Fração hidratada de cada componente ao longo do processo (aquecimento a 2 °C/min, patamar, resfriamento e maturação), pela temperatura e pelo tempo. A linha tracejada marca 90%.</p>
+  <svg viewBox="0 0 ${W} ${H}" style="width:100%;height:auto;display:block" role="img" aria-label="Curvas de hidratação dos hidrocoloides">${g}</svg>
+  <div class="pills" style="margin-top:8px">${Object.keys(keys).map(k=>`<div class="pill2 ${hy.h[k]>=.9?'ok':hy.h[k]>=.7?'warn':'crit'}"><span class="dot"></span><span class="n"><span style="color:${NSTYLE[k]?NSTYLE[k].col:'var(--t2)'}">■</span> ${esc(NCOMP[k].n)}</span><span class="v">${f0(hy.h[k]*100)}% hidratada</span></div>`).join('')}</div>
+  <p class="note" style="margin-bottom:0">${bad.length?'<b class="c-warn">'+esc(bad.map(k=>NCOMP[k].n).join(', '))+'</b> não chega a 90% com '+fT(+pr.pastT)+' °C. ':'Todos os componentes hidratam com este processo. '}${minT!=null?'Temperatura mínima para hidratar ≥95% de todos com o patamar atual ('+fT(holdS(pr))+' s): <b>'+minT+' °C</b>.':'Nem a 95 °C este patamar hidrata tudo: alongue o patamar.'}</p></div>`;}
+function nxDesignCard(E){const D=U.nxDes;
+ return`<div class="card"><h2>Desenhar neutro por objetivo</h2><p class="note" style="margin-top:0">O motor busca combinações de componentes e doses (900 candidatas + refino local) que entregam o perfil funcional do objetivo, com hidratação completa no seu processo e sem alertas do avaliador.</p>
+  <div class="chips">${Object.entries(NX_GOALS).map(([k,g])=>`<button data-a="nxGoal" data-v="${k}" aria-pressed="${!!(D&&D.goal===k)}">${g.n}</button>`).join('')}</div>
+  ${D?`<div class="g3" style="margin-top:10px">${D.list.map((c,i)=>`<div class="card flat"><b style="color:var(--t1)">Proposta ${i+1}</b><div class="muted" style="font-size:12px">${f1(c.dose)} g/kg · ${f2(c.hydro)}% de hidrocoloides</div>
+    <p class="note" style="margin:6px 0">${Object.keys(c.parts).filter(k=>k!=='dex'&&c.parts[k]>0).map(k=>`<span style="color:${NSTYLE[k]?NSTYLE[k].col:'var(--t2)'}">■</span> ${esc(NCOMP[k].n)} ${c.parts[k]} g`).join('<br>')}${c.parts.dex?'<br>Dextrose (veículo) '+c.parts.dex+' g':''}</p>
+    ${NFUN.filter(([k])=>k!=='emul').map(([k,n])=>`<div class="row" style="justify-content:space-between;font-size:11.5px"><span class="t2">${n}</span><span class="mono">${c.P[k]}</span></div>`).join('')}
+    <button class="btn sm" style="margin-top:8px" data-a="nxDesUse" data-v="${i}">Abrir no editor</button></div>`).join('')}</div>`:''}</div>`;}
+
+/* ---------- reprodução do processo sem redesenhar a página ---------- */
+let procT=null;
+function procTick(){if(S.page!=='creator'||S.creatorTab!=='gelato'){procStop();return;}const c=U._cr;if(!c||!GSIM)return;const{m,F,sc,C}=c;const u=+U.procU;
+ GSIM.set(microAt(S,m,F,sc,+U.days||0,u,C));
+ const el=document.getElementById('procU');if(el)el.value=u;
+ const s=procSnap(S,m,u,C);const cur=document.getElementById('procCur');
+ if(cur){const W=640,L=34,R=8,sw=(W-L-R)/7;cur.setAttribute('transform','translate('+(L+u*sw).toFixed(1)+',0)');const t0=-26,t1=Math.max(90,+C.pr.pastT+4),T=18,H=132,B=30;const dot=document.getElementById('procDot');if(dot)dot.setAttribute('cy',(T+(1-(clamp(s.T,t0,t1)-t0)/(t1-t0))*(H-T-B)).toFixed(1));}
+ const tx=document.getElementById('procTxt');if(tx)tx.textContent=procDesc(S,m,s,C);
+ document.querySelectorAll('.procbar .chips button').forEach((b,i)=>b.setAttribute('aria-pressed',String(Math.floor(u)===i)));}
+function procStop(){if(procT){clearInterval(procT);procT=null;}U.procPlay=false;}
+const AT_ACT={
+ procGo:v=>{procStop();U.procU=clamp(+v||0,0,6);render();},
+ procPlay:()=>{if(U.procPlay){procStop();render();return;}if((+U.procU||0)>=6.9||Math.floor(+U.procU)===PROC_SERV)U.procU=0;U.procPlay=true;render();
+  if(typeof setInterval!=='function')return;procT=setInterval(()=>{U.procU=Math.round(((+U.procU||0)+.025)*1000)/1000;if(U.procU>=6.99){U.procU=6.99;procStop();render();return;}procTick();},90);},
+ atSel:v=>{U.atSel=U.atSel===v?null:v;render();},
+ atTry:v=>{const i=ING_BY[v];if(!i)return;const tot=S.recipe.reduce((a,r)=>a+(+r.g||0),0)||1000;const g=Math.round(aDose(i)*tot/1000*10)/10;
+  const ex=S.recipe.find(r=>r.id===v);if(ex)ex.g=Math.round((+ex.g+g)*10)/10;else S.recipe.push({id:v,g});
+  let msg=i.n+' +'+fT(g)+' g';try{const b=S.proc.serveFrom==='pote'?balancePote(S):balance(S);if(b&&b.ok){S.recipe=b.newRecipe;msg+=' · açúcares rebalanceados';}}catch(e){}
+  U.atSel=v;U.bal=null;render();toast(msg);},
+ atExplore:()=>{const seed=((U.atEx&&U.atEx.seed)||0)+1;const r=exploreGelato(S,24,seed);U.atEx=r?{...r,sig:JSON.stringify(S.recipe)+S.tipo+S.vit}:null;U.atPick=0;render();if(!r)toast('Monte uma receita com ao menos 2 ingredientes');},
+ atPick:v=>{U.atPick=+v||0;render();},
+ atAdopt:v=>{const x=U.atEx&&U.atEx.list[+v];if(!x)return;S.recipe=JSON.parse(JSON.stringify(x.recipe));U.atEx=null;U.bal=null;render();toast('Variação na bancada: '+x.labs.join(' · '));},
+ atToLab:v=>{const x=U.atEx&&U.atEx.list[+v];if(!x)return;addVariant(x.labs.join(' · ').slice(0,30),x.recipe);S.crSub='comparar';render();},
+ atCard:()=>{U.atCard=((+U.atCard||0)+1+Math.floor(Math.random()*(ACARDS.length-1)))%ACARDS.length;render();},
+ nxGoal:v=>{if(!NX_GOALS[v])return;U.nxDes=nxDesign(v,S.nxEdit.dairy,S.proc);render();},
+ nxDesUse:v=>{const D=U.nxDes,c=D&&D.list[+v];if(!c)return;S.nxEdit={id:null,name:('Desenhado · '+NX_GOALS[D.goal].n).slice(0,40),dose:c.dose,dairy:D.dairy,parts:{...c.parts}};U.nxTest=null;render();toast('Proposta aberta no editor');}
+};
+const AT_INP={procU:v=>{procStop();U.procU=clamp(+v||0,0,6.99);render();}};
 
 /* ==== 57-v13.js ==== */
 /* ===================== IL FREDOLIN · v13: COMPONENTES, DEGUSTAÇÃO, BIBLIOTECA, ESTAÇÃO ===================== */
@@ -3621,6 +3988,7 @@ const ACT={
  ...EXEC_ACT,
  ...TEAM_ACT,
  ...V13_ACT,
+ ...AT_ACT,
  ...SHELL_ACT
 };
 
@@ -3655,6 +4023,7 @@ const INP={
  invNew:(v,t)=>{U.invNew=U.invNew||{ingId:'leite',kg:'',costKg:'',lot:'',exp:''};U.invNew[t.dataset.k]=v;},
  ...TEAM_INP,
  ...V13_INP,
+ ...AT_INP,
  ...SHELL_INP
 };
 
@@ -3688,7 +4057,7 @@ function importBackup(file){const fr=new FileReader();fr.onload=()=>{try{const d
 /* toda ação passa pela checagem do perfil (o servidor também recusa o que o perfil não pode) */
 const denied=()=>toast('Seu perfil não tem acesso a esta função.');
 /* ações que não mexem na receita não entram no desfazer */
-const NO_UNDO=new Set(['go','fam','palOpen','palClose','palRun','undo','copy','chk','unchk','libTab','libAuthor','libMore','libTipo','libVitF','simOpen','simClose','cmpToggle','cmpClear','histOpen','lotOpen','crTab','crSub','sazM','del','delNo','meltTimer','panelSet','panelStart','panelNext','panelCancel','panelReveal','panelReset','testRun','syncNow','age','pick']);
+const NO_UNDO=new Set(['go','fam','palOpen','palClose','palRun','undo','copy','chk','unchk','libTab','libAuthor','libMore','libTipo','libVitF','simOpen','simClose','cmpToggle','cmpClear','histOpen','lotOpen','crTab','crSub','procGo','procPlay','atSel','atPick','atCard','atExplore','nxGoal','sazM','del','delNo','meltTimer','panelSet','panelStart','panelNext','panelCancel','panelReveal','panelReset','testRun','syncNow','age','pick']);
 function runAct(k,v,t){if(NO_UNDO.has(k))return ACT[k](v,t);const before=undoSnap();undoMark();const r=ACT[k](v,t);
  if(r&&typeof r.then==='function')return r;if(undoSnap()===before)undoSettle();else if(UNDO_TOAST.has(k))toastUndo();return r;}
 document.addEventListener('click',e=>{const t=e.target.closest('[data-a]');if(!t)return;e.preventDefault();const k=t.dataset.a;if(!ACT[k])return;if(!can.act(k))return denied();runAct(k,t.dataset.v,t);});
