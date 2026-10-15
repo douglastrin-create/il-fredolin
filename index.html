@@ -2435,7 +2435,7 @@ const isMac=()=>{try{return /Mac|iPhone|iPad/.test(navigator.platform||navigator
 const kbd=k=>`<kbd>${isMac()?'⌘':'Ctrl '}${k}</kbd>`;
 
 /* ---------- marca ---------- */
-const VERSION='v17.12';
+const VERSION='v17.12.1';
 const brandHTML=()=>`<div class="brand"><div class="hex"></div><div><b>Il <span>Fredolin</span></b><small>Gelato Lab ${VERSION}${APP_MODE==='app'&&ME.email?' · '+ROLE_N[ROLE]:''}</small></div></div>`;
 
 /* ---------- termômetro da receita: vitrine, serviço ideal (com faixa de incerteza) e freezer numa régua só ---------- */
@@ -2524,7 +2524,7 @@ function undoMark(coalesceKey){const now=Date.now();if(coalesceKey&&undoMark.k==
  const s=undoSnap();if(s&&UNDO[UNDO.length-1]!==s){UNDO.push(s);if(UNDO.length>UNDO_MAX)UNDO.shift();}}
 /* depois de uma ação: se nada mudou, descarta o passo guardado */
 function undoSettle(){const top=UNDO[UNDO.length-1];if(top&&top===undoSnap())UNDO.pop();}
-const UNDO_TOAST=new Set(['liveApply','rm','applyAct','dexConv','balApply','norm','scale','preset','master','load','varToBench','sensApply','genToBench','nxApply','histLoad','lotBench','vitOpen','compRm','crAdd','add','infToggle']);
+const UNDO_TOAST=new Set(['liveApply','atTry','rm','applyAct','dexConv','balApply','norm','scale','preset','master','load','varToBench','sensApply','genToBench','nxApply','histLoad','lotBench','vitOpen','compRm','crAdd','add','infToggle']);
 function undoRestore(){const s=UNDO.pop();if(!s)return false;const[name,tipo,vit,recipe,proc,brix,comps]=JSON.parse(s);Object.assign(S,{name,tipo,vit,recipe,proc,brix,comps});U.bal=null;return true;}
 
 /* ---------- paleta de comandos ---------- */
@@ -3794,6 +3794,21 @@ function balanceLab(st,maxE){maxE=maxE||900;const rec=(st.recipe||[]).filter(r=>
  const prop=L.map((l,i)=>({id:l.id,g:x[i]})).filter((p,i)=>Math.abs(x[i]-x0[i])>=.3);const cur=prop.map(p=>x0[L.findIndex(l=>l.id===p.id)]);
  if(!prop.length)return{ok:false,msg:'A receita já está no melhor ponto que as alavancas disponíveis alcançam.',lab:1};
  return{ok:best<l0-.05,mode:'lab',lab:1,prop,cur,newRecipe,m1,loss:best,loss0:l0,evals,crit:F1.filter(q=>q.sev==='crit').length,msg:best<l0-.05?'':'Nenhuma combinação melhora a receita.'};}
+/* Testar um sabor do ateliê como um gelatiere faria: o sabor entra na dose sugerida; se for líquido (café, suco, infusão),
+   ocupa o lugar da mesma quantidade de água do líquido-base (água, leite…), para não diluir gordura e sólidos;
+   depois o balanceador completo acerta açúcares e sólidos, e o lote volta ao peso original. */
+const AT_LIQ=['agua','leite','leite15','leite0','aveia','amendoab','soja','arrozb','cocoleite','aguacoco'];
+function atAddBalanced(st,id){const i=ING_BY[id];if(!i)return null;const orig=st.recipe||[];const rec=orig.map(r=>({...r}));const T0=rec.reduce((a,r)=>a+(+r.g||0),0)||1000;
+ const g=Math.round(aDose(i)*T0/1000*10)/10;const ex=rec.find(r=>r.id===id);if(ex)ex.g=Math.round((+ex.g+g)*10)/10;else rec.push({id,g});const wI=(i.c.w||0)/100;let swap=false;
+ if(wI>=.6&&!(i.c.alc>0)){const car=rec.filter(r=>r.id!==id&&AT_LIQ.includes(r.id)).sort((a,b)=>AT_LIQ.indexOf(a.id)-AT_LIQ.indexOf(b.id))[0];
+  if(car){const wC=(ING_BY[car.id].c.w||0)/100||1;const d=Math.min(+car.g*.5,g*wI/wC);if(d>=.5){car.g=Math.round((+car.g-d)*10)/10;swap=true;}}}
+ let out=rec,bal=null;try{const b=balanceBest({...st,recipe:rec});if(b&&b.ok){out=b.newRecipe;bal=true;}else bal=(b&&b.msg)||'nenhum ajuste melhora';}catch(e){bal='não foi possível calcular';}
+ const T1=out.reduce((a,r)=>a+(+r.g||0),0);if(T1>0&&Math.abs(T1-T0)>.5){const k=T0/T1;out=out.map(r=>({...r,g:Math.round(+r.g*k*10)/10}));}
+ const gO=(R,x)=>{const q=R.find(r=>r.id===x);return q?+q.g:0;};const nm2=x=>ING_BY[x].n.split(' (')[0].replace(/ \d.*$/,'').toLowerCase();
+ const ch=[...new Set([...orig,...out].map(r=>r.id))].filter(x=>x!==id&&Math.abs(gO(orig,x)-gO(out,x))>=.5).sort((x,y)=>Math.abs(gO(out,y)-gO(orig,y))-Math.abs(gO(out,x)-gO(orig,x)));
+ const msg=i.n+' +'+fT(Math.round(gO(out,id)-gO(orig,id)))+' g'+(ch.length?' · '+ch.slice(0,4).map(x=>nm2(x)+' '+(gO(out,x)>gO(orig,x)?'+':'−')+fT(Math.round(Math.abs(gO(out,x)-gO(orig,x))))+' g').join(', '):'')+
+  (bal===true?' · rebalanceada':' · sem rebalanceamento ('+bal+')')+', lote mantido em '+fT(Math.round(T0))+' g';
+ return{recipe:out,msg,swap,balanced:bal===true};}
 /* índice contínuo para comparar criações finas (o índice oficial satura em 100) */
 function fineScore(st,m,F){if(m.empty)return 0;const sc=score(st,m,F);let q=sc.parts.reduce((s,p)=>s+p[1]*p[2],0);const crit=F.filter(f=>f.sev==='crit').length;if(crit)q=Math.min(q,62-crit*4);
  q-=Math.abs(m.fzVit-m.fzMid)*.25+Math.max(0,m.crystal-30)*.12+Math.max(0,7-Math.min(m.shelfVit,30))*.25+F.filter(f=>f.sev==='warn').length*.6;return Math.round(q*10)/10;}
@@ -3947,7 +3962,7 @@ function labAtelie(m,F,sc){
  const fams=ks=>ks.map(k=>AFAM[k][1].split(' · ')[0].toLowerCase()).join(', ');
  const TST=['ácido corta gordura e doce','amargo equilibra o doce','sal levanta doce e gordura','gordura arredonda ácido e amargo','doce suaviza ácido e amargo'];
  const why=(x,kind)=>kind==='h'?'partilham '+fams(x.shared.slice(0,3)):kind==='c'?'ponte: '+fams(x.shared.slice(0,2))+' · traz '+fams(x.fresh.slice(0,2)):kind==='t'?(x.via?'por analogia: '+nm(x.from).toLowerCase()+' ≈ '+nm(x.via).toLowerCase():'clássico com '+nm(x.from).toLowerCase()):TST[x.taste.indexOf(Math.max(...x.taste))];
- const item=(x,kind)=>`<div class="atitem${U.atSel===x.id?' on':''}"><button class="atname" data-a="atSel" data-v="${x.id}"><b>${nm(x.id)}</b><small>${why(x,kind)}</small></button><span class="mono atpct">${f0((kind==='h'?x.sim:kind==='c'?x.contrast:kind==='t'?x.sim:x.comp)*100)}</span><button class="btn sm" data-a="atTry" data-v="${x.id}" title="Adiciona ${f0(aDose(ING_BY[x.id]))} g/kg e rebalanceia">Testar</button></div>`;
+ const item=(x,kind)=>`<div class="atitem${U.atSel===x.id?' on':''}"><button class="atname" data-a="atSel" data-v="${x.id}"><b>${nm(x.id)}</b><small>${why(x,kind)}</small></button><span class="mono atpct">${f0((kind==='h'?x.sim:kind==='c'?x.contrast:kind==='t'?x.sim:x.comp)*100)}</span><button class="btn sm" data-a="atTry" data-v="${x.id}" title="Adiciona ${f0(aDose(ING_BY[x.id]))} g/kg (se for líquido, no lugar da água da base), rebalanceia e mantém o peso do lote">Testar</button></div>`;
  const top=AP?AP.R.map((v,k)=>[v,k]).sort((a,b)=>b[0]-a[0]).slice(0,3).map(([,k])=>AFAM[k]):[];
  const E=U.atEx&&U.atEx.sig===JSON.stringify(S.recipe)+S.tipo+S.vit?U.atEx:null;const pk=E&&E.list[U.atPick]?E.list[U.atPick]:null;
  const card=ACARDS[(+U.atCard||0)%ACARDS.length];
@@ -4008,10 +4023,7 @@ const AT_ACT={
  procPlay:()=>{if(U.procPlay){procStop();render();return;}if((+U.procU||0)>=6.9||Math.floor(+U.procU)===PROC_SERV)U.procU=0;U.procPlay=true;render();
   if(typeof setInterval!=='function')return;procT=setInterval(()=>{U.procU=Math.round(((+U.procU||0)+.025)*1000)/1000;if(U.procU>=6.99){U.procU=6.99;procStop();render();return;}procTick();},90);},
  atSel:v=>{U.atSel=U.atSel===v?null:v;render();},
- atTry:v=>{const i=ING_BY[v];if(!i)return;const tot=S.recipe.reduce((a,r)=>a+(+r.g||0),0)||1000;const g=Math.round(aDose(i)*tot/1000*10)/10;
-  const ex=S.recipe.find(r=>r.id===v);if(ex)ex.g=Math.round((+ex.g+g)*10)/10;else S.recipe.push({id:v,g});
-  let msg=i.n+' +'+fT(g)+' g';try{const b=balanceBest(S);if(b&&b.ok){S.recipe=b.newRecipe;msg+=' · açúcares rebalanceados';}}catch(e){}
-  U.atSel=v;U.bal=null;render();toast(msg);},
+ atTry:v=>{const r=atAddBalanced(S,v);if(!r)return;S.recipe=r.recipe;U.atSel=v;U.bal=null;render();toast(r.msg,true);},
  atExplore:()=>{const seed=((U.atEx&&U.atEx.seed)||0)+1;const r=exploreGelato({...S,_goal:U.atGoal||'equil'},24,seed);U.atEx=r?{...r,sig:JSON.stringify(S.recipe)+S.tipo+S.vit}:null;U.atPick=0;render();if(!r)toast('Monte uma receita com ao menos 2 ingredientes');},
  atGoal:v=>{if(!EXP_GOALS[v])return;U.atGoal=v;const E=U.atEx;if(E&&E.list.length){const g=EXP_GOALS[v];E.list.forEach(x=>x.rank=g.f(x,E.base));E.list.sort((a,b)=>b.rank-a.rank);E.goal=v;}U.atPick=0;render();},
  atPick:v=>{U.atPick=+v||0;render();},
