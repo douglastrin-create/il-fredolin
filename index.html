@@ -87,6 +87,13 @@ nav .cnt .c{background:var(--crit-a);color:var(--crit)}nav .cnt .w{background:va
 .seg button{flex:none;border:0;background:none;color:var(--t2);padding:7px 13px;border-radius:9px;cursor:pointer;white-space:nowrap;font-size:13.5px;min-height:36px}.seg button:hover{color:var(--t1)}
 .seg button[aria-selected=true]{background:var(--raise);color:var(--t1);font-weight:500;box-shadow:inset 0 1px 0 rgba(255,255,255,.04),0 1px 3px rgba(0,0,0,.35)}
 .pghead{display:flex;flex-wrap:wrap;align-items:flex-end;gap:12px 20px}.pghead>div:first-child{flex:1;min-width:240px}
+.cphead{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;align-items:center}.cphead input{max-width:none}
+.cpmeta{display:flex;flex-wrap:wrap;gap:8px 14px;align-items:center;margin-top:10px}.cpmeta select{width:auto;max-width:100%;flex:0 1 auto}
+.cpnum,.cpg{display:inline-flex;align-items:center;gap:6px;margin:0}.cpnum input[type=number],.cpg input[type=number]{width:76px;min-width:0;flex:none}.cpnum span,.cpg span{color:var(--t3);font-size:12.5px;white-space:nowrap}
+.cplist{display:flex;flex-direction:column;gap:8px;margin:12px 0 8px}.cpi{display:grid;grid-template-columns:minmax(0,1fr) auto auto;gap:6px;align-items:center}.cpi select{min-width:0;width:100%}
+.bxlist{display:flex;flex-direction:column;margin-top:6px}.bxrow{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:6px 14px;padding:10px 0;border-bottom:1px solid var(--line)}.bxrow:last-child{border-bottom:0}
+.bxn b{display:block;font-weight:550;font-size:14px}.bxn small{color:var(--t3);font-size:12px}.bxin{display:flex;align-items:center;gap:6px}.bxin input{width:84px;text-align:right}.bxin span{color:var(--t3);font-size:12.5px}
+.bxin input[type=number]{width:86px;min-width:0;flex:none;text-align:right}
 .dcard>summary{display:flex;align-items:center;gap:10px;cursor:pointer;list-style:none;min-height:28px}.dcard>summary::-webkit-details-marker{display:none}.dcard>summary::after{content:"";margin-left:auto;flex:none;width:8px;height:8px;border-right:1.5px solid var(--t3);border-bottom:1.5px solid var(--t3);transform:rotate(45deg);transition:transform .15s}.dcard[open]>summary::after{transform:rotate(225deg)}
 
 /* ---------- cabeçalho: receita, termômetro, índice, busca ---------- */
@@ -327,12 +334,12 @@ body[data-nav=rail] main{padding:18px 20px 40px}
 /* celular: abas inferiores, cabeçalho em três linhas */
 @media (max-width:760px){
  .app{grid-template-columns:minmax(0,1fr);grid-template-rows:auto minmax(0,1fr);grid-template-areas:"hdr" "main"}
- nav{position:fixed;left:0;right:0;bottom:0;z-index:40;flex-direction:row;padding:6px 4px calc(6px + env(safe-area-inset-bottom,0px));border-right:0;border-top:1px solid var(--line);background:rgba(14,20,32,.92);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);overflow:visible}
+ nav{position:fixed;left:0;right:0;bottom:0;z-index:40;flex-direction:row;padding:3px 4px max(4px,calc(env(safe-area-inset-bottom,0px) - 14px));border-right:0;border-top:1px solid var(--line);background:rgba(14,20,32,.92);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);overflow:visible}
  .nbrand,.nsearch,.np,.nfoot{display:none}
  .nlist{flex-direction:row;gap:0;justify-content:space-around}
  .nfam{flex:1;min-width:0}
- .fam{flex-direction:column;gap:3px;padding:6px 2px;font-size:10.5px;font-weight:500;justify-content:center;width:100%;text-align:center}
- .fam .ico{width:22px;height:22px}
+ .fam{flex-direction:column;gap:2px;padding:4px 2px 2px;min-height:44px;font-size:10px;font-weight:500;letter-spacing:.01em;justify-content:center;width:100%;text-align:center}
+ .fam .ico{width:20px;height:20px}
  .nfam.on .fam{color:var(--ice)}
  .nb{position:absolute;top:2px;left:calc(50% + 6px);margin:0}
  header{display:grid;grid-template-columns:minmax(0,1fr) auto;grid-template-areas:"brand right" "rcp rcp" "thermo thermo";gap:10px;padding:10px 16px 12px}
@@ -342,7 +349,7 @@ body[data-nav=rail] main{padding:18px 20px 40px}
   .thermo{display:grid;grid-template-columns:1fr 1fr;grid-template-areas:"v f" "b b";gap:12px 16px;padding:12px 14px}
  .thermo>.tq:first-child{grid-area:v}.thermo>.tq.sec{grid-area:f;justify-self:end}.tbar{grid-area:b;min-width:0}
  .tbar-cap em{display:none}
- main{padding:14px 16px calc(96px + env(safe-area-inset-bottom,0px))}
+ main{padding:14px 16px calc(72px + env(safe-area-inset-bottom,0px))}
  .ptabs{display:flex;width:auto;margin:0 -16px 16px;border-radius:0;border-left:0;border-right:0;padding:3px 12px;background:transparent;border-top:0}
  h1{font-size:23px}
  .g2,.g3{grid-template-columns:minmax(0,1fr)}
@@ -395,18 +402,37 @@ body.auth .app{grid-template-columns:minmax(0,1fr);grid-template-areas:"hdr" "ma
 .mattl li:before{content:'';position:absolute;left:-6px;top:11px;width:10px;height:10px;border-radius:50%;background:var(--ice);box-shadow:0 0 0 3px var(--bg)}
 .mattl li span{font-size:12px;color:var(--ice);padding-top:2px}.mattl b{color:var(--t1);font-size:13px}.mattl p{margin:2px 0 0;color:var(--t2);font-size:12.5px;line-height:1.45}
 @media (max-width:720px){.matgrid{grid-template-columns:repeat(2,minmax(0,1fr))}}
-.fkpis{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:10px;margin:6px 0 14px}
-.fkpi{border:1px solid var(--line);border-radius:var(--r2);background:var(--surf);padding:10px 12px;display:flex;flex-direction:column;gap:2px}
-.fkpi span{font-size:12px;color:var(--t2)}.fkpi b{font:600 22px var(--fm);color:var(--t1)}.fkpi small{font-size:11.5px;color:var(--t3);min-height:14px}.fkpi.warn{border-color:rgba(251,191,36,.45)}.fkpi.warn b{color:var(--warn)}
-.fboard{display:grid;grid-template-columns:repeat(6,minmax(172px,1fr));gap:10px;overflow-x:auto;padding-bottom:6px;scroll-snap-type:x proximity}
-.fcol{background:rgba(255,255,255,.015);border:1px solid var(--line);border-radius:var(--r2);padding:8px;min-height:120px;scroll-snap-align:start}
-.fcol h3{font-size:12.5px;margin:2px 4px 8px;color:var(--t2);font-weight:600;letter-spacing:.01em}
-.fempty{color:var(--t3);text-align:center;margin:18px 0;font-size:12px}
-.fcard{background:var(--surf);border:1px solid var(--line);border-left:3px solid var(--fc);border-radius:10px;padding:10px;margin-bottom:8px;display:flex;flex-direction:column;gap:6px;transition:border-color .2s,box-shadow .2s}
-.fcard.lvl-ready{box-shadow:0 0 0 1px rgba(110,231,183,.45) inset}.fcard.lvl-late{box-shadow:0 0 0 1px rgba(251,191,36,.5) inset}.fcard.lvl-crit{box-shadow:0 0 0 1px rgba(251,113,133,.6) inset;animation:fpulse 1.6s ease-in-out infinite}
-@keyframes fpulse{50%{box-shadow:0 0 0 2px rgba(251,113,133,.35) inset}}
+.fkpis{display:flex;gap:8px;margin:6px 0 14px;overflow-x:auto;scrollbar-width:none;padding-bottom:2px}.fkpis::-webkit-scrollbar{display:none}
+.fkpi{flex:none;display:flex;align-items:baseline;gap:7px;border:1px solid var(--line);border-radius:99px;background:var(--surf);padding:6px 13px}
+.fkpi b{font:600 15px var(--fm);color:var(--t3)}.fkpi.on b{color:var(--t1)}.fkpi span{font-size:12.5px;color:var(--t2);white-space:nowrap}.fkpi.warn{border-color:rgba(251,191,36,.5)}.fkpi.warn b{color:var(--warn)}
+.flist{display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:14px;align-items:start}
+.fcard{position:relative;background:var(--surf);border:1px solid var(--line);border-radius:16px;padding:16px 16px 14px;display:flex;flex-direction:column;gap:14px;overflow:hidden}
+.fcard::before{content:"";position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--fc)}
+.fcard.lvl-ready{border-color:rgba(110,231,183,.45)}.fcard.lvl-late{border-color:rgba(251,191,36,.5)}.fcard.lvl-crit{border-color:rgba(251,113,133,.6);animation:fpulse 2s ease-in-out infinite}
+@keyframes fpulse{50%{box-shadow:0 0 0 4px rgba(251,113,133,.12)}}
 @media (prefers-reduced-motion:reduce){.fcard.lvl-crit{animation:none}}
-.fhead{display:flex;gap:10px;align-items:center}.fring{width:44px;height:44px;flex:none}
+.fdot{width:10px;height:10px;border-radius:50%;background:var(--fc);flex:none;box-shadow:0 0 0 3px color-mix(in srgb,var(--fc) 22%,transparent)}
+.fsteps{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(var(--n),minmax(0,1fr));position:relative}
+.fsteps li{display:flex;flex-direction:column;align-items:center;gap:5px;position:relative;min-width:0}
+.fsteps li::before{content:"";position:absolute;top:9px;right:50%;width:100%;height:2px;background:var(--line2);z-index:0}.fsteps li:first-child::before{display:none}
+.fsteps li.done::before,.fsteps li.cur::before{background:var(--ok)}
+.fsteps i{width:20px;height:20px;border-radius:50%;border:2px solid var(--line2);background:var(--surf);display:grid;place-items:center;position:relative;z-index:1;color:#06281b}
+.fsteps li.done i{background:var(--ok);border-color:var(--ok)}.fsteps i svg{width:12px;height:12px}
+.fsteps li.cur i{border-color:var(--fc);box-shadow:0 0 0 4px color-mix(in srgb,var(--fc) 25%,transparent)}.fsteps li.cur i::after{content:"";width:8px;height:8px;border-radius:50%;background:var(--fc)}
+.fsteps span{font-size:10.5px;color:var(--t3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}.fsteps li.cur span{color:var(--t1);font-weight:600}.fsteps li.done span{color:var(--t2)}
+.fbody{display:flex;gap:16px;align-items:center}
+.ftimer{position:relative;width:96px;height:96px;flex:none}.ftimer svg{width:100%;height:100%}
+.ftv{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center}
+.ftv b{font:600 19px/1.1 var(--fm);color:var(--t1)}.ftv small{font-size:10px;color:var(--t3);margin-top:2px;max-width:66%;line-height:1.2}
+.ftimer.lvl-ready .ftv b{color:var(--ok);font-size:26px}.ftimer.lvl-late .ftv b{color:var(--warn)}.ftimer.lvl-crit .ftv b{color:var(--crit)}
+.finfo{flex:1;min-width:0;display:flex;flex-direction:column;gap:3px}.fstage{font:600 11.5px var(--fb);letter-spacing:.06em;text-transform:uppercase;color:var(--fc)}
+.fsub{font-size:12px;color:var(--t3)}
+.mtrack{position:relative;height:8px;border-radius:99px;background:var(--line);margin-top:10px;overflow:visible}
+.mtrack i{position:absolute;top:0;bottom:0}.mtrack .m0{background:rgba(148,163,184,.18);border-radius:99px 0 0 99px}.mtrack .m1{background:rgba(125,211,252,.35)}.mtrack .m2{background:var(--ok)}.mtrack .m3{background:rgba(251,191,36,.45)}.mtrack .m4{background:rgba(251,113,133,.35);border-radius:0 99px 99px 0}
+.mtrack b{position:absolute;top:-4px;width:3px;height:16px;margin-left:-1.5px;border-radius:2px;background:var(--t1);box-shadow:0 0 0 2px var(--surf)}
+.mlegend{display:flex;justify-content:space-between;gap:6px;font-size:10.5px;color:var(--t3);margin-top:5px;flex-wrap:wrap}
+.fact{display:flex;gap:8px;align-items:center;flex-wrap:wrap}.fact .btn:first-child{flex:1;justify-content:center}
+.fhead{display:flex;gap:10px;align-items:center;padding-left:4px}.fring{width:44px;height:44px;flex:none}
 .ftit{display:flex;flex-direction:column;min-width:0}.fname{all:unset;cursor:pointer;font-weight:650;color:var(--t1);font-size:14px}.fname:focus-visible{outline:2px solid var(--ice);border-radius:4px}
 .ftit small{color:var(--t3);font-size:11.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .fmsg{margin:0;font-size:12.5px;color:var(--t2)}.lvl-ready .fmsg{color:var(--ok)}.lvl-late .fmsg{color:var(--warn)}.lvl-crit .fmsg{color:var(--crit)}
@@ -414,7 +440,8 @@ body.auth .app{grid-template-columns:minmax(0,1fr);grid-template-areas:"hdr" "ma
 .fown{width:22px;height:22px;border-radius:50%;background:var(--line2);color:var(--t1);display:inline-grid;place-items:center;font-size:10px;font-weight:700}
 .fdet{border-top:1px solid var(--line);padding-top:8px}.flog{list-style:none;padding:0;margin:6px 0;font-size:12px;color:var(--t2)}.flog li{padding:2px 0}
 .flabel{white-space:pre-wrap;font:11.5px/1.45 var(--fm);background:var(--bg);border:1px dashed var(--line2);border-radius:8px;padding:8px;margin:8px 0 0;color:var(--t1)}
-@media (max-width:900px){.fkpis{grid-template-columns:repeat(3,minmax(0,1fr))}.fboard{grid-template-columns:repeat(6,minmax(78vw,1fr))}}
+@media (max-width:760px){.flist{grid-template-columns:minmax(0,1fr)}.fcard{padding:14px 14px 12px}.ftimer{width:84px;height:84px}.ftv b{font-size:17px}}
+@media (max-width:420px){.fsteps li:not(.cur) span{visibility:hidden}.fsteps li.cur span{overflow:visible;position:relative;z-index:2}}
 .rrow{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
 .setsw{display:inline-flex;border:1px solid var(--line2);border-radius:99px;padding:2px;background:var(--bg);gap:2px}
 .setsw button{all:unset;cursor:pointer;padding:3px 11px;border-radius:99px;display:flex;flex-direction:column;line-height:1.1;color:var(--t3)}
@@ -438,8 +465,8 @@ body.auth .app{grid-template-columns:minmax(0,1fr);grid-template-areas:"hdr" "ma
  .setsw.dk{display:none}.setsw.ph{display:inline-flex}
  .rrow{gap:6px}
  #mini{display:block;position:sticky;top:calc(-1 * env(safe-area-inset-top,0px));z-index:30;height:0;overflow:visible}
- #mini .minib{position:absolute;left:0;right:0;top:0;display:flex;align-items:center;gap:10px;padding:calc(10px + env(safe-area-inset-top,0px)) 16px 10px;border:0;border-bottom:1px solid var(--line);background:rgba(8,12,20,.86);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);color:var(--t1);font-size:14px;cursor:pointer;transform:translateY(-110%);opacity:0;transition:transform .18s ease,opacity .18s ease;text-align:left}
- #mini.show .minib{transform:none;opacity:1}
+ #mini .minib{position:absolute;left:0;right:0;top:0;display:flex;align-items:center;gap:10px;padding:calc(10px + env(safe-area-inset-top,0px)) 16px 10px;border:0;border-bottom:1px solid var(--line);background:#080c14;color:var(--t1);font-size:14px;cursor:pointer;opacity:0;visibility:hidden;transition:opacity .15s ease,visibility 0s linear .15s;text-align:left;-webkit-font-smoothing:antialiased}
+ #mini.show .minib{opacity:1;visibility:visible;transition:opacity .15s ease}
  #mini .minib b{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-weight:650}
  #mini .mini-sc{font:600 13px var(--fm);padding:2px 8px;border-radius:99px;background:var(--raise)}
  .nbrand .ntog{display:none}
@@ -2123,7 +2150,7 @@ const stOf=(rec,tipo,vit)=>({tipo:tipo||S.tipo,vit:vit!=null?vit:S.vit,recipe:re
 const ingOpts=(sel,filter)=>{const cats=[...new Set(ING.map(i=>i.cat))];return cats.map(c=>{const L=ING.filter(i=>i.cat===c&&i.id!=='nx_tmp'&&(!filter||filter(i)));return L.length?`<optgroup label="${esc(c)}">${L.map(i=>`<option value="${i.id}"${i.id===sel?' selected':''}>${esc(i.n)}</option>`).join('')}</optgroup>`:'';}).join('');};
 const stabFilter=i=>i.cat==='Estabilizantes'||i.cat==='Meus neutros';
 const recFromPairs=r=>r.map(([id,g])=>({id,g:Math.round(g*10)/10}));
-function loadRecipe(name,tipo,vit,rec){S.execId=null;S.libId=null;S.name=name;S.tipo=tipo;S.vit=vit;S.recipe=rec.map(r=>({id:r.id,g:Math.round(r.g*10)/10}));S.brix={};S.page='bancada';U.bal=null;normalizeState();}
+function loadRecipe(name,tipo,vit,rec){S.execId=null;S.libId=null;S.name=name;S.tipo=tipo;S.vit=vit;S.recipe=rec.map(r=>({id:r.id,g:Math.round(r.g*10)/10}));S.brix={};S.comps=[];S.compBal=false;S.page='bancada';U.bal=null;normalizeState();}
 const addVariant=(name,recipe)=>{if(S.lab.variants.length>=4)S.lab.variants.shift();S.lab.variants.push({name:name.slice(0,30),recipe:JSON.parse(JSON.stringify(recipe))});};
 function miniCurves(list){/* list: [{name,m,col}] */
  const TM=Math.min(-25,Math.floor((+S.vit-2)/5)*5),W=640,H=230,L=40,R=12,Tp=12,B=30,tx=t=>L+(-t)/(-TM)*(W-L-R),ty=p=>Tp+(100-p)/100*(H-Tp-B);let g='';
@@ -2166,6 +2193,8 @@ const FAMILIES=[
 const PAGE_ALIAS={congelamento:['laudo','congelamento','Congelamento'],quimica:['laudo','quimica','Química e vida útil'],brix:['bancada',null,'Calibração Brix'],
  execucao:['linha',null,'Receitas em execução'],degustacao:['lotes','painel','Painel cego'],estoque:['planejamento','estoque','Estoque']};
 function pageResolve(){const k=S.page,al=PAGE_ALIAS[k];if(!al)return;S.page=al[0];if(al[1]){U.sub=U.sub||{};U.sub[al[0]]=al[1];}if(k==='brix')U.brixOpen=1;}
+/* seções recolhíveis guardam o estado aberto/fechado (antes fechavam a cada digitação) */
+const dOpen=(id,def)=>{const o=U.dopen&&U.dopen[id];return(o==null?def:o)?' open':'';};
 const subOf=(pg,def)=>(U.sub&&U.sub[pg])||def;
 /* usa uma página antiga como seção de outra: tira o invólucro .pg e o título; devolve a descrição (lead) e o corpo */
 function embedPg(h){h=String(h||'').trim();const o=h.match(/^<div class="pg[^"]*">([\s\S]*)<\/div>$/);if(o)h=o[1].trim();
@@ -2200,7 +2229,7 @@ const isMac=()=>{try{return /Mac|iPhone|iPad/.test(navigator.platform||navigator
 const kbd=k=>`<kbd>${isMac()?'⌘':'Ctrl '}${k}</kbd>`;
 
 /* ---------- marca ---------- */
-const VERSION='v17.7.1';
+const VERSION='v17.8';
 const brandHTML=()=>`<div class="brand"><div class="hex"></div><div><b>Il <span>Fredolin</span></b><small>Gelato Lab ${VERSION}${APP_MODE==='app'&&ME.email?' · '+ROLE_N[ROLE]:''}</small></div></div>`;
 
 /* ---------- termômetro da receita: vitrine, serviço ideal (com faixa de incerteza) e freezer numa régua só ---------- */
@@ -2390,7 +2419,7 @@ function pgBancada(m,F,sc){
  <div class="card"><div class="row" style="margin-bottom:8px"><h2 style="margin:0">Receita</h2><span class="sp"></span><span class="chip">${f0(m.tot)} g</span></div>
   ${rows?`<div class="tw"><table class="tbl"><thead><tr><th>Ingrediente</th><th class="r">Gramas</th><th class="r">% mistura</th><th></th></tr></thead><tbody>${rows}</tbody></table></div>`:'<p class="muted">Bancada vazia. Busque um ingrediente acima ou carregue uma base na Biblioteca.</p>'}
   <div class="row" style="margin-top:12px"><button class="btn sm" data-a="norm">Normalizar para 1000 g</button><span class="sp"></span>
-   <input type="number" id="scaleG" data-i="scaleG" value="${U.scaleG}" placeholder="peso do lote" style="width:130px" aria-label="Novo peso do lote em gramas"><button class="btn sm" data-a="scale">Escalar lote</button></div>${pairChips()}</div>${brixFruitCard(m)}</div><div class="bcol">
+   <input type="number" id="scaleG" data-i="scaleG" value="${U.scaleG}" placeholder="peso do lote" style="width:130px" aria-label="Novo peso do lote em gramas"><button class="btn sm" data-a="scale">Escalar lote</button></div>${pairChips()}</div>${brixFruitCard(m)}${compBenchCard(m)}</div><div class="bcol">
  ${S.proc.serveFrom==='pote'?poteCard(m,true):''}
  ${balanceCard(m)}
  ${approveCard(m,F,sc)}
@@ -2425,7 +2454,7 @@ function pgLaudo(m,F,sc){
   <div class="card"><div class="row"><h2 style="margin:0">Riscos de defeito</h2><span class="sp"></span><button class="btn sm" data-a="go" data-v="defeitos">Diagnóstico por sintomas</button></div>
    ${R.length?R.map(x=>`<div class="find"><div class="bar ${defLvl(x.s)}"></div><div><div class="area">${esc(x.d.n)} · risco ${defLvlN(x.s)} · ${f0(x.s*100)}%</div><h3>${esc(x.R[0].txt)}</h3><div class="fix"><b>Correção</b>${esc(x.R[0].fix)}</div><div style="margin-top:6px"><button class="btn ghost sm" data-a="defOpenB" data-v="${x.d.id}">Ficha do defeito</button></div></div></div>`).join('')
    :'<p class="t2" style="margin:0">Nenhum dos '+DEFECTS.length+' defeitos do banco tem causa provável na receita e no processo atuais.</p>'}</div>
-  ${ok.length?`<details class="card dcard"><summary><h2 style="margin:0">Acertos</h2><span class="chip ok">${ok.length}</span></summary>${ok.map(findHTML).join('')}</details>`:''}`;}
+  ${ok.length?`<details class="card dcard" id="laudoOk"${dOpen('laudoOk',false)}><summary><h2 style="margin:0">Acertos</h2><span class="chip ok">${ok.length}</span></summary>${ok.map(findHTML).join('')}</details>`:''}`;}
  return`<div class="pg"><div class="pghead"><div><h1>Laudo técnico</h1><p class="lead">${lead}</p></div>${segHTML('laudo',LAUDO_SEC,t,'Seções do laudo')}</div>${body}</div>`;}
 
 /* ---------- CONGELAMENTO ---------- */
@@ -2517,12 +2546,12 @@ function pgProcesso(m,F){
 /* Brix da safra: cartão contextual na Bancada (só aparece com fruta na receita) e leitura da mistura no Laudo */
 function brixFruitCard(m){const fr=(S.recipe||[]).filter(r=>ING_BY[r.id]&&ING_BY[r.id].brix);if(!fr.length||m.empty)return'';
  const ref=analyze({...S,brix:{}});const dPod=m.A.pod-ref.A.pod,dPac=m.A.pac-ref.A.pac;const meas=fr.some(r=>S.brix[r.id]!=null&&S.brix[r.id]!=='');
- return`<details class="card dcard" id="brixCard"${U.brixOpen||meas?' open':''}><summary><h2 style="margin:0">Brix da fruta desta safra</h2><span class="muted" style="font-size:12.5px">${meas?'medido':'valores de tabela'}</span></summary><p class="note" style="margin:8px 0">A doçura de cada safra varia. Meça o °Brix da polpa no refratômetro: o motor corrige açúcares e água da fruta e recalcula a receita inteira.</p>
-${true?`<div class="tw"><table class="tbl"><thead><tr><th>Fruta</th><th class="r">Gramas</th><th class="r">°Bx tabela</th><th class="r">°Bx medido</th><th class="r">Δ açúcar no lote</th><th></th></tr></thead><tbody>
-  ${fr.map(r=>{const i=ING_BY[r.id],b=S.brix[r.id];const has=b!=null&&b!=='';const d=has?(+b-i.brix):0;return`<tr><td>${esc(i.n)}</td><td class="r mono">${f0(r.g)}</td><td class="r mono muted">${i.brix}</td><td class="r"><input type="number" id="bx-${r.id}" data-i="brix" data-id="${r.id}" value="${has?esc(b):''}" placeholder="${i.brix}" step=".1" min="0" max="40" aria-label="Brix medido de ${esc(i.n)}"></td><td class="r mono ${d>0?'c-gold':d<0?'c-crit':'muted'}">${has?(d>=0?'+':'')+f1(r.g*.9*d/100)+' g':'—'}</td><td class="r">${has?`<button class="btn sm" data-a="brixReset" data-v="${r.id}">Padrão</button>`:''}</td></tr>`;}).join('')}
- </tbody></table></div>
- ${Math.abs(dPod)>.5?`<div class="find" style="border:0;padding-bottom:0"><div class="bar ${dPod>0?'warn':'info'}"></div><div><h3>Compensação da safra</h3><p>A fruta medida traz ${dPod>0?'+':''}${f0(dPod)} g de doçura equivalente e ${dPac>0?'+':''}${f0(dPac)} de PAC em relação à tabela.</p><div class="fix"><b>Solução</b>Para manter a receita original, ${dPod>0?'retire':'acrescente'} ≈ ${f0(Math.abs(dPod))} g de sacarose; ou aplique o balanceamento da Bancada, que já considera a fruta medida.</div></div></div>`:''}`
- :'<p class="muted">Nenhuma fruta na receita. Polpas e sucos do banco aparecem aqui automaticamente.</p>'}
+ return`<details class="card dcard" id="brixCard"${dOpen('brixCard',U.brixOpen||meas)}><summary><h2 style="margin:0">Brix da fruta desta safra</h2><span class="chip${meas?' ok':''}">${meas?'medido':'tabela'}</span></summary>
+ <p class="note" style="margin:8px 0 4px">A doçura de cada safra varia. Meça o °Brix da polpa no refratômetro e digite ao lado: açúcares, água e a receita inteira são recalculados.</p>
+ <div class="bxlist">${fr.map(r=>{const i=ING_BY[r.id],b=S.brix[r.id];const has=b!=null&&b!=='';const d=has?(+b-i.brix):0;const dg=r.g*.9*d/100;
+  return`<div class="bxrow"><div class="bxn"><b>${esc(i.n)}</b><small>${f0(r.g)} g · tabela ${fT(i.brix)} °Bx${has?` · <span class="${d>0?'c-gold':d<0?'c-crit':''}">${dg>=0?'+':''}${f1(dg)} g de açúcar no lote</span>`:''}</small></div>
+   <div class="bxin"><input type="number" inputmode="decimal" id="bx-${r.id}" data-i="brix" data-id="${r.id}" value="${has?esc(b):''}" placeholder="${fT(i.brix)}" step=".1" min="1" max="85" aria-label="Brix medido de ${esc(i.n)}"><span>°Bx</span>${has?`<button class="btn sm ghost" data-a="brixReset" data-v="${r.id}" aria-label="Voltar ao valor de tabela">Tabela</button>`:''}</div></div>`;}).join('')}</div>
+ ${Math.abs(dPod)>.5?`<div class="find" style="border:0;padding-bottom:0"><div class="bar ${dPod>0?'warn':'info'}"></div><div><h3>Compensação da safra</h3><p>A fruta medida traz ${dPod>0?'+':''}${f0(dPod)} g de doçura equivalente e ${dPac>0?'+':''}${f0(dPac)} de PAC em relação à tabela.</p><div class="fix"><b>Solução</b>Para manter a receita original, ${dPod>0?'retire':'acrescente'} ≈ ${f0(Math.abs(dPod))} g de sacarose; ou aplique o balanceamento ao lado, que já considera a fruta medida.</div></div></div>`:''}
 </details>`;}
 function brixMixCards(m){if(m.empty)return'';return`<div class="g2">
   <div class="card"><h2>Brix estimado da mistura</h2><div class="big c-ice">${m.empty?'—':f1(m.brixMix)}<small class="muted" style="font-size:14px"> °Bx</small></div>
@@ -3867,18 +3896,45 @@ function compAnalysis(m){const comps=S.comps||[];const res=comps.map(c=>{const s
  const mix=(fn)=>fb*fn(m)+res.reduce((s,r)=>s+(r.m.empty?0:clamp(+r.c.pct||0,0,60)/100*fn(r.m)),0);
  const al=new Set(m.A.al);res.forEach(r=>{if(!r.m.empty)r.m.A.al.forEach(a=>al.add(a));});
  return{res,pTot,fb,tot:{fat:mix(x=>x.fat),swt:mix(x=>x.swt),prot:mix(x=>x.prot),sol:mix(x=>x.sol),kcal:mix(x=>x.nut.kcal),sat:mix(x=>x.nut.sat),add:mix(x=>x.nut.add),costKg:mix(x=>x.costKg||0)},al};}
+/* v17.8 · ponto de servir do produto montado (base + variegato/calda + pedaços).
+   A colherada é dura pelo gelo: soma-se o gelo de cada fase pela sua própria curva de congelamento, ponderado pela água que ela traz.
+   Crocantes quase não têm água: não mudam esse gelo, mas endurecem a colherada (aviso qualitativo). Alvo: o mesmo % de água congelada
+   que a base sozinha tem no seu ponto ideal. Modelo de fases separadas (sem migração de água/açúcar entre elas, que acontece com os dias). */
+function compServe(m){if(!m||m.empty)return null;const C=(S.comps||[]).filter(c=>(+c.pct||0)>0&&(c.recipe||[]).length);if(!C.length)return null;
+ const pT=C.reduce((s,c)=>s+clamp(+c.pct||0,0,60),0);const ph=[{n:'Base',kind:'base',w:Math.max(0,1-pT/100),m}];
+ C.forEach(c=>{const cm=analyze(compSt(c));if(!cm.empty)ph.push({n:c.name||COMP_KINDS[c.kind],kind:c.kind,w:clamp(+c.pct||0,0,60)/100,m:cm});});
+ const F=T=>{let a=0,b=0;ph.forEach(p=>{const wat=p.w*(p.m.wat/100);a+=wat*p.m.fz(T);b+=wat;});return b>0?a/b:0;};
+ const ref=m.fz(m.serveT);let lo=-40,hi=-1;if(F(hi)>ref)return{ph,T:hi,d:hi-m.serveT,ref,F,pT};if(F(lo)<ref)return{ph,T:lo,d:lo-m.serveT,ref,F,pT};
+ for(let i=0;i<40;i++){const mid=(lo+hi)/2;if(F(mid)>ref)lo=mid;else hi=mid;}const T=(lo+hi)/2;
+ const croc=C.filter(c=>c.kind==='crocante').reduce((s,c)=>s+clamp(+c.pct||0,0,60),0);
+ return{ph,T,d:T-m.serveT,ref,F,pT,croc,fzVit:F(+S.vit)};}
+function compServeCard(m,compact){const R=compServe(m);if(!R)return'';const pote=S.proc.serveFrom==='pote';const sh=R.d;
+ const lbl=Math.abs(sh)<.15?'igual ao da base':(sh>0?'mais quente':'mais frio');
+ return`<div class="card${compact?' flat':''}"><h2>Ponto de servir do produto montado</h2>
+  <div class="row" style="gap:18px;align-items:baseline;flex-wrap:wrap"><div><span class="lbl">Base sozinha</span><div class="big mono" style="font-size:22px">${f1(m.serveT)} °C</div></div><div><span class="lbl">Com ${f0(R.pT)}% de componentes</span><div class="big mono c-ice" style="font-size:22px">${f1(R.T)} °C</div></div><div><span class="lbl">Diferença</span><div class="big mono ${Math.abs(sh)>=.5?'c-warn':'c-ok'}" style="font-size:22px">${sh>=0?'+':''}${f1(sh)} °C</div><small class="muted">${lbl}</small></div></div>
+  ${compact?'':`<div class="tw" style="margin-top:10px"><table class="tbl"><thead><tr><th>Fase</th><th class="r">% do produto</th><th class="r">Água</th><th class="r">Congelada a ${fT(+S.vit)}°</th></tr></thead><tbody>${R.ph.map(p=>`<tr><td>${esc(p.n)}</td><td class="r mono">${f0(p.w*100)}%</td><td class="r mono">${f0(p.m.wat)}%</td><td class="r mono">${p.m.wat<5?'—':f0(p.m.fz(+S.vit))+'%'}</td></tr>`).join('')}</tbody></table></div>`}
+  ${pote?'':`<label class="row" style="gap:8px;margin-top:12px;font-size:13.5px"><input type="checkbox" id="compBal" data-c="compBal"${S.compBal?' checked':''}> Balancear a base para o produto montado</label>
+  <p class="note" style="margin:4px 0 0">${S.compBal?'Ligado: o balanceamento ajusta a base para o conjunto ficar no ponto a '+fT(+S.vit)+' °C (a base sozinha fica '+(sh<0?'mais dura':'mais macia')+').':'Desligado: a base continua balanceada sozinha. Alternativa: servir com a vitrine a '+f1(+S.vit+sh)+' °C.'}</p>`}
+  <p class="note" style="margin:8px 0 0">${pote?'Servindo do pote, o balanceamento segue o tempo de espera; use esta diferença como referência.':''}${R.croc>0?' Crocantes ('+f0(R.croc)+'%) não mudam o gelo, mas deixam a colherada mais resistente: na dúvida, sirva alguns décimos mais quente e confirme no teste de textura do lote.':''} Estimativa por fases separadas; com os dias a água e o açúcar migram entre elas.</p></div>`;}
+/* atalho na Bancada: componentes do produto e o efeito no ponto de servir */
+function compBenchCard(m){if(m.empty||!can.edit())return'';const C=(S.comps||[]);const R=compServe(m);
+ return`<div class="card"><div class="row"><h2 style="margin:0">Componentes do produto</h2><span class="sp"></span>${C.length?'<button class="btn sm" data-a="go" data-v="componentes">Editar</button>':''}</div>
+  ${C.length?`<div class="chips" style="margin:10px 0 0">${C.map(c=>`<span class="tag">${esc(c.name)} · ${f0(+c.pct||0)}%</span>`).join('')}</div>
+   ${R?`<p class="t2" style="margin:10px 0 0">Ponto de servir do produto montado: <b class="mono c-ice">${f1(R.T)} °C</b> (base sozinha ${f1(m.serveT)} °C, ${R.d>=0?'+':''}${f1(R.d)} °C).${S.compBal&&S.proc.serveFrom!=='pote'?' O balanceamento já mira o produto montado.':''}</p>`:''}`
+  :`<p class="note" style="margin:6px 0 10px">Variegato/calda, crocante ou pedaços de fruta mudam a dureza da colherada e o ponto de servir. Inclua para o app balancear o produto montado.</p>
+   <div class="row" style="gap:6px"><button class="btn sm" data-a="compAdd" data-v="variegato">+ Variegato / calda</button><button class="btn sm" data-a="compAdd" data-v="crocante">+ Crocante</button><button class="btn sm" data-a="compAdd" data-v="fruta">+ Pedaços de fruta</button></div>`}</div>`;}
 function pgComponentes(m){
  const C=S.comps||[];const R=m.empty?null:compAnalysis(m);
  const sev=s=>({crit:'c-crit',warn:'c-warn',info:'c-ice',ok:'c-ok'})[s];
  return`<div class="pg"><div><h1>Componentes</h1><p class="lead">Variegatos, crocantes e pedaços de fruta são balanceados à parte: cada um precisa ficar macio, seco ou na mesma dureza da base. Informe quanto cada um representa do produto final.</p></div>
- ${C.map((c,k)=>{const r=R&&R.res[k];const cm=r&&r.m;return`<div class="card"><div class="row"><input type="text" id="cp-n${k}" data-i="comp" data-k="${k}" data-f="name" value="${esc(c.name)}" style="max-width:260px;font-weight:600" aria-label="Nome do componente">
-   <select id="cp-k${k}" data-c="comp" data-k="${k}" data-f="kind" style="max-width:200px" aria-label="Tipo">${Object.entries(COMP_KINDS).map(([v,n])=>`<option value="${v}"${v===c.kind?' selected':''}>${n}</option>`).join('')}</select>
-   <label class="row" style="gap:6px"><input type="number" id="cp-p${k}" data-i="comp" data-k="${k}" data-f="pct" value="${c.pct}" min="0" max="60" step="1" style="width:80px" aria-label="Porcentagem do produto final"><span class="muted">% do produto</span></label>
-   ${c.kind==='variegato'?`<label class="row" style="gap:6px"><input type="number" id="cp-l${k}" data-i="comp" data-k="${k}" data-f="loss" value="${c.loss||0}" min="0" max="60" step="1" style="width:70px" aria-label="Perda no cozimento"><span class="muted">% perda no cozimento</span></label>`:''}
-   <span class="sp"></span><button class="btn del" data-a="compRm" data-v="${k}" aria-label="Remover componente">✕</button></div>
-  <div style="margin-top:10px;display:flex;flex-direction:column;gap:8px">${(c.recipe||[]).map((x,j)=>`<div class="row"><select id="cp-i${k}-${j}" data-c="compIng" data-k="${k}" data-j="${j}" style="flex:1;min-width:180px" aria-label="Ingrediente">${ingOpts(x.id)}</select><input type="number" id="cp-g${k}-${j}" data-i="compG" data-k="${k}" data-j="${j}" value="${x.g}" min="0" step="1" style="width:100px" aria-label="Gramas"><span class="muted">g</span><button class="btn del" data-a="compIngRm" data-v="${k}|${j}" aria-label="Remover">✕</button></div>`).join('')}
+ ${C.map((c,k)=>{const r=R&&R.res[k];const cm=r&&r.m;return`<div class="card"><div class="cphead"><input type="text" id="cp-n${k}" data-i="comp" data-k="${k}" data-f="name" value="${esc(c.name)}" style="font-weight:600" aria-label="Nome do componente"><button class="btn del" data-a="compRm" data-v="${k}" aria-label="Remover componente">✕</button></div>
+  <div class="cpmeta"><select id="cp-k${k}" data-c="comp" data-k="${k}" data-f="kind" aria-label="Tipo">${Object.entries(COMP_KINDS).map(([v,n])=>`<option value="${v}"${v===c.kind?' selected':''}>${n}</option>`).join('')}</select>
+   <label class="cpnum"><input type="number" inputmode="decimal" id="cp-p${k}" data-i="comp" data-k="${k}" data-f="pct" value="${c.pct}" min="0" max="60" step="1" aria-label="Porcentagem do produto final"><span>% do produto</span></label>
+   ${c.kind==='variegato'?`<label class="cpnum"><input type="number" inputmode="decimal" id="cp-l${k}" data-i="comp" data-k="${k}" data-f="loss" value="${c.loss||0}" min="0" max="60" step="1" aria-label="Perda no cozimento"><span>% perda no cozimento</span></label>`:''}</div>
+  <div class="cplist">${(c.recipe||[]).map((x,j)=>`<div class="cpi"><select id="cp-i${k}-${j}" data-c="compIng" data-k="${k}" data-j="${j}" aria-label="Ingrediente">${ingOpts(x.id)}</select><label class="cpg"><input type="number" inputmode="decimal" id="cp-g${k}-${j}" data-i="compG" data-k="${k}" data-j="${j}" value="${x.g}" min="0" step="1" aria-label="Gramas"><span>g</span></label><button class="btn del" data-a="compIngRm" data-v="${k}|${j}" aria-label="Remover">✕</button></div>`).join('')}
    <div><button class="btn sm" data-a="compIngAdd" data-v="${k}">+ Ingrediente</button></div></div>
   ${cm&&!cm.empty?`<div class="row note" style="gap:14px;margin:12px 0 4px">${[['Água',f1(cm.wat)+'%'],['Gordura',f1(cm.fat)+'%'],['Açúcares',f1(cm.swt)+'%'],['Congelada a '+fT(S.vit)+'°',f0(cm.fzVit)+'%'],['Brix',f0(cm.brixMix)]].map(([a,b])=>`<span>${a} <b class="mono" style="color:var(--t1)">${b}</b></span>`).join('')}</div>${r.notes.map(([s,t])=>`<p class="${sev(s)}" style="margin:6px 0 0;font-size:13.5px">${esc(t)}</p>`).join('')}`:''}</div>`;}).join('')}
+ ${m.empty?'':compServeCard(m)}
  <div class="row"><button class="btn pri" data-a="compAdd" data-v="variegato">+ Variegato</button><button class="btn" data-a="compAdd" data-v="crocante">+ Crocante</button><button class="btn" data-a="compAdd" data-v="fruta">+ Pedaços de fruta</button></div>
  ${R&&C.length?`<div class="card"><h2>Produto final (base ${f0(R.fb*100)}% + componentes ${f0(R.pTot)}%)</h2>
   <div class="tw"><table class="tbl"><thead><tr><th>Por 100 g</th><th class="r">Base</th><th class="r">Produto final</th></tr></thead><tbody>
@@ -4042,7 +4098,7 @@ function pgSazonal(){const mo=new Date().getMonth()+1;const sel=+U.sazM||mo;cons
 const V13_ACT={
  liveApply:()=>{const r=LIVE.res;if(!r||r==='pending'||!r.ok||LIVE.key!==liveKey())return;S.recipe=JSON.parse(JSON.stringify(r.newRecipe));U.bal=null;render();toast('Melhor balanceamento aplicado');},
  applyEquip:v=>{const E=EQUIP[v];if(!E)return;Object.assign(S.proc,E.proc);U.bal=null;render();toast('Conjunto aplicado: '+E.n);},
- compAdd:v=>{(S.comps=S.comps||[]).push({name:COMP_KINDS[v]||'Componente',kind:v,pct:10,recipe:v==='crocante'?[{id:'choc70',g:90},{id:'mcacau',g:10}]:v==='fruta'?[{id:'manga',g:100}]:[{id:'framboesa',g:60},{id:'sacarose',g:30},{id:'dextrose',g:10}],loss:v==='variegato'?10:0});render();},
+ compAdd:v=>{(S.comps=S.comps||[]).push({name:COMP_KINDS[v]||'Componente',kind:v,pct:10,recipe:v==='crocante'?[{id:'choc70',g:90},{id:'mcacau',g:10}]:v==='fruta'?[{id:'manga',g:100}]:[{id:'framboesa',g:60},{id:'sacarose',g:30},{id:'dextrose',g:10}],loss:v==='variegato'?10:0});if(S.page!=='componentes'){S.page='componentes';scrollTopAll();}render();},
  compRm:v=>{S.comps.splice(+v,1);render();},
  compIngAdd:v=>{S.comps[+v].recipe.push({id:'sacarose',g:10});render();},
  compIngRm:v=>{const[k,j]=v.split('|');S.comps[+k].recipe.splice(+j,1);render();},
@@ -4131,8 +4187,8 @@ function equipCard(m){const cur=S.proc.equip||'';const E=EQUIP[cur];
    Recalcula a proposta de açúcares meio segundo depois da última mudança (sem pesar na digitação) para o modo atual:
    vitrine, freezer ou em casa (espera no pote). */
 const LIVE={key:null,res:null,pending:null,t:0};
-function liveKey(){try{return JSON.stringify([S.tipo,S.vit,S.recipe,S.proc,S.brix,CAL.on?CAL.ver:-1,ING_VER]);}catch(e){return null;}}
-function liveRun(){try{return balanceBest(S);}catch(e){return{ok:false,msg:'Não foi possível calcular agora.'};}}
+function liveKey(){try{return JSON.stringify([S.tipo,S.vit,S.recipe,S.proc,S.brix,S.comps||[],!!S.compBal,CAL.on?CAL.ver:-1,ING_VER]);}catch(e){return null;}}
+function liveRun(){try{let st=S;if(S.compBal&&S.proc.serveFrom!=='pote'){const R=compServe(analyze(S));if(R&&Math.abs(R.d)>=.1){st={...S,vit:Math.round((+S.vit-R.d)*10)/10};const r=balanceBest(st);if(r)r.compShift=R.d;return r;}}return balanceBest(st);}catch(e){return{ok:false,msg:'Não foi possível calcular agora.'};}}
 function liveBalance(){if(!(S.recipe||[]).length)return null;const key=liveKey();if(!key)return null;
  if(LIVE.key===key)return LIVE.res;
  if(typeof requestAnimationFrame!=='function'){LIVE.res=liveRun();LIVE.key=key;return LIVE.res;}
@@ -4145,7 +4201,7 @@ function liveBalCard(m){if(m.empty||!can.edit())return'';const r=liveBalance();i
  const ch=r.prop.map((p,k)=>({id:p.id,a:r.cur[k],b:p.g})).filter(x=>Math.abs(x.b-x.a)>=1);const m1=r.m1;
  if(!ch.length)return`<div class="card"><h2>Melhor balanceamento agora</h2><p class="c-ok" style="margin:0">Os açúcares já estão no melhor ponto para ${alvo}.</p></div>`;
  return`<div class="card"><div class="row"><h2 style="margin:0">Melhor balanceamento agora</h2><span class="sp"></span><button class="btn sm okb" data-a="liveApply">Aplicar</button></div>
-  <p class="note" style="margin:6px 0 8px">Para ${alvo}, mantendo o resto da receita:</p>
+  <p class="note" style="margin:6px 0 8px">Para ${alvo}${r.compShift!=null?' com o produto montado (componentes: base mira '+fT(Math.round((+S.vit-r.compShift)*10)/10)+' °C)':''}, mantendo o resto da receita:</p>
   ${ch.map(x=>`<div class="kv"><span>${esc(ING_BY[x.id]?ING_BY[x.id].n:x.id)}</span><span>${f0(x.a)} → <b class="c-ice">${f0(x.b)} g</b> <span class="muted">(${x.b-x.a>=0?'+':''}${f0(x.b-x.a)})</span></span></div>`).join('')}
   <p class="note" style="margin:8px 0 0">Resultado: ${f0(m1.fzVit)}% congelada · doçura ${f1(m1.pod)}% · sólidos ${f1(m1.sol)}%${pote&&r.poteVit!=null?' · colher a '+f1(r.poteVit)+' °C':''}.${r.note?' '+esc(r.note):''}</p></div>`;}
 
@@ -4360,7 +4416,7 @@ function flowState(L,now){now=now||Date.now();const f=L.flow,k=f.stage,tg=(f.tg|
  let lvl='run';if(tg.crit!=null&&el>=tg.crit)lvl='crit';else if(tg.late!=null&&el>=tg.late)lvl='late';else if(tg.t!=null&&el>=tg.t)lvl='ready';
  if(k==='store')lvl=el>=tg.crit?'crit':el>=tg.late?'late':'ready';
  const pct=tg.t?clamp(el/tg.t,0,1):0;const eta=tg.t!=null?tg.t-el:null;return{k,el,tg,lvl,pct,eta};}
-const fDur=min=>{min=Math.max(0,min);if(min<1)return'agora';if(min<60)return f0(min)+' min';if(min<1440){const h=Math.floor(min/60),mm=Math.round(min%60);return h+' h'+(mm?' '+String(mm).padStart(2,'0'):'');}return fT(Math.round(min/144)/10)+' d';};
+const fDur=min=>{min=Math.max(0,min);if(min<1)return'agora';if(min<60)return f0(min)+' min';if(min<1440){const t=Math.round(min),h=Math.floor(t/60),mm=t%60;return h+' h'+(mm?' '+String(mm).padStart(2,'0'):'');}return fT(Math.round(min/144)/10)+' d';};
 function flowMsg(L,s){const k=s.k,tg=s.tg||{};
  if(k==='mat'){if(s.lvl==='crit')return'Passou do máximo (qualidade/segurança): avalie antes de usar';if(s.lvl==='late')return'No ponto há '+fDur(s.el-tg.t)+' · ganho já mínimo';if(s.lvl==='ready')return'Pronta para a mantecadora';return'Pronta em '+fDur(s.eta)+(tg.min!=null&&s.el>=tg.min?' · já utilizável':'');}
  if(k==='cool'){if(s.lvl==='crit')return'Resfriamento acima de 120 min: fora do APPCC';if(s.lvl==='late')return'Resfriamento lento: use banho de gelo';return s.lvl==='ready'?'Meça: abaixo de 6 °C, vá para a geladeira':'Meta '+fDur(tg.t)+' · faltam '+fDur(s.eta);}
@@ -4371,13 +4427,34 @@ function flowMsg(L,s){const k=s.k,tg=s.tg||{};
  if(k==='prep')return'Em preparo há '+fDur(s.el);return'';}
 function flowRing(s,col){const r=17,c=2*Math.PI*r;const p=s.k==='store'?clamp(1-s.el/(s.tg.t||1),0,1):s.pct;const cc={run:col,ready:'var(--ok)',late:'var(--warn)',crit:'var(--crit)',idle:'var(--t3)'}[s.lvl];
  return`<svg class="fring" viewBox="0 0 44 44" aria-hidden="true"><circle cx="22" cy="22" r="${r}" fill="none" stroke="var(--line2)" stroke-width="4"/><circle cx="22" cy="22" r="${r}" fill="none" stroke="${cc}" stroke-width="4" stroke-linecap="round" stroke-dasharray="${(p*c).toFixed(1)} ${c.toFixed(1)}" transform="rotate(-90 22 22)"/>${s.lvl==='ready'?'<path d="M15 22.5l4.5 4.5 9-10" fill="none" stroke="var(--ok)" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>':`<text x="22" y="26" text-anchor="middle" font-size="10.5" fill="var(--t1)" font-family="var(--fm)">${s.k==='store'?f0(p*100):f0(s.pct*100)}%</text>`}</svg>`;}
-function flowCard(L,now){const f=L.flow,s=flowState(L,now),seq=flowSeq(L),i=seq.indexOf(f.stage),nx=seq[i+1]||'done';const open=U.flowOpen===L.id;
- return`<article class="fcard lvl-${s.lvl}${open?' open':''}" style="--fc:${f.color||'#7dd3fc'}">
-  <div class="fhead">${flowRing(s,f.color||'#7dd3fc')}<div class="ftit"><button class="fname" data-a="flowOpen" data-v="${L.id}">${esc(f.label||L.code)}</button><small>${esc(L.name||'')} · ${fT(f.kg||0)} kg · <span class="mono">${esc(L.code)}</span></small></div></div>
-  <p class="fmsg">${esc(flowMsg(L,s))}</p>
-  <div class="fmeta"><span>${FLOW_N[f.stage]} há ${fDur(s.el)}</span>${f.owner?`<span class="fown" title="${esc(f.owner)}">${esc(f.owner.split('@')[0].slice(0,2).toUpperCase())}</span>`:''}</div>
-  ${FLOW_ACTIVE.includes(f.stage)?`<div class="row" style="gap:6px"><button class="btn sm ${s.lvl==='ready'||s.lvl==='late'?'okb':''}" data-a="flowNext" data-v="${L.id}">${nx==='done'?'Concluir (servido)':'→ '+FLOW_N[nx]}</button></div>`:''}
+/* ---------- v17.8 · cartão da calda: etapa atual em destaque, etapas concluídas com check, cronômetro grande ---------- */
+const FLOW_SH={prep:'Preparo',past:'Pasteur.',cool:'Resfriar',mat:'Maturação',mant:'Mantecar',hard:'Endurecer',store:'Freezer'};
+const hm=min=>{min=Math.max(0,Math.round(min));const h=Math.floor(min/60),mm=min%60;return h?h+':'+String(mm).padStart(2,'0'):mm+' min';};
+function flowTimer(s,col){const r=40,c=2*Math.PI*r,tg=s.tg||{};const store=s.k==='store',prep=s.k==='prep';
+ const p=store?clamp(1-s.el/(tg.t||1),0,1):prep?0:s.pct;const cc={run:col,ready:'var(--ok)',late:'var(--warn)',crit:'var(--crit)',idle:'var(--t3)'}[s.lvl];
+ let big,sub;if(prep){big=hm(s.el);sub='decorridos';}
+ else if(store){big=fDur(tg.t-s.el);sub='de validade';}
+ else if(s.lvl==='run'&&s.eta!=null){big=hm(s.eta);sub=s.k==='mat'?'para o ideal':'restantes';}
+ else if(s.lvl==='ready'){big='✓';sub='no ponto';}
+ else{big='+'+hm(s.el-(tg.t||0));sub=s.lvl==='crit'?'fora do limite':'além do ideal';}
+ return`<div class="ftimer lvl-${s.lvl}"><svg viewBox="0 0 96 96" aria-hidden="true"><circle cx="48" cy="48" r="${r}" fill="none" stroke="var(--line2)" stroke-width="6"/><circle cx="48" cy="48" r="${r}" fill="none" stroke="${cc}" stroke-width="6" stroke-linecap="round" stroke-dasharray="${(p*c).toFixed(1)} ${c.toFixed(1)}" transform="rotate(-90 48 48)"/></svg><div class="ftv"><b>${big}</b><small>${sub}</small></div></div>`;}
+/* régua da maturação: utilizável → ideal → não compensa → máximo, com o "agora" */
+function matTrack(s){const tg=s.tg||{};if(s.k!=='mat'||!tg.t)return'';const end=Math.max(tg.late||tg.t*1.3,tg.hi||0,s.el)*1.12;const x=v=>clamp(v/end*100,0,100);
+ const lo=tg.lo||tg.t*.9,hi=tg.hi||tg.t*1.1,mn=tg.min!=null?tg.min:lo*.4,late=tg.late||hi*1.2;
+ const seg=(a,b,cls)=>`<i class="${cls}" style="left:${x(a)}%;width:${Math.max(.5,x(b)-x(a))}%"></i>`;
+ return`<div class="mtrack" role="img" aria-label="Maturação: ${fDur(s.el)} de ${fDur(tg.t)} ideais">${seg(0,mn,'m0')}${seg(mn,lo,'m1')}${seg(lo,hi,'m2')}${seg(hi,late,'m3')}${seg(late,end,'m4')}<b style="left:${x(s.el)}%"></b></div>
+  <div class="mlegend"><span>utilizável ${fDur(mn)}</span><span class="c-ok">ideal ${fDur(lo)}–${fDur(hi)}</span><span>máx. ${fDur(tg.crit||late)}</span></div>`;}
+function flowSteps(L){const seq=flowSeq(L),ci=seq.indexOf(L.flow.stage);const done=L.flow.stage==='done';
+ return`<ol class="fsteps" style="--n:${seq.length}">${seq.map((k,i)=>{const st=done||i<ci?'done':i===ci?'cur':'';return`<li class="${st}"><i>${st==='done'?'<svg viewBox="0 0 12 12" aria-hidden="true"><path d="M2.5 6.3l2.3 2.3 4.7-5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>':''}</i><span>${FLOW_SH[k]||FLOW_N[k]}</span></li>`;}).join('')}</ol>`;}
+function flowCard(L,now){const f=L.flow,s=flowState(L,now),seq=flowSeq(L),i=seq.indexOf(f.stage),nx=seq[i+1]||'done';const open=U.flowOpen===L.id;const col=f.color||'#7dd3fc';
+ const since=new Date(flowSince(L)).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});const tg=s.tg||{};
+ return`<article class="fcard lvl-${s.lvl}${open?' open':''}" style="--fc:${col}">
+  <div class="fhead"><span class="fdot"></span><div class="ftit"><button class="fname" data-a="flowOpen" data-v="${L.id}" aria-expanded="${open}">${esc(f.label||L.code)}</button><small>${esc(L.name||'')} · ${fT(f.kg||0)} kg · <span class="mono">${esc(L.code)}</span></small></div>${f.owner?`<span class="fown" title="${esc(f.owner)}">${esc(f.owner.split('@')[0].slice(0,2).toUpperCase())}</span>`:''}</div>
+  ${flowSteps(L)}
+  <div class="fbody">${flowTimer(s,col)}<div class="finfo"><div class="fstage">${FLOW_N[f.stage]}</div><p class="fmsg">${esc(flowMsg(L,s))}</p><div class="fsub">desde ${since}${tg.t&&f.stage!=='store'&&f.stage!=='prep'?' · alvo '+fDur(tg.t):''}</div>${matTrack(s)}</div></div>
+  ${FLOW_ACTIVE.includes(f.stage)?`<div class="fact"><button class="btn ${s.lvl==='ready'||s.lvl==='late'?'okb':'pri'}" data-a="flowNext" data-v="${L.id}">${nx==='done'?'Concluir (servido)':'Concluir etapa → '+FLOW_N[nx]}</button><button class="btn sm ghost" data-a="flowOpen" data-v="${L.id}">${open?'Fechar':'Detalhes'}</button></div>`:''}
   ${open?flowDetail(L,s):''}</article>`;}
+const FLOW_PRI={crit:0,late:1,ready:2,run:3,idle:4};
 function flowDetail(L,s){const f=L.flow,me=L.meas||{};const tg=f.tg||{};
  const inp=(k,lab,ph)=>`<label class="field"><span class="lbl">${lab}</span><input type="number" id="fm-${L.id}-${k}" data-i="flowMeas" data-id="${L.id}" data-k="${k}" value="${me[k]!=null?esc(String(me[k])):''}" step=".1" placeholder="${ph||''}"></label>`;
  const m=f.stage==='past'?inp('pastT','Temperatura medida (°C)','85'):f.stage==='mat'?inp('matT','Geladeira medida (°C)',tg.mat&&tg.mat.T!=null?fT(Math.round(tg.mat.T*10)/10):'4'):f.stage==='mant'?inp('drawT','Saída medida (°C)','−9'):'';
@@ -4412,15 +4489,15 @@ function pgLinha(m){const now=Date.now();const all=flowLots();const act=all.filt
  const view=U.flowView||'quadro';const cols=[['prep','Preparo'],['heat','Pasteurização e resfriamento'],['mat','Maturação'],['mant','Mantecadora'],['hard','Endurecendo'],['store','No freezer']];
  const inCol=(L,c)=>c==='heat'?['past','cool'].includes(L.flow.stage):L.flow.stage===c;
  const hist=all.filter(L=>['done','disc'].includes(L.flow.stage)).slice(0,8);
- const kpi=(n,v,sub,cls)=>`<div class="fkpi ${cls||''}"><span>${n}</span><b>${v}</b><small>${sub||''}</small></div>`;
+ const kpi=(n,v,sub,cls)=>`<div class="fkpi ${cls||''}${v&&v!=='0'&&v!==0?' on':''}"><b>${v}</b><span>${n}${sub?' · '+sub:''}</span></div>`;
  const notif=typeof Notification!=='undefined'?Notification.permission:'na';
  return`<div class="pg"><div class="row" style="align-items:flex-end"><div style="flex:1;min-width:240px"><h1>Produção ao vivo</h1><p class="lead">Cada calda com cronômetro e alvo calculado pelo motor. A equipe inteira vê o que está maturando, o que está na mantecadora e o que já está no freezer.</p></div>
   <div class="row" style="gap:8px">${notif==='default'?'<button class="btn sm" data-a="flowNotify">Ativar avisos</button>':notif==='granted'?'<span class="chip ok">Avisos ativos</span>':''}${can.edit()||ROLE==='sous'?`<button class="btn pri" data-a="flowStart"${m.empty?' disabled':''}>+ Iniciar calda: ${esc(S.name||'bancada')}</button>`:''}</div></div>
  <div class="fkpis">${kpi('Maturando',cnt('mat'),rd?rd+' pronta'+(rd>1?'s':''):'')}${kpi('Mantecadora',cnt('mant'))}${kpi('Endurecendo',cnt('hard'))}${kpi('No freezer',cnt('store'),act.filter(L=>L.flow.stage==='store').reduce((a,L)=>a+(+L.flow.kg||0),0).toFixed(1).replace('.',',')+' kg')}${kpi('Atenção',al,al?'ver cartões':'tudo no prazo',al?'warn':'')}${kpi('Hoje',fT(Math.round(todayKg*10)/10)+' kg','mantecados')}</div>
- <div class="chips" style="margin:4px 0 12px">${[['quadro','Quadro'],['tempo','Linha do tempo']].map(([k,n])=>`<button data-a="flowView" data-v="${k}" aria-pressed="${view===k}">${n}</button>`).join('')}</div>
+ <div class="seg" role="tablist" aria-label="Visualização" style="margin:0 0 14px">${[['quadro','Caldas'],['tempo','Linha do tempo']].map(([k,n])=>`<button role="tab" data-a="flowView" data-v="${k}" aria-selected="${view===k}">${n}</button>`).join('')}</div>
  ${!act.length?`<div class="card"><p class="muted" style="margin:0">Nenhuma calda em produção. Escolha uma receita aprovada abaixo (Produzir) ou abra uma receita na Bancada e toque em <b>Iniciar calda</b>: o app passa a cronometrar cada etapa e avisa quando a maturação chegar ao ponto.</p></div>`:
   view==='tempo'?`<div class="card" style="overflow-x:auto">${flowGantt(act,now)}<p class="note">Barras cheias: o que já aconteceu. Tracejado: previsão pelos alvos do motor. Ponto verde: chegada prevista ao freezer.</p></div>`:
-  `<div class="fboard">${cols.map(([c,n])=>{const L=act.filter(x=>inCol(x,c));return`<section class="fcol"><h3>${n} <span class="muted">${L.length||''}</span></h3>${L.map(x=>flowCard(x,now)).join('')||'<p class="fempty">—</p>'}</section>`;}).join('')}</div>`}
+  `<div class="flist">${act.map((L,i)=>({L,s:st[i]})).sort((a,b)=>(FLOW_PRI[a.s.lvl]-FLOW_PRI[b.s.lvl])||((a.s.eta==null?1e9:a.s.eta)-(b.s.eta==null?1e9:b.s.eta))).map(x=>flowCard(x.L,now)).join('')}</div>`}
  ${hist.length?`<div class="card"><h2>Recentes</h2>${hist.map(L=>`<div class="kv"><span><i class="sw" style="background:${L.flow.color}"></i>${esc(L.flow.label)} · ${esc(L.name||'')}</span><span class="muted" style="font-size:12px">${FLOW_N[L.flow.stage]} · ${new Date(flowSince(L)).toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'})}</span></div>`).join('')}</div>`:''}
  <p class="note">Os avisos aparecem com o app aberto (inclusive em outra aba ou com a tela do app em segundo plano). Os tempos medidos pelo fluxo (resfriamento, maturação) entram sozinhos no registro do lote para o APPCC e para a calibração.</p></div>`;}
 /* ---------- avisos: verifica a cada 30 s e quando o app volta à frente ---------- */
@@ -4833,7 +4910,7 @@ const VIEW={execucao:pgExecucao,equipe:pgEquipe,bancada:pgBancada,creator:pgCrea
 /* ---------- v17.7 · páginas-eixo: cada tarefa num lugar só ---------- */
 /* Produção ao vivo também é onde se escolhe a receita aprovada (antes: página "Em execução") */
 function pgProducaoViva(m){const h=pgLinha(m);const act=flowLots().some(L=>FLOW_ACTIVE.includes(L.flow.stage));const k=h.lastIndexOf('</div>');
- const sec=`<details class="card dcard" id="execSec"${!act||ROLE==='sous'?' open':''}><summary><h2 style="margin:0">Receitas aprovadas</h2><span class="chip">${EXEC.length}</span></summary>
+ const sec=`<details class="card dcard" id="execSec"${dOpen('execSec',!act||ROLE==='sous')}><summary><h2 style="margin:0">Receitas aprovadas</h2><span class="chip">${EXEC.length}</span></summary>
   <p class="note" style="margin:8px 0 12px">${ROLE==='sous'?'As receitas liberadas para produção. Toque em Produzir para abrir a ficha com a pesagem, o processo e o cronômetro.':'A versão aprovada de cada receita é a que a equipe produz, sem custos e sem edição. Aprove na Bancada.'}</p>${execList()}</details>`;
  return h.slice(0,k)+sec+h.slice(k);}
 function hubPage(pg,title,lead,secs,def,render){const t=subOf(pg,def);const E=embedPg(render(t));
@@ -5024,6 +5101,7 @@ const INP={
 
 /* ---------- MUDANÇAS (data-c, selects/checkboxes/arquivo) ---------- */
 const CHG={
+ compBal:t=>{S.compBal=!!t.checked;},
  defChk:t=>{U.defChk=U.defChk||{};U.defChk[t.dataset.v]=t.checked;},
  tipo:t=>{S.tipo=t.value;U.bal=null;},
  proc:t=>{const k=t.dataset.k;S.proc[k]=t.value;if(k==='pastHoldU'&&t.value==='min'&&S.proc.pastHold>60)S.proc.pastHold=30;},
@@ -5057,6 +5135,7 @@ const denied=()=>toast('Seu perfil não tem acesso a esta função.');
 const NO_UNDO=new Set(['appReload','go','sub','defMode','defSym','defClr','defOpen','defCat','fam','palOpen','palClose','palRun','undo','copy','chk','unchk','libTab','libAuthor','libMore','libTipo','libVitF','simOpen','simClose','cmpToggle','cmpClear','histOpen','lotOpen','crTab','crSub','atGoal','setSw','navTog','toTop','flowOpen','flowView','flowNotify','flowNext','flowBack','flowDisc','flowColor','flowStart','flowLot','procGo','procPlay','atSel','atPick','atCard','atExplore','nxGoal','sazM','del','delNo','meltTimer','panelSet','panelStart','panelNext','panelCancel','panelReveal','panelReset','testRun','syncNow','age','pick']);
 function runAct(k,v,t){if(NO_UNDO.has(k))return ACT[k](v,t);const before=undoSnap();undoMark();const r=ACT[k](v,t);
  if(r&&typeof r.then==='function')return r;if(undoSnap()===before)undoSettle();else if(UNDO_TOAST.has(k))toastUndo();return r;}
+document.addEventListener('toggle',e=>{const d=e.target;if(d&&d.tagName==='DETAILS'&&d.id){U.dopen=U.dopen||{};U.dopen[d.id]=d.open;}},true);
 document.addEventListener('click',e=>{const t=e.target.closest('[data-a]');if(!t)return;e.preventDefault();const k=t.dataset.a;if(!ACT[k])return;if(!can.act(k))return denied();runAct(k,t.dataset.v,t);});
 /* régua do termômetro: tocar ou arrastar muda a vitrine */
 document.addEventListener('pointerdown',e=>{const r=e.target.closest&&e.target.closest('[data-rail]');if(!r||ROLE==='sous')return;e.preventDefault();railStart(r,e);});
