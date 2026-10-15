@@ -424,7 +424,7 @@ body.auth .app{grid-template-columns:minmax(0,1fr);grid-template-areas:"hdr" "ma
 .ftimer{position:relative;width:96px;height:96px;flex:none}.ftimer svg{width:100%;height:100%}
 .ftv{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center}
 .ftv b{font:600 19px/1.1 var(--fm);color:var(--t1)}.ftv small{font-size:10px;color:var(--t3);margin-top:2px;max-width:66%;line-height:1.2}
-.ftimer.lvl-ready .ftv b{color:var(--ok);font-size:26px}.ftimer.lvl-late .ftv b{color:var(--warn)}.ftimer.lvl-crit .ftv b{color:var(--crit)}
+.ftv b.long{font-size:15px}.ftimer.lvl-ready .ftv b{color:var(--ok);font-size:26px}.ftimer.lvl-late .ftv b{color:var(--warn)}.ftimer.lvl-crit .ftv b{color:var(--crit)}
 .finfo{flex:1;min-width:0;display:flex;flex-direction:column;gap:3px}.fstage{font:600 11.5px var(--fb);letter-spacing:.06em;text-transform:uppercase;color:var(--fc)}
 .fsub{font-size:12px;color:var(--t3)}
 .mtrack{position:relative;height:8px;border-radius:99px;background:var(--line);margin-top:10px;overflow:visible}
@@ -433,7 +433,7 @@ body.auth .app{grid-template-columns:minmax(0,1fr);grid-template-areas:"hdr" "ma
 .mlegend{display:flex;justify-content:space-between;gap:6px;font-size:10.5px;color:var(--t3);margin-top:5px;flex-wrap:wrap}
 .fact{display:flex;gap:8px;align-items:center;flex-wrap:wrap}.fact .btn:first-child{flex:1;justify-content:center}
 .fhead{display:flex;gap:10px;align-items:center;padding-left:4px}.fring{width:44px;height:44px;flex:none}
-.ftit{display:flex;flex-direction:column;min-width:0}.fname{all:unset;cursor:pointer;font-weight:650;color:var(--t1);font-size:14px}.fname:focus-visible{outline:2px solid var(--ice);border-radius:4px}
+.ftit{display:flex;flex-direction:column;min-width:0;flex:1}.fname{all:unset;cursor:pointer;font-weight:650;color:var(--t1);font-size:14px}.fname:focus-visible{outline:2px solid var(--ice);border-radius:4px}
 .ftit small{color:var(--t3);font-size:11.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .fmsg{margin:0;font-size:12.5px;color:var(--t2)}.lvl-ready .fmsg{color:var(--ok)}.lvl-late .fmsg{color:var(--warn)}.lvl-crit .fmsg{color:var(--crit)}
 .fmeta{display:flex;justify-content:space-between;align-items:center;font-size:11.5px;color:var(--t3)}
@@ -464,7 +464,7 @@ body.auth .app{grid-template-columns:minmax(0,1fr);grid-template-areas:"hdr" "ma
  main{overflow:visible}
  .setsw.dk{display:none}.setsw.ph{display:inline-flex}
  .rrow{gap:6px}
- #mini{display:block;position:sticky;top:calc(-1 * env(safe-area-inset-top,0px));z-index:30;height:0;overflow:visible}
+ #mini{display:block;position:fixed;top:0;left:0;right:0;z-index:30;height:0;overflow:visible}
  #mini .minib{position:absolute;left:0;right:0;top:0;display:flex;align-items:center;gap:10px;padding:calc(10px + env(safe-area-inset-top,0px)) 16px 10px;border:0;border-bottom:1px solid var(--line);background:#080c14;color:var(--t1);font-size:14px;cursor:pointer;opacity:0;visibility:hidden;transition:opacity .15s ease,visibility 0s linear .15s;text-align:left;-webkit-font-smoothing:antialiased}
  #mini.show .minib{opacity:1;visibility:visible;transition:opacity .15s ease}
  #mini .minib b{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-weight:650}
@@ -2229,7 +2229,7 @@ const isMac=()=>{try{return /Mac|iPhone|iPad/.test(navigator.platform||navigator
 const kbd=k=>`<kbd>${isMac()?'⌘':'Ctrl '}${k}</kbd>`;
 
 /* ---------- marca ---------- */
-const VERSION='v17.8';
+const VERSION='v17.8.1';
 const brandHTML=()=>`<div class="brand"><div class="hex"></div><div><b>Il <span>Fredolin</span></b><small>Gelato Lab ${VERSION}${APP_MODE==='app'&&ME.email?' · '+ROLE_N[ROLE]:''}</small></div></div>`;
 
 /* ---------- termômetro da receita: vitrine, serviço ideal (com faixa de incerteza) e freezer numa régua só ---------- */
@@ -4433,11 +4433,11 @@ const hm=min=>{min=Math.max(0,Math.round(min));const h=Math.floor(min/60),mm=min
 function flowTimer(s,col){const r=40,c=2*Math.PI*r,tg=s.tg||{};const store=s.k==='store',prep=s.k==='prep';
  const p=store?clamp(1-s.el/(tg.t||1),0,1):prep?0:s.pct;const cc={run:col,ready:'var(--ok)',late:'var(--warn)',crit:'var(--crit)',idle:'var(--t3)'}[s.lvl];
  let big,sub;if(prep){big=hm(s.el);sub='decorridos';}
- else if(store){big=fDur(tg.t-s.el);sub='de validade';}
+ else if(store){const d=Math.max(0,tg.t-s.el)/1440;if(d>=1){big=fT(Math.round(d*10)/10);sub=(d>=2?'dias':'dia')+' de validade';}else{big=hm(tg.t-s.el);sub='de validade';}}
  else if(s.lvl==='run'&&s.eta!=null){big=hm(s.eta);sub=s.k==='mat'?'para o ideal':'restantes';}
  else if(s.lvl==='ready'){big='✓';sub='no ponto';}
  else{big='+'+hm(s.el-(tg.t||0));sub=s.lvl==='crit'?'fora do limite':'além do ideal';}
- return`<div class="ftimer lvl-${s.lvl}"><svg viewBox="0 0 96 96" aria-hidden="true"><circle cx="48" cy="48" r="${r}" fill="none" stroke="var(--line2)" stroke-width="6"/><circle cx="48" cy="48" r="${r}" fill="none" stroke="${cc}" stroke-width="6" stroke-linecap="round" stroke-dasharray="${(p*c).toFixed(1)} ${c.toFixed(1)}" transform="rotate(-90 48 48)"/></svg><div class="ftv"><b>${big}</b><small>${sub}</small></div></div>`;}
+ return`<div class="ftimer lvl-${s.lvl}"><svg viewBox="0 0 96 96" aria-hidden="true"><circle cx="48" cy="48" r="${r}" fill="none" stroke="var(--line2)" stroke-width="6"/><circle cx="48" cy="48" r="${r}" fill="none" stroke="${cc}" stroke-width="6" stroke-linecap="round" stroke-dasharray="${(p*c).toFixed(1)} ${c.toFixed(1)}" transform="rotate(-90 48 48)"/></svg><div class="ftv"><b${String(big).length>5?' class="long"':''}>${big}</b><small>${sub}</small></div></div>`;}
 /* régua da maturação: utilizável → ideal → não compensa → máximo, com o "agora" */
 function matTrack(s){const tg=s.tg||{};if(s.k!=='mat'||!tg.t)return'';const end=Math.max(tg.late||tg.t*1.3,tg.hi||0,s.el)*1.12;const x=v=>clamp(v/end*100,0,100);
  const lo=tg.lo||tg.t*.9,hi=tg.hi||tg.t*1.1,mn=tg.min!=null?tg.min:lo*.4,late=tg.late||hi*1.2;
