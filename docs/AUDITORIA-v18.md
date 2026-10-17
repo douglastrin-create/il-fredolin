@@ -101,6 +101,21 @@ Num iPhone espera-se algo como 2–4× isso: ainda abaixo de 60 ms. **Recomenda�
 
 **Resultados locais:** Node 12/12 testes (motor 4, sincronização 7, regressão 1) · Chromium: 24 páginas sem erro, 24/24 internos · WebKit: **não executado aqui** (download bloqueado no ambiente); roda no CI do GitHub.
 
+## 5-B. Segunda rodada (mesma branch)
+
+| Problema | Antes | Agora | Teste |
+|---|---|---|---|
+| **Backup incompleto** | Exportava só a vitrine principal; set Professionale e lápides ficavam de fora | Todas as coleções (`vits` completa), lápides e `schema: 2`; formato antigo continua aceito | `backup.test.mjs` |
+| **Restauração destrutiva** | Cada item importado era gravado como "agora": um backup antigo sobrescrevia na nuvem as edições mais novas da equipe | Plano antes de gravar (`planImport`, função pura): novos, atualizados, **mantidos** (o daqui é igual ou mais novo) e apagados-aqui (só voltam se marcado). Confirmação explícita | `backup.test.mjs`, E2E |
+| **Quarentena inacessível ao Sous Chef** | As ações novas não estavam em `ALWAYS_ACT`: Sous recebia "sem acesso" para a própria fila | Liberadas para todos os perfis; restaurar backup só Maestro | `backup.test.mjs` (perfis) |
+| **Heurística com cara de medição** | pH, viscosidade, overrun, cristal (µm), estabilidade da textura e Tg′ sem indicação de natureza | Etiqueta "heurístico/semiempírico" com explicação; overrun mostra "calibrado por N lotes" quando houver | `registry.test.mjs` mantém a interface igual ao `model-registry.json` (pegou a viscosidade rotulada acima da classe registrada) |
+| Ícone *maskable* fora do cache offline | — | Incluído no `sw.js` | — |
+| CI podia passar sem WebKit | Motor ausente era "pulado" | No CI, motor ausente reprova | — |
+
+**Offline real (Chromium):** service worker instalado, rede cortada, recarregar e reabrir em aba nova: app abre e `runTests` passa 24/24 sem rede (`tests/e2e/smoke.mjs`).
+
+**Resultados:** Node 21/21 · Chromium 24 páginas, 24/24 internos, offline OK · CI do commit `d4fca4e`: verde nos dois jobs.
+
 ## 6. Para publicar (requer sua autorização)
 1. Conferir a execução do workflow *Testes* na branch (inclui WebKit).
 2. Testar no iPhone pela URL da branch ou após merge: abrir, trabalhar offline, fechar e reabrir.
@@ -110,8 +125,8 @@ Num iPhone espera-se algo como 2–4× isso: ainda abaixo de 60 ms. **Recomenda�
 ## 7. Próximas fases, em ordem de prioridade (seção 53 da especificação)
 1. **Banco:** versionar `supabase/schema.sql` no repositório e auditar RLS (custos `fin`, isolamento por espaço, perfis).
 2. **Conflitos:** versão por registro no servidor; estoque por movimentos em vez de saldo.
-3. **Backup:** exportação completa automática e restauração testada antes de migrar `localStorage` → IndexedDB.
-4. **Rótulos de natureza do resultado** na interface (medido · calculado · estimado · heurístico), lendo `docs/model-registry.json`.
+3. **Backup automático** periódico (o manual já está completo e a restauração é segura) antes de migrar `localStorage` → IndexedDB.
+4. ~~Rótulos de natureza do resultado~~ — feito para 6 grandezas; estender a textura/quenelle, derretimento e incerteza.
 5. **Medições de baixo custo** que mais reduzem incerteza: temperatura do centro do pote no endurecimento e na espera (calibra h), overrun por copo, temperatura de extração da Maestro.
 6. Só então: novas famílias, design inverso, DoE.
 

@@ -201,6 +201,7 @@ input:focus,select:focus,textarea:focus{border-color:var(--ice2);outline:none;bo
 .btn.wide{width:100%;padding:11px 14px;font-size:14px;margin-top:6px}
 .row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
 .sp{flex:1}
+.chip.nat{font-size:10.5px;font-weight:500;letter-spacing:.02em;color:var(--t2);border-style:dashed;vertical-align:2px;margin-left:6px;text-transform:none}
 .chip{display:inline-flex;align-items:center;gap:6px;padding:3px 10px;border-radius:99px;font:500 12px/1.4 var(--fb);border:1px solid var(--line2);background:var(--raise);white-space:nowrap;color:var(--t2)}
 button.chip{cursor:pointer}
 .chip.ok{color:var(--ok);border-color:rgba(110,231,183,.35);background:var(--ok-a)}
@@ -2260,9 +2261,9 @@ const PAGE_ROLES={bancada:'mc',creator:'mc',laudo:'mc',congelamento:'mc',quimica
 const SOUS_ACT=new Set(['go','sub','defMode','defSym','defClr','defOpen','defOpenB','defCat','navTog','toTop','flowStart','flowNext','flowBack','flowDisc','flowOpen','flowColor','flowView','flowLot','flowNotify','chk','unchk','copy','lotNew','lotOpen','lotSave','lotConsume','defect','execRun','logout','logoutYes','logoutNo','syncNow','testRun','delNo','authMode','authGo',
  'meltTimer','fam','palOpen','palClose','palRun','panelStart','panelSet','panelNext','panelCancel','panelReveal','panelReset']);
 const SOUS_INP=new Set(['flowLabel','flowMeas','prodG','lot','lotTxt','auth','panelTaster','panelNote','palQ']),SOUS_CHG=new Set(['defChk','lot','panelLot']);
-const CHEF_DENY_ACT=new Set(['expJson','expCsv','memInvite','memDel','memDelYes','teamReload']),CHEF_DENY_INP=new Set(['cost','costCap']),CHEF_DENY_CHG=new Set(['memRole']);
+const CHEF_DENY_ACT=new Set(['expJson','expCsv','impGo','impDel','memInvite','memDel','memDelYes','teamReload']),CHEF_DENY_INP=new Set(['cost','costCap']),CHEF_DENY_CHG=new Set(['memRole']);
 /* telas de entrada e saída funcionam para qualquer perfil (inclusive antes de saber o perfil) */
-const ALWAYS_ACT=new Set(['appReload','authGo','authMode','authRetry','logout','logoutYes','logoutNo','syncNow']);
+const ALWAYS_ACT=new Set(['appReload','authGo','authMode','authRetry','logout','logoutYes','logoutNo','syncNow','rejRetry','rejExport','rejDrop','rejDropYes','rejDropNo']);
 const can={
  page:k=>(PAGE_ROLES[k]||'m').includes(ROLE[0]),
  cost:()=>ROLE==='maestro',
@@ -2280,6 +2281,16 @@ const $cost=h=>can.cost()?h:'';
 /* ===================== IL FREDOLIN · INTERFACE: NÚCLEO ===================== */
 const $=s=>document.querySelector(s);
 const esc=s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+/* v18 · natureza de cada resultado (mesmas classes de docs/model-registry.json): evita que uma regra prática
+   apareça com a autoridade de uma medição. "calibrável" = os lotes medidos corrigem o valor. */
+const MODEL_NAT={ph:['heurístico','Estimado pela fonte ácida dominante e pelo tampão do leite; não resolve o equilíbrio ácido-base. Meça com pHmetro.'],
+ viscosity:['heurístico','Base de literatura (Krieger–Dougherty), mas os coeficientes da fase sérica e dos hidrocoloides não foram medidos. Meça com viscosímetro ou copo Ford.'],
+ overrun:['heurístico','Soma de efeitos do processo limitada pela máquina; os lotes com overrun medido corrigem o valor.'],
+ 'ice-crystal-size':['heurístico','Índice de risco convertido em µm; não é medição microscópica.'],
+ 'texture-stability':['heurístico','Crescimento de cristais com taxa ainda não calibrada. Não é validade sanitária.'],
+ 'tg-prime':['semiempírico','Média ponderada dos Tg′ dos solutos.']};
+const natTag=id=>{const n=MODEL_NAT[id];if(!n)return'';const cal=id==='overrun'&&typeof CAL!=='undefined'&&CAL.on&&CAL.counts&&CAL.counts.ov?' · calibrado por '+CAL.counts.ov+' lote(s)':'';
+ return` <span class="chip nat" title="${esc(n[1])}" aria-label="${esc(n[0]+cal+'. '+n[1])}">${esc(n[0]+cal)}</span>`;};
 const norm=s=>String(s).normalize('NFD').replace(/[̀-ͯ]/g,'').toLowerCase();
 /* v18 (auditoria): gravar pode falhar (cota cheia do Safari, modo privado). Antes o erro era engolido e a alteração
    simplesmente não ficava no aparelho. Agora set() devolve true/false, guarda quais chaves falharam (LS.bad) e avisa. */
@@ -2792,8 +2803,8 @@ function pgProcesso(m,F){
   ${p.serveFrom==='pote'?fieldNum('p-poteMl','Tamanho do pote (mL)',p.poteMl,50,'Volume do gelato no pote')+fieldNum('p-ambT','Temperatura da cozinha (°C)',p.ambT,1,'Onde o pote fica esperando')+fieldNum('p-waitMin','Espera antes de servir (min)',p.waitMin,1,'O balanceamento mira o ponto depois deste tempo'):''}
  </div></div>
  ${m.empty?'':`<div class="g3">
-  <div class="card"><h2>Overrun previsto</h2><div class="big c-ice">${f0(m.ov)}%</div><p class="t2" style="margin:6px 0 0">≈ ${f0(m.gPerL)} g de gelato por litro · ${f2(1+m.ov/100)} L por kg de mistura</p><p class="note">Faixa usual: ${fT(m.P.ov[0])}–${fT(m.P.ov[1])}% · ${esc(m.mach.n)}</p></div>
-  <div class="card"><h2>Cristalização</h2><div class="big ${m.ci>=80?'c-ok':m.ci>=60?'c-warn':'c-crit'}">${m.ci}<small class="muted" style="font-size:14px"> /100</small></div><p class="t2" style="margin:6px 0 0">Cristais estimados ≈ ${m.crystal} µm (acima de ~50 µm a língua percebe gelo)</p><p class="note">${m.ciNotes.length?'Pesam contra: '+m.ciNotes.join(', ')+'.':'Processo favorece cristais pequenos.'} ${f0(m.fzDraw)}% da água sai congelada da máquina.</p></div>
+  <div class="card"><h2>Overrun previsto${natTag('overrun')}</h2><div class="big c-ice">${f0(m.ov)}%</div><p class="t2" style="margin:6px 0 0">≈ ${f0(m.gPerL)} g de gelato por litro · ${f2(1+m.ov/100)} L por kg de mistura</p><p class="note">Faixa usual: ${fT(m.P.ov[0])}–${fT(m.P.ov[1])}% · ${esc(m.mach.n)}</p></div>
+  <div class="card"><h2>Cristalização${natTag('ice-crystal-size')}</h2><div class="big ${m.ci>=80?'c-ok':m.ci>=60?'c-warn':'c-crit'}">${m.ci}<small class="muted" style="font-size:14px"> /100</small></div><p class="t2" style="margin:6px 0 0">Cristais estimados ≈ ${m.crystal} µm (índice heurístico, não medido) (acima de ~50 µm a língua percebe gelo)</p><p class="note">${m.ciNotes.length?'Pesam contra: '+m.ciNotes.join(', ')+'.':'Processo favorece cristais pequenos.'} ${f0(m.fzDraw)}% da água sai congelada da máquina.</p></div>
   <div class="card"><h2>Resistência ao derretimento</h2><div class="big ${m.melt>=65?'c-ok':m.melt>=45?'c-warn':'c-crit'}">${f0(m.melt)}<small class="muted" style="font-size:14px"> /100</small></div><p class="note">Combina estabilizantes, emulsificantes, ar incorporado, sólidos e o quanto a receita congela na vitrine.</p></div>
  </div>
  <div class="card"><h2>Verificações de processo</h2>${PF.map(findHTML).join('')||'<p class="muted">Nada a apontar.</p>'}</div>`}
@@ -3117,9 +3128,9 @@ function pgQuimica(m){if(m.empty)return`<div class="pg"><h1>Química e sensorial
  const tg=m.tg;
  return`<div class="pg"><div><h1>Química e sensorial</h1><p class="lead">Propriedades que o balanceamento clássico não mostra: viscosidade da mistura, pH, transição vítrea da fase concentrada, cinética de recristalização e percepção de doçura e aroma.</p></div>
  <div class="g3">
-  <div class="card"><h2>Viscosidade a 4 °C</h2><div class="big ${m.visc<25||m.visc>800?'c-warn':'c-ok'}">${f0(m.visc)}<small class="muted" style="font-size:14px"> mPa·s</small></div><p class="note">Fase sérica pela concentração de solutos, proteínas, Krieger-Dougherty para gordura e insolúveis e contribuição de cada hidrocoloide. Faixa de trabalho 50–400 mPa·s; abaixo de 25 a mistura não segura ar, acima de 800 a mantecadora sofre.</p></div>
-  <div class="card"><h2>pH e acidez</h2><div class="big ${m.msnf>.5&&m.ph<5.2?'c-warn':''}">${f1(m.ph)}</div><p class="t2" style="margin:6px 0 0">Acidez titulável ${f2(m.ta)}% (ácido cítrico equivalente)</p><p class="note">Fonte ácida dominante diluída na água da mistura, tamponada pelas proteínas do leite. Com leite, abaixo de 5,2 a caseína coagula no calor; abaixo de 4,6 agrega mesmo a frio.</p></div>
-  <div class="card"><h2>Transição vítrea Tg′</h2><div class="big c-ice">${f1(tg)}<small class="muted" style="font-size:14px"> °C</small></div><p class="t2" style="margin:6px 0 0">Vitrine a ${f0(m.dTgVit)} °C acima · estoque a ${f0(m.dTgStore)} °C acima</p><p class="note">Abaixo de Tg′ a fase concentrada vira vidro e os cristais param de crescer. A velocidade de recristalização segue a equação WLF da distância até Tg′.</p></div>
+  <div class="card"><h2>Viscosidade a 4 °C${natTag('viscosity')}</h2><div class="big ${m.visc<25||m.visc>800?'c-warn':'c-ok'}">${f0(m.visc)}<small class="muted" style="font-size:14px"> mPa·s</small></div><p class="note">Fase sérica pela concentração de solutos, proteínas, Krieger-Dougherty para gordura e insolúveis e contribuição de cada hidrocoloide. Faixa de trabalho 50–400 mPa·s; abaixo de 25 a mistura não segura ar, acima de 800 a mantecadora sofre.</p></div>
+  <div class="card"><h2>pH e acidez${natTag('ph')}</h2><div class="big ${m.msnf>.5&&m.ph<5.2?'c-warn':''}">${f1(m.ph)}</div><p class="t2" style="margin:6px 0 0">Acidez titulável ${f2(m.ta)}% (ácido cítrico equivalente)</p><p class="note">Fonte ácida dominante diluída na água da mistura, tamponada pelas proteínas do leite. Com leite, abaixo de 5,2 a caseína coagula no calor; abaixo de 4,6 agrega mesmo a frio.</p></div>
+  <div class="card"><h2>Transição vítrea Tg′${natTag('tg-prime')}</h2><div class="big c-ice">${f1(tg)}<small class="muted" style="font-size:14px"> °C</small></div><p class="t2" style="margin:6px 0 0">Vitrine a ${f0(m.dTgVit)} °C acima · estoque a ${f0(m.dTgStore)} °C acima</p><p class="note">Abaixo de Tg′ a fase concentrada vira vidro e os cristais param de crescer. A velocidade de recristalização segue a equação WLF da distância até Tg′.</p></div>
  </div>
  <div class="card"><div class="row"><h2 style="margin:0">Freezer de armazenamento</h2><span class="sp"></span><button class="btn sm" data-a="go" data-v="processo">Ajustar no Processo</button></div>
   <div class="g3" style="margin-top:10px;gap:12px">
@@ -3129,7 +3140,7 @@ function pgQuimica(m){if(m.empty)return`<div class="pg"><h1>Química e sensorial
   </div>
   <p class="note">O freezer não muda a temperatura de serviço, que é a da vitrine; ele decide quanto o gelato endurece no estoque, quanto tempo precisa aclimatar e, sobretudo, a velocidade com que os cristais crescem. Oscilação (porta, degelo) pesa mais que a temperatura média. Se você serve direto do freezer, escolha "Direto do freezer" no Processo: o balanceamento passa a mirar a temperatura dele.</p></div>
  <div class="g2">
-  <div class="card"><h2>Estabilidade da textura (estimativa)</h2><p class="note" style="margin-top:0">Tempo até os cristais de gelo chegarem a ~50 µm (arenosidade), por um modelo de crescimento ainda <b>não calibrado</b> com medições. <b>Não é prazo de validade:</b> segurança de consumo depende de pasteurização, higiene, cadeia de frio e da legislação.</p><div class="kv"><span>Na vitrine (${f1(m.vit)} °C)</span><span class="${m.shelfVit>=5?'c-ok':m.shelfVit>=2?'c-warn':'c-crit'}">${m.shelfVit>60?'60+':f1(m.shelfVit)} dias</span></div><div class="kv"><span>No freezer (${fT(m.pr.storeT)} °C)</span><span>${m.shelfStore>180?'180+':f0(m.shelfStore)} dias</span></div><div class="kv"><span>Cristal inicial</span><span>${m.crystal} µm</span></div>
+  <div class="card"><h2>Estabilidade da textura${natTag('texture-stability')}</h2><p class="note" style="margin-top:0">Tempo até os cristais de gelo chegarem a ~50 µm (arenosidade), por um modelo de crescimento ainda <b>não calibrado</b> com medições. <b>Não é prazo de validade:</b> segurança de consumo depende de pasteurização, higiene, cadeia de frio e da legislação.</p><div class="kv"><span>Na vitrine (${f1(m.vit)} °C)</span><span class="${m.shelfVit>=5?'c-ok':m.shelfVit>=2?'c-warn':'c-crit'}">${m.shelfVit>60?'60+':f1(m.shelfVit)} dias</span></div><div class="kv"><span>No freezer (${fT(m.pr.storeT)} °C)</span><span>${m.shelfStore>180?'180+':f0(m.shelfStore)} dias</span></div><div class="kv"><span>Cristal inicial</span><span>${m.crystal} µm</span></div>
    <div class="kv"><span>Fatores de K</span><span>estab. ${f2(m.kin.fStab)} · choque ${f2(m.kin.fShock)} · WLF ${f2(m.kin.fKinVit)}${m.kin.km!==1?' · calib. '+f2(m.kin.km):''}</span></div><p class="note">Dias até o cristal médio passar de 50 µm (Ostwald, d³ = d₀³ + K·t).</p></div>
   <div class="card"><h2>Percepção</h2><div class="kv"><span>Doçura percebida a ${f1(m.vit)} °C</span><span class="c-gold">${f1(m.podPerc)}%</span></div><div class="kv"><span>Liberação de aroma</span><span class="${m.aroma>=75?'c-ok':m.aroma>=55?'c-warn':'c-crit'}">${f0(m.aroma)}/100</span></div><div class="kv"><span>Derretido em 10 min a 20 °C</span><span>${f0(m.melt10)}%</span></div>${aromaRows(m)}
    <p class="note">O frio reduz a doçura percebida (cerca de 2,5% por grau abaixo de −12 °C). Gordura, gomas, ar e proteína em excesso prendem os voláteis: aromas delicados (flores, ervas, frutas brancas) pedem índice acima de 75.</p></div></div>
@@ -3175,7 +3186,7 @@ function pgDados(){const st=STORE.status;
   <div class="g3" style="margin-top:12px">${(ROLE==='sous'?[['Receitas em execução',EXEC.length],['Lotes',LOTS.length]]:[['Receitas em execução',EXEC.length],['Minhas receitas',LIB.length],['Lotes',LOTS.length],['Ingredientes próprios',CUST.length],['Neutros',NXLIB.length],['Entradas de estoque',INV.length]]).map(([n,v])=>`<div class="kv"><span>${n}</span><span>${v}</span></div>`).join('')}${pend?`<div class="kv"><span>Aguardando envio</span><span class="c-warn">${pend}</span></div>`:''}</div></div>
  ${can.cost()?`<div class="card"><h2>Exportar e importar</h2><div class="row"><button class="btn pri" data-a="expJson">Exportar backup (JSON)</button><button class="btn" data-a="expCsv">Exportar lotes (CSV)</button><label class="btn" for="impFile">Importar backup</label><input type="file" id="impFile" accept=".json,application/json" style="display:none"></div>
   ${U.exp?`<textarea id="expArea" rows="8" readonly style="margin-top:10px;font-family:var(--fm);font-size:11px">${esc(U.exp)}</textarea><p class="note">Download indisponível nesta visualização: selecione e copie o texto.</p>`:''}
-  <p class="note">O backup inclui biblioteca, receitas em execução, lotes, ingredientes, neutros, estoque e a vitrine.${APP_MODE==='app'?' Para trazer os dados do artefato: exporte o backup lá e importe aqui — tudo vai para a nuvem da equipe.':''}</p></div>`:''}
+  <p class="note">O backup inclui biblioteca, receitas em execução, lotes, ingredientes, neutros, estoque, vitrine, sets e itens apagados. Ao importar, você vê o que muda antes de confirmar; nada mais novo deste aparelho é sobrescrito.${APP_MODE==='app'?' Para trazer os dados do artefato: exporte o backup lá e importe aqui — tudo vai para a nuvem da equipe.':''}</p></div>${importCard()}`:''}
  ${ROLE==='sous'?'':testCard()}</div>`;}
 /* bateria de testes dentro do app: mesma bateria que roda antes de cada publicação */
 function testCard(){const R=U.test;const grp=R?[...new Set(R.list.map(t=>t.group))]:[];
@@ -4867,6 +4878,27 @@ async function saveFile(name,data){try{const d=window.claude&&typeof window.clau
  try{if(APP_MODE==='app'){const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([data],{type:'application/octet-stream'}));a.download=name;document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove();},500);toast('Arquivo pronto');return;}}catch(e){}
  U.exp=data;render();}
 
+/* ==== 60b-backup.js ==== */
+/* ===================== IL FREDOLIN · BACKUP E RESTAURAÇÃO (v18) =====================
+   Antes: o backup levava só a vitrine principal (sem o set Professionale nem as lápides) e a importação gravava
+   cada item como "agora", de modo que um backup antigo virava a versão mais nova e sobrescrevia na nuvem o que a
+   equipe tinha editado depois. Agora a restauração é planejada antes (função pura, testada) e nunca troca um
+   registro deste aparelho que seja igual ou mais novo que o do arquivo. Itens apagados só voltam se o usuário pedir. */
+const BACKUP_COLS=['lib','exec','lots','ings','nx','inv','vit'];
+const BACKUP_N={lib:'receitas',exec:'em execução',lots:'lotes',ings:'ingredientes',nx:'neutros',inv:'estoque',vit:'vitrine e sets'};
+function backupPayload(cols,tomb,meta){const o=Object.assign({app:'Il Fredolin',schema:2},meta||{});
+ BACKUP_COLS.forEach(c=>{o[c==='vit'?'vits':c]=cols[c]||[];});o.tomb=tomb||{};return o;}
+/* plano de importação: para cada coleção, o que entra (novo), o que atualiza (o daqui é mais antigo),
+   o que fica como está (o daqui é igual ou mais novo) e o que foi apagado aqui depois */
+function planImport(d,cols,tomb){if(!d||typeof d!=='object')throw new Error('arquivo inválido');
+ const src={lib:d.lib,exec:d.exec,lots:d.lots,ings:d.ings,nx:d.nx,inv:d.inv,vit:Array.isArray(d.vits)?d.vits:d.vitrine?[{id:'main',temp:d.vitrine.temp,items:d.vitrine.items||[]}]:[]};
+ const plan={cols:{},total:{add:0,upd:0,keep:0,del:0},version:d.v||'',date:d.date||''};
+ BACKUP_COLS.forEach(c=>{const loc=new Map((cols[c]||[]).map(r=>[String(r.id),r]));const tb=(tomb||{})[c]||{};const P={add:[],upd:[],keep:0,del:[]};
+  safeList(src[c]).forEach(r=>{if(r.deleted)return;const id=String(r.id),l=loc.get(id),ts=+r.updatedAt||0;
+   if(l){if((+l.updatedAt||0)<ts)P.upd.push(r);else P.keep++;}
+   else if(tb[id]!=null&&tb[id]>=ts)P.del.push(r);else P.add.push(r);});
+  plan.cols[c]=P;plan.total.add+=P.add.length;plan.total.upd+=P.upd.length;plan.total.keep+=P.keep;plan.total.del+=P.del.length;});
+ return plan;}
 /* ==== 61-sets.js ==== */
 /* ===================== SETS: ARTIGIANALE × PROFESSIONALE =====================
    O set é o conjunto de equipamentos onde a receita vai ser feita. A chave no cabeçalho troca o set inteiro:
@@ -5359,7 +5391,8 @@ const ACT={
   try{navigator.clipboard.writeText(t).then(()=>toast('Lista copiada'),()=>{U.planCopy=t;render();});}catch(e){U.planCopy=t;render();}},
  invAdd:()=>{const N=U.invNew||{};if(!(+N.kg>0)||!N.ingId)return;const e={id:'E'+Date.now(),ingId:N.ingId,qty:+N.kg*1000,costKg:+N.costKg||0,lot:N.lot||'',exp:N.exp||'',date:today()};STORE.put('inv',e);U.invNew={ingId:N.ingId,kg:'',costKg:'',lot:'',exp:''};render();toast('Entrada registrada');},
  invDel:v=>{STORE.del('inv',v);render();},
- expJson:async()=>{const data=JSON.stringify({app:'Il Fredolin',v:VERSION,date:today(),lib:LIB,exec:EXEC,lots:LOTS,ings:CUST,nx:NXLIB,inv:INV,vitrine:S.vitrine},null,1);await saveFile('il_fredolin_backup_'+today()+'.json',data);},
+ impGo:()=>{if(!can.cost())return denied();applyImport();},impNo:()=>{U.imp=null;render();},impDel:()=>{if(U.imp){U.imp.withDel=!U.imp.withDel;render();}},
+ expJson:async()=>{const cols={};BACKUP_COLS.forEach(c=>cols[c]=COLS[c].get());const data=JSON.stringify(Object.assign(backupPayload(cols,STORE.tomb,{v:VERSION,date:today(),exportedAt:new Date().toISOString()}),{vitrine:S.vitrine}),null,1);await saveFile('il_fredolin_backup_'+today()+'.json',data);},
  expCsv:async()=>{const h=['lote','data','receita','overrun_prev','overrun_med','brix_prev','brix_med','derretimento_prev','derretimento_med','textura','pasteurizacao','resfriamento_min','maturacao_h'];const rows=LOTS.map(L=>{const me=L.meas||{};return[L.code,L.date,L.name,f1(L.pred.ov),measuredOverrun(me)!=null?f1(measuredOverrun(me)):'',f1(L.pred.brix),me.brix||'',f0(L.pred.melt10),me.melt10||'',me.tex!=null?me.tex:'',me.pastT||'',me.coolMin||'',me.matH||''].map(x=>'"'+String(x).replace(/"/g,'""')+'"').join(';');});await saveFile('il_fredolin_lotes_'+today()+'.csv','﻿'+[h.join(';'),...rows].join('\n'));},
  frz:v=>{S.proc.storeT=clamp(Math.round((+S.proc.storeT+ +v)*2)/2,-35,-8);if(S.proc.serveFrom==='freezer')S.vit=S.proc.storeT;U.bal=null;render();},
  vit:v=>{S.vit=clamp(Math.round((+S.vit+ +v)*2)/2,-35,-6);if(S.proc.serveFrom==='freezer')S.proc.storeT=S.vit;U.bal=null;render();},
@@ -5442,13 +5475,25 @@ const CHG={
  ...V13_CHG,
  ...MAT_CHG
 };
-function importBackup(file){const fr=new FileReader();fr.onload=()=>{try{const d=JSON.parse(fr.result);[['lib',d.lib],['exec',d.exec],['lots',d.lots],['ings',d.ings],['nx',d.nx],['inv',d.inv]].forEach(([c2,arr])=>safeList(arr).forEach(r=>STORE.put(c2,r)));if(d.vitrine){S.vitrine=d.vitrine;saveVit();}render();toast('Backup importado');}catch(err){toast('Arquivo inválido');}};fr.readAsText(file);}
+/* importar = ler, planejar e mostrar o plano; nada é gravado antes de "Restaurar" */
+function importBackup(file){const fr=new FileReader();fr.onload=()=>{try{const d=JSON.parse(fr.result);const cols={};BACKUP_COLS.forEach(c=>cols[c]=COLS[c].get());
+  U.imp={name:file.name,plan:planImport(d,cols,STORE.tomb),withDel:false};render();}catch(err){U.imp=null;toast('Arquivo inválido: não é um backup do Il Fredolin.');}};fr.readAsText(file);}
+function applyImport(){const I=U.imp;if(!I)return;let n=0;
+ BACKUP_COLS.forEach(c=>{const P=I.plan.cols[c];[...P.add,...P.upd,...(I.withDel?P.del:[])].forEach(r=>{const x=Object.assign({},r);delete x.base;STORE.put(c,x);n++;});});
+ const v=VITS.find(x=>x.id==='main');if(v){S.vitrine={temp:v.temp,items:v.items||[]};LS.set(K10.vit,S.vitrine);}
+ U.imp=null;render();toast(n+' item(ns) restaurado(s)');}
+function importCard(){const I=U.imp;if(!I)return'';const P=I.plan,t=P.total;
+ const rows=BACKUP_COLS.filter(c=>{const x=P.cols[c];return x.add.length||x.upd.length||x.keep||x.del.length;}).map(c=>{const x=P.cols[c];
+  return`<div class="kv"><span>${BACKUP_N[c]}</span><span>${x.add.length} novos · ${x.upd.length} atualizados · ${x.keep} mantidos${x.del.length?' · '+x.del.length+' apagados aqui':''}</span></div>`;}).join('');
+ return`<div class="card"><h2>Restaurar ${esc(I.name)}</h2><p class="note">Backup ${esc(P.version)} de ${esc(P.date)}. Registros iguais ou mais novos neste aparelho são <b>mantidos</b>: o backup só completa o que falta ou está mais antigo.</p>${rows||'<p class="muted">Nada no arquivo.</p>'}
+ ${t.del?`<label class="row" style="gap:8px;margin-top:8px"><input type="checkbox" data-a="impDel" ${I.withDel?'checked':''}> Trazer de volta também ${t.del} item(ns) apagado(s) depois deste backup</label>`:''}
+ <div class="row" style="margin-top:10px"><button class="btn pri" data-a="impGo" ${t.add+t.upd+(I.withDel?t.del:0)?'':'disabled'}>Restaurar ${t.add+t.upd+(I.withDel?t.del:0)} item(ns)</button><button class="btn" data-a="impNo">Cancelar</button></div></div>`;}
 
 /* ---------- EVENTOS: um ouvinte por tipo ---------- */
 /* toda ação passa pela checagem do perfil (o servidor também recusa o que o perfil não pode) */
 const denied=()=>toast('Seu perfil não tem acesso a esta função.');
 /* ações que não mexem na receita não entram no desfazer */
-const NO_UNDO=new Set(['appReload','go','sub','defMode','defSym','defClr','defOpen','defCat','fam','palOpen','palClose','palRun','undo','copy','chk','unchk','libTab','libAuthor','libMore','libTipo','libVitF','simOpen','simClose','cmpToggle','cmpClear','histOpen','lotOpen','crTab','crSub','atGoal','setSw','navTog','toTop','flowOpen','flowView','flowNotify','flowNext','flowBack','flowDisc','flowColor','flowStart','flowLot','procGo','procPlay','atSel','atPick','atCard','atExplore','nxGoal','sazM','del','delNo','meltTimer','panelSet','panelStart','panelNext','panelCancel','panelReveal','panelReset','testRun','syncNow','age','pick']);
+const NO_UNDO=new Set(['impNo','impDel','rejDrop','rejDropNo','rejExport','appReload','go','sub','defMode','defSym','defClr','defOpen','defCat','fam','palOpen','palClose','palRun','undo','copy','chk','unchk','libTab','libAuthor','libMore','libTipo','libVitF','simOpen','simClose','cmpToggle','cmpClear','histOpen','lotOpen','crTab','crSub','atGoal','setSw','navTog','toTop','flowOpen','flowView','flowNotify','flowNext','flowBack','flowDisc','flowColor','flowStart','flowLot','procGo','procPlay','atSel','atPick','atCard','atExplore','nxGoal','sazM','del','delNo','meltTimer','panelSet','panelStart','panelNext','panelCancel','panelReveal','panelReset','testRun','syncNow','age','pick']);
 function runAct(k,v,t){if(NO_UNDO.has(k))return ACT[k](v,t);const before=undoSnap();undoMark();const r=ACT[k](v,t);
  if(r&&typeof r.then==='function')return r;if(undoSnap()===before)undoSettle();else if(UNDO_TOAST.has(k))toastUndo();return r;}
 document.addEventListener('toggle',e=>{const d=e.target;if(d&&d.tagName==='DETAILS'&&d.id){U.dopen=U.dopen||{};U.dopen[d.id]=d.open;}},true);

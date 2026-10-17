@@ -59,3 +59,17 @@ export function loadSync(html = readApp(), { quotaBytes } = {}) {
 /** Erro no formato que SB.req lança. */
 export const httpErr = (status, msg = 'HTTP ' + status) => Object.assign(new Error(msg), { status, raw: msg });
 export const offlineErr = () => Object.assign(new Error('Sem conexão com a internet.'), { offline: true });
+
+/** Backup (60b-backup): plano de restauração. safeList simplificado (a limpeza real de receitas é coberta no E2E). */
+export function loadBackup(html = readApp()) {
+  const ctx = baseContext();
+  vm.runInContext(`const safeList=a=>(Array.isArray(a)?a:[]).filter(r=>r&&typeof r==='object'&&r.id!=null);\n` + segment(html, '60b-backup.js', '61-sets.js') +
+    `\n;globalThis.__B={planImport,backupPayload,BACKUP_COLS};`, ctx, { filename: 'index.html#backup' });
+  return ctx.__B;
+}
+/** Perfis (39-roles): o que cada perfil pode acionar. */
+export function loadRoles(html = readApp(), role = 'maestro') {
+  const ctx = baseContext();
+  vm.runInContext(segment(html, '39-roles.js', '40-ui-core.js') + `\n;ROLE=${JSON.stringify(role)};globalThis.__R={can};`, ctx, { filename: 'index.html#roles' });
+  return ctx.__R;
+}
