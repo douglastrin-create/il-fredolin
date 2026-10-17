@@ -1,0 +1,26 @@
+# Il Fredolin · testes automáticos. Só verifica: não publica nada e não altera o GitHub Pages.
+name: Testes
+on:
+  push:
+    branches-ignore: [main]
+  pull_request:
+  workflow_dispatch:
+jobs:
+  motor-e-sincronizacao:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with: { fetch-depth: 0 }
+      - uses: actions/setup-node@v4
+        with: { node-version: 22 }
+      - name: Motor científico, sincronização e regressão
+        run: node --test tests/node/*.test.mjs
+  navegador:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22 }
+      - run: npm i --no-save playwright@1.56.0 && npx playwright install --with-deps chromium webkit
+      - name: Fumaça em Chromium e WebKit (motor do Safari)
+        run: node tests/e2e/smoke.mjs
