@@ -26,7 +26,7 @@ export function readManifest() {
   }
   /* todo arquivo de código em src/ precisa estar no manifesto (nada fica de fora sem querer) */
   const walk = d => fs.readdirSync(d, { withFileTypes: true }).flatMap(e => e.isDirectory() ? walk(path.join(d, e.name)) : [path.join(d, e.name)]);
-  const orphan = walk(SRC).map(p => path.relative(SRC, p).split(path.sep).join('/')).filter(p => p !== 'build.json' && !seen.has(p) && !p.endsWith('.md'));
+  const orphan = walk(SRC).map(p => path.relative(SRC, p).split(path.sep).join('/')).filter(p => p !== 'build.json' && p !== (m.sw && m.sw.src) && !seen.has(p) && !p.endsWith('.md'));
   if (orphan.length) throw new Error('arquivos em src/ fora do manifesto: ' + orphan.join(', '));
   return m;
 }
@@ -34,6 +34,17 @@ export function readManifest() {
 export function build() {
   const m = readManifest();
   return m.files.map(f => fs.readFileSync(path.join(SRC, f), 'utf8')).join('');
+}
+
+/* service worker: leva o SHA-256 do index.html montado (a instalação confere) e a versão do app */
+export function buildSW(html = build()) {
+  const m = readManifest(); if (!m.sw) return null;
+  const tpl = fs.readFileSync(path.join(SRC, m.sw.src), 'utf8');
+  const ver = (html.match(/const VERSION='([^']+)'/) || [])[1];
+  if (!ver) throw new Error('VERSION não encontrada no index.html montado');
+  const full = crypto.createHash('sha256').update(html, 'utf8').digest('hex');
+  if (!tpl.includes("'__INDEX_SHA__'") || !tpl.includes("'__APP_VERSION__'")) throw new Error('src/' + m.sw.src + ' sem os marcadores __INDEX_SHA__/__APP_VERSION__');
+  return { out: m.sw.output, text: tpl.replace("'__INDEX_SHA__'", `'${full}'`).replace("'__APP_VERSION__'", `'${ver}'`), sha: full, ver };
 }
 
 const sha = s => crypto.createHash('sha256').update(s).digest('hex').slice(0, 12);
@@ -51,9 +62,12 @@ if (process.argv[1] && path.resolve(process.argv[1]) === path.resolve(new URL(im
       console.error('  src/:       ' + (b[i] || '').slice(0, 120));
       process.exit(1);
     }
-    console.log(`index.html confere com src/ (${readManifest().files.length} módulos, sha ${sha(out)})`);
+    const sw = buildSW(out);
+    if (sw && fs.readFileSync(path.join(ROOT, sw.out), 'utf8') !== sw.text) { console.error(`${sw.out} desatualizado em relação a src/. Rode: node tools/build.mjs`); process.exit(1); }
+    console.log(`index.html confere com src/ (${readManifest().files.length} módulos, sha ${sha(out)})` + (sw ? ` · ${sw.out} da versão ${sw.ver}` : ''));
   } else {
     fs.writeFileSync(target, out);
-    console.log(`index.html gerado (${readManifest().files.length} módulos, ${out.length} caracteres, sha ${sha(out)})`);
+    const sw = buildSW(out); if (sw) fs.writeFileSync(path.join(ROOT, sw.out), sw.text);
+    console.log(`index.html gerado (${readManifest().files.length} módulos, ${out.length} caracteres, sha ${sha(out)})` + (sw ? ` · ${sw.out} (cache il-fredolin-${sw.sha.slice(0, 12)})` : ''));
   }
 }

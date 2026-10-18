@@ -3,13 +3,24 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
-import { build, readManifest } from '../../tools/build.mjs';
+import { build, buildSW, readManifest } from '../../tools/build.mjs';
 import { analyzeLayers, stripCode, topDecls, localNames } from '../../tools/layers.mjs';
 
 const ROOT = path.resolve(path.dirname(new URL(import.meta.url).pathname), '../..');
 
 test('index.html é exatamente a montagem de src/ (ninguém editou o arquivo montado à mão)', () => {
   assert.equal(fs.readFileSync(path.join(ROOT, 'index.html'), 'utf8'), build());
+});
+
+test('sw.js é gerado com o SHA-256 da página montada e a versão do app', () => {
+  const html = build(), sw = buildSW(html);
+  assert.equal(fs.readFileSync(path.join(ROOT, 'sw.js'), 'utf8'), sw.text);
+  assert.match(sw.text, /const INDEX_SHA='[0-9a-f]{64}'/);
+  assert.equal(sw.ver, (html.match(/const VERSION='([^']+)'/) || [])[1]);
+  assert.ok(!/__INDEX_SHA__|__APP_VERSION__/.test(sw.text), 'marcadores substituídos');
+  /* todo arquivo que o sw guarda existe no repositório */
+  const core = JSON.parse(sw.text.match(/const CORE=(\[[^\]]*\])/)[1].replace(/'/g, '"'));
+  for (const u of core) assert.ok(fs.existsSync(path.join(ROOT, u)), u);
 });
 
 test('marcadores dos módulos continuam no arquivo montado, uma vez cada (Web Worker e testes dependem deles)', () => {

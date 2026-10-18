@@ -60,5 +60,10 @@
   "ui/pwa.js",
   "ui/app.js",
   "shell/tail.html"
- ]
+ ],
+ "sw": {
+  "src": "sw/sw.js",
+  "output": "sw.js",
+  "note": "Gerado com o SHA-256 do index.html montado e a VERSION do app."
+ }
 }

@@ -2702,7 +2702,7 @@ const SOUS_ACT=new Set(['go','sub','defMode','defSym','defClr','defOpen','defOpe
 const SOUS_INP=new Set(['flowLabel','flowMeas','prodG','lot','lotTxt','auth','panelTaster','panelNote','palQ']),SOUS_CHG=new Set(['defChk','lot','panelLot']);
 const CHEF_DENY_ACT=new Set(['expJson','expCsv','impGo','impDel','memInvite','memDel','memDelYes','teamReload']),CHEF_DENY_INP=new Set(['cost','costCap']),CHEF_DENY_CHG=new Set(['memRole']);
 /* telas de entrada e saída funcionam para qualquer perfil (inclusive antes de saber o perfil) */
-const ALWAYS_ACT=new Set(['appReload','authGo','authMode','authRetry','logout','logoutYes','logoutNo','syncNow','rejRetry','rejExport','rejDrop','rejDropYes','rejDropNo']);
+const ALWAYS_ACT=new Set(['offDiag','offRepair','appReload','authGo','authMode','authRetry','logout','logoutYes','logoutNo','syncNow','rejRetry','rejExport','rejDrop','rejDropYes','rejDropNo']);
 const can={
  page:k=>(PAGE_ROLES[k]||'m').includes(ROLE[0]),
  cost:()=>ROLE==='maestro',
@@ -2897,7 +2897,7 @@ const isMac=()=>{try{return /Mac|iPhone|iPad/.test(navigator.platform||navigator
 const kbd=k=>`<kbd>${isMac()?'⌘':'Ctrl '}${k}</kbd>`;
 
 /* ---------- marca ---------- */
-const VERSION='v18.6';
+const VERSION='v18.7';
 const brandHTML=()=>`<div class="brand"><div class="hex"></div><div><b>Il <span>Fredolin</span></b><small>Gelato Lab ${VERSION}${APP_MODE==='app'&&ME.email?' · '+ROLE_N[ROLE]:''}</small></div></div>`;
 
 /* ---------- termômetro da receita: vitrine, serviço ideal (com faixa de incerteza) e freezer numa régua só ---------- */
@@ -3749,6 +3749,7 @@ function pgDados(){const st=STORE.status;
  const pend=APP_MODE==='app'?SUPA_BACKEND.pending():0;
  return`<div class="pg"><div><h1>${APP_MODE==='app'?'Conta e sincronização':'Dados e sincronização'}</h1><p class="lead">Onde seus dados ficam e como levá-los.</p></div>
  ${APP_MODE==='app'?accountCard(pend):''}
+ ${offlineCard()}
  <div class="card"><div class="row"><span class="chip ${st==='cloud'?'ok':st==='error'?'crit':st==='syncing'?'info':'warn'}">${st==='cloud'?'Nuvem':st==='syncing'?'Sincronizando':st==='error'?'Erro':st==='offline'?'Sem internet':'Este aparelho'}</span><span class="t2" style="font-size:13px">${esc(STORE.msg)}</span><span class="sp"></span>${APP_MODE==='app'?`<button class="btn sm" data-a="syncNow">Sincronizar agora</button>`:''}</div>
   <div class="g3" style="margin-top:12px">${(ROLE==='sous'?[['Receitas em execução',EXEC.length],['Lotes',LOTS.length]]:[['Receitas em execução',EXEC.length],['Minhas receitas',LIB.length],['Lotes',LOTS.length],['Ingredientes próprios',CUST.length],['Neutros',NXLIB.length],['Entradas de estoque',INV.filter(e=>!isMov(e)).length],['Baixas registradas',INV.filter(isMov).length]]).map(([n,v])=>`<div class="kv"><span>${n}</span><span>${v}</span></div>`).join('')}${pend?`<div class="kv"><span>Aguardando envio</span><span class="c-warn">${pend}</span></div>`:''}</div></div>
  ${can.cost()?`<div class="card"><h2>Exportar e importar</h2><div class="row"><button class="btn pri" data-a="expJson">Exportar backup (JSON)</button><button class="btn" data-a="expCsv">Exportar lotes (CSV)</button><label class="btn" for="impFile">Importar backup</label><input type="file" id="impFile" accept=".json,application/json" style="display:none"></div>
@@ -5882,6 +5883,40 @@ if(APP_MODE==='app'&&'serviceWorker' in navigator&&(location.protocol==='https:'
   const up=()=>{try{reg.update();}catch(e){}};document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')up();});setInterval(up,20*60*1000);
   if(reg.waiting&&hadCtl)offerReload();}).catch(()=>{});});}
 
+/* ===================== v18.7 · FUNCIONAMENTO OFFLINE: diagnóstico, reparo e armazenamento persistente =====================
+   O service worker responde o que está guardado nesta versão (arquivos do núcleo, conferência do hash do index.html,
+   versões antigas ainda presentes). O app pede ao navegador armazenamento persistente (menos risco de o sistema apagar
+   dados e cache por falta de espaço) e mostra a data do último backup exportado. */
+const LASTBK_KEY='fredolin_v18_lastbackup';
+function swAsk(type,ms){return new Promise(res=>{try{const c=navigator.serviceWorker&&navigator.serviceWorker.controller;if(!c){res({none:true});return;}
+ const ch=new MessageChannel();const t=setTimeout(()=>res({timeout:true}),ms||8000);ch.port1.onmessage=e=>{clearTimeout(t);res(e.data||{});};c.postMessage({type},[ch.port2]);}catch(e){res({err:String(e)});}});}
+async function offlineDiag(){U.off={busy:true};render();const o={};
+ o.sw='serviceWorker' in navigator;o.d=o.sw?await swAsk('diag'):{none:true};
+ try{if(navigator.storage&&navigator.storage.persisted)o.persisted=await navigator.storage.persisted();}catch(e){}
+ try{if(navigator.storage&&navigator.storage.estimate){const e=await navigator.storage.estimate();o.usage=e.usage;o.quota=e.quota;}}catch(e){}
+ o.at=Date.now();U.off=o;render();}
+async function offlineRepair(){U.off=Object.assign({},U.off||{},{busy:true,repair:null});render();const r=await swAsk('repair',30000);
+ await offlineDiag();U.off.repair=r;render();}
+/* pede armazenamento persistente uma vez por aparelho, depois de o app abrir (o navegador pode recusar em silêncio) */
+if(APP_MODE==='app'&&typeof navigator!=='undefined'&&navigator.storage&&navigator.storage.persist){
+ window.addEventListener('load',()=>{setTimeout(()=>{try{navigator.storage.persisted().then(p=>{if(!p&&!LS.get('fredolin_v18_persistAsked')){LS.set('fredolin_v18_persistAsked',1);navigator.storage.persist().catch(()=>{});}}).catch(()=>{});}catch(e){}},3000);});}
+function offlineCard(){if(APP_MODE!=='app')return'';const o=U.off,lb=LS.get(LASTBK_KEY);const mb=x=>x>=1e9?f1(x/1e9)+' GB':f0(x/1e6)+' MB';
+ const st=!o?null:o.busy?'busy':!o.sw||o.d.none?'none':o.d.timeout||o.d.err?'erro':o.d.miss&&o.d.miss.length||!o.d.indexOk?'falta':'ok';
+ const rows=o&&!o.busy?[
+  ['Service worker',!o.sw?'<span class="c-crit">não suportado neste navegador</span>':o.d.none?'<span class="c-warn">ainda não controla esta página (abra o app de novo)</span>':o.d.timeout||o.d.err?'<span class="c-crit">não respondeu</span>':'<span class="c-ok">ativo · versão '+esc(o.d.version||'?')+'</span>'],
+  ...(o.d&&o.d.have?[['Arquivos do app guardados',(o.d.miss.length?'<span class="c-warn">':'<span class="c-ok">')+o.d.have.length+' de '+(o.d.have.length+o.d.miss.length)+'</span>'+(o.d.miss.length?' · faltam '+esc(o.d.miss.join(', ')):'')],
+   ['Página guardada confere (SHA-256)',o.d.indexOk?'<span class="c-ok">sim</span>':'<span class="c-crit">não</span>'],
+   ['Versão em uso',esc(VERSION)+(o.d.version&&o.d.version!==VERSION?' <span class="c-warn">(guardada: '+esc(o.d.version)+'; feche e abra o app)</span>':'')],
+   ['Versões antigas no aparelho',o.d.others.length?o.d.others.length+' <span class="muted">(apagadas quando a nova estiver completa)</span>':'nenhuma']]:[]),
+  ['Armazenamento persistente',o.persisted===true?'<span class="c-ok">sim</span>':o.persisted===false?'<span class="c-warn">não</span> <span class="muted">(o sistema pode apagar dados se faltar espaço; faça backup)</span>':'<span class="muted">não informado pelo navegador</span>'],
+  ...(o.quota?[['Espaço usado',mb(o.usage||0)+' de '+mb(o.quota)]]:[]),
+ ]:[];
+ return`<div class="card" id="off-card"><div class="row"><h2 style="margin:0">Funcionamento offline</h2><span class="sp"></span>${st?`<span class="chip ${st==='ok'?'ok':st==='busy'?'info':st==='falta'||st==='none'?'warn':'crit'}">${st==='ok'?'Pronto para usar sem internet':st==='busy'?'Verificando…':st==='falta'?'Incompleto':st==='none'?'Sem service worker':'Erro'}</span>`:''}</div>
+  <p class="note" style="margin:6px 0 10px">Confere se este aparelho tem tudo para abrir o app sem internet. Os seus dados ficam no aparelho e na nuvem da equipe; o backup é a terceira cópia.</p>
+  ${rows.length?rows.map(([a,b])=>`<div class="kv"><span>${a}</span><span>${b}</span></div>`).join(''):''}
+  <div class="kv"><span>Último backup exportado neste aparelho</span><span>${lb?new Date(lb).toLocaleDateString('pt-BR'):'<span class="c-warn">nunca</span>'}</span></div>
+  ${o&&o.repair?`<p class="${o.repair.ok?'c-ok':'c-warn'}" style="margin:8px 0 0">${o.repair.ok?'Arquivos baixados e conferidos de novo.':'Não deu para reparar agora: '+esc(o.repair.msg||'sem resposta')+'. Com internet, tente de novo.'}</p>`:''}
+  <div class="row" style="margin-top:10px"><button class="btn sm" data-a="offDiag"${o&&o.busy?' disabled':''}>${o?'Verificar de novo':'Verificar agora'}</button>${st&&st!=='ok'&&st!=='busy'&&o.d&&!o.d.none?`<button class="btn sm" data-a="offRepair">Baixar de novo e conferir</button>`:''}</div></div>`;}
 /* ==== 70-app.js ==== */
 /* ===================== IL FREDOLIN · APLICAÇÃO (render, ações, eventos) ===================== */
 const VIEW={execucao:pgExecucao,equipe:pgEquipe,bancada:pgBancada,creator:pgCreator,laudo:pgLaudo,congelamento:pgCongel,quimica:pgQuimica,vitrine:pgVitrine,
@@ -6049,7 +6084,9 @@ const ACT={
  invAdd:()=>{const N=U.invNew||{};if(!(+N.kg>0)||!N.ingId)return;const e={id:'E'+Date.now(),ingId:N.ingId,qty:+N.kg*1000,costKg:+N.costKg||0,lot:N.lot||'',exp:N.exp||'',date:today()};STORE.put('inv',e);U.invNew={ingId:N.ingId,kg:'',costKg:'',lot:'',exp:''};render();toast('Entrada registrada');},
  invDel:v=>{STORE.del('inv',v);render();},
  impGo:()=>{if(!can.cost())return denied();applyImport();},impNo:()=>{U.imp=null;render();},impDel:()=>{if(U.imp){U.imp.withDel=!U.imp.withDel;render();}},
- expJson:async()=>{const cols={};BACKUP_COLS.forEach(c=>cols[c]=COLS[c].get());const data=JSON.stringify(Object.assign(backupPayload(cols,STORE.tomb,{v:VERSION,date:today(),exportedAt:new Date().toISOString()}),{vitrine:S.vitrine}),null,1);await saveFile('il_fredolin_backup_'+today()+'.json',data);},
+ expJson:async()=>{const cols={};BACKUP_COLS.forEach(c=>cols[c]=COLS[c].get());const data=JSON.stringify(Object.assign(backupPayload(cols,STORE.tomb,{v:VERSION,date:today(),exportedAt:new Date().toISOString()}),{vitrine:S.vitrine}),null,1);await saveFile('il_fredolin_backup_'+today()+'.json',data);LS.set(LASTBK_KEY,Date.now());},
+ offDiag:()=>{offlineDiag();},
+ offRepair:()=>{offlineRepair();},
  expCsv:async()=>{const h=['lote','data','receita','overrun_prev','overrun_med','brix_prev','brix_med','derretimento_prev','derretimento_med','textura','pasteurizacao','resfriamento_min','maturacao_h'];const rows=LOTS.map(L=>{const me=L.meas||{};return[L.code,L.date,L.name,lotPred(L,'ov',f1),measuredOverrun(me)!=null?f1(measuredOverrun(me)):'',lotPred(L,'brix',f1),me.brix||'',lotPred(L,'melt10',f0),me.melt10||'',me.tex!=null?me.tex:'',me.pastT||'',me.coolMin||'',me.matH||''].map(x=>'"'+String(x).replace(/"/g,'""')+'"').join(';');});await saveFile('il_fredolin_lotes_'+today()+'.csv','﻿'+[h.join(';'),...rows].join('\n'));},
  frz:v=>{S.proc.storeT=clamp(Math.round((+S.proc.storeT+ +v)*2)/2,-35,-8);if(S.proc.serveFrom==='freezer')S.vit=S.proc.storeT;U.bal=null;render();},
  vit:v=>{S.vit=clamp(Math.round((+S.vit+ +v)*2)/2,-35,-6);if(S.proc.serveFrom==='freezer')S.proc.storeT=S.vit;U.bal=null;render();},
@@ -6156,7 +6193,7 @@ function importCard(){const I=U.imp;if(!I)return'';const P=I.plan,t=P.total;
 /* toda ação passa pela checagem do perfil (o servidor também recusa o que o perfil não pode) */
 const denied=()=>toast('Seu perfil não tem acesso a esta função.');
 /* ações que não mexem na receita não entram no desfazer */
-const NO_UNDO=new Set(['doeGen','doeCancel','doeLots','impNo','impDel','rejDrop','rejDropNo','rejExport','appReload','go','sub','defMode','defSym','defClr','defOpen','defCat','fam','palOpen','palClose','palRun','undo','copy','chk','unchk','libTab','libAuthor','libMore','libTipo','libVitF','simOpen','simClose','cmpToggle','cmpClear','histOpen','lotOpen','crTab','crSub','atGoal','setSw','navTog','toTop','flowOpen','flowView','flowNotify','flowNext','flowBack','flowDisc','flowColor','flowStart','flowLot','procGo','procPlay','atSel','atPick','atCard','atExplore','nxGoal','sazM','del','delNo','meltTimer','panelSet','panelStart','panelNext','panelCancel','panelReveal','panelReset','testRun','syncNow','age','pick']);
+const NO_UNDO=new Set(['offDiag','offRepair','doeGen','doeCancel','doeLots','impNo','impDel','rejDrop','rejDropNo','rejExport','appReload','go','sub','defMode','defSym','defClr','defOpen','defCat','fam','palOpen','palClose','palRun','undo','copy','chk','unchk','libTab','libAuthor','libMore','libTipo','libVitF','simOpen','simClose','cmpToggle','cmpClear','histOpen','lotOpen','crTab','crSub','atGoal','setSw','navTog','toTop','flowOpen','flowView','flowNotify','flowNext','flowBack','flowDisc','flowColor','flowStart','flowLot','procGo','procPlay','atSel','atPick','atCard','atExplore','nxGoal','sazM','del','delNo','meltTimer','panelSet','panelStart','panelNext','panelCancel','panelReveal','panelReset','testRun','syncNow','age','pick']);
 function runAct(k,v,t){if(NO_UNDO.has(k))return ACT[k](v,t);const before=undoSnap();undoMark();const r=ACT[k](v,t);
  if(r&&typeof r.then==='function')return r;if(undoSnap()===before)undoSettle();else if(UNDO_TOAST.has(k))toastUndo();return r;}
 document.addEventListener('toggle',e=>{const d=e.target;if(d&&d.tagName==='DETAILS'&&d.id){U.dopen=U.dopen||{};U.dopen[d.id]=d.open;}},true);

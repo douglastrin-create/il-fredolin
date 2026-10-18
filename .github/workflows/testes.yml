@@ -23,6 +23,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with: { fetch-depth: 0 }
       - uses: actions/setup-node@v4
         with: { node-version: 22 }
       - run: npm i --no-save playwright@1.56.0 && npx playwright install --with-deps chromium webkit
@@ -30,6 +31,8 @@ jobs:
         run: node tests/e2e/smoke.mjs
       - name: Fluxo pela interface — O que medir e Experimentos
         run: node tests/e2e/experiments.mjs
+      - name: PWA — instalação conferida, erro do servidor, atualização, migração do service worker publicado, offline
+        run: node tests/e2e/pwa.mjs chromium && node tests/e2e/pwa.mjs webkit
   banco:
     runs-on: ubuntu-latest
     services:

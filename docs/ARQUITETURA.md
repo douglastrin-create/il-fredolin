@@ -1,4 +1,4 @@
-# Arquitetura do Il Fredolin (v18.6)
+# Arquitetura do Il Fredolin (v18.6–v18.7)
 
 ## Ideia em uma frase
 
@@ -12,6 +12,10 @@ Em produção nada mudou:
 Na primeira montagem, o `index.html` gerado foi **idêntico byte a byte** ao da v18.5 (sha `78fdf962b04e`).
 
 A especificação (§50) pede reestruturação progressiva, não reescrita. Por isso a separação foi feita **nos limites que o código já tinha**: os marcadores `/* ==== NN-nome.js ==== */` e os cabeçalhos de seção. Nenhuma linha foi movida de lugar na ordem de execução.
+
+## Service worker (v18.7)
+
+O `sw.js` da raiz também é **gerado**: `src/sw/sw.js` é o modelo, e o build preenche o SHA-256 do `index.html` montado e a `VERSION`. Cada publicação muda o `sw.js`; o navegador instala a versão nova só se a página baixada tiver exatamente esse hash, guarda tudo (8 arquivos) e só então apaga o cache anterior. Ver §5-K do relatório de auditoria.
 
 ## Como editar
 
@@ -128,11 +132,12 @@ Principais campos de `PROC0`:
 
 | Formato | Versão | Onde |
 |---|---|---|
-| App | `VERSION = 'v18.6'` | `ui/shell.js` (mostrado no rodapé) |
+| App | `VERSION = 'v18.7'` | `ui/shell.js` (mostrado no rodapé) |
 | Backup (JSON) | `{app: 'Il Fredolin', schema: 2, …coleções, tomb}` | `data/local/backup.js` |
 | Registro na nuvem | linha `records {workspace_id, col, id, data, deleted, updated_at, ver, base_ver, force}` | `supabase/migrations/*`, `data/sync/supabase.js` |
 | Registro de modelos | `il-fredolin/model-registry@1` | `docs/model-registry.json` |
 | Montagem | `il-fredolin/build@1` | `src/build.json` |
+| Cache offline | `il-fredolin-<12 primeiros do SHA-256 do index.html>` | `sw.js` (gerado de `src/sw/sw.js`) |
 | Dívidas de camada | `il-fredolin/layers-known@1` | `tools/layers-known.json` |
 | Chaves locais | `fredolin_v9_*`, `fredolin_v10_*`, `fredolin_v11_*`, mantidas desde a v9 para não perder dados | `data/local/colecoes.js` |
 

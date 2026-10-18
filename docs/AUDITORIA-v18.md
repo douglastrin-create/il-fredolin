@@ -286,6 +286,32 @@ A tela diz quantas combinações foram testadas, quantas ficaram viáveis e quan
 
 **Testes:** `arch.test.mjs` (6: index.html = montagem de src/; 27 marcadores únicos; trecho do Web Worker só com núcleo e produto; camadas = dívidas registradas; verificador ignora comentários, textos e locais; todas as camadas presentes) e `contracts.test.mjs` (4). CI ganhou duas etapas: montagem confere e camadas sem dependência nova. Node 71/71.
 
+## 5-K. v18.7 — PWA confiável (especificação §45)
+
+**Auditoria do service worker publicado:**
+
+| # | Problema | Consequência |
+|---|---|---|
+| 1 | Nome do cache fixo (`d50551d3dc`) desde a v17; o `sw.js` não mudava entre publicações | O navegador nunca instalava service worker novo: o aviso "Nova versão disponível" nunca aparecia e o cache não era versionado nem limpo por versão. A página nova chegava só porque a navegação busca na rede primeiro |
+| 2 | Qualquer resposta 200 da página era gravada como cópia offline, sem conferir o conteúdo | Uma página inesperada (portal de Wi-Fi em http, página trocada, versão intermediária) podia virar a cópia offline |
+| 3 | Na navegação, erro do servidor (404/500, ex.: durante uma publicação) era mostrado em vez da cópia guardada | O app "sumia" mesmo estando guardado no aparelho |
+| 4 | Nenhum diagnóstico | Não dava para saber se o aparelho tinha tudo para abrir offline |
+| 5 | Sem pedido de armazenamento persistente | O navegador pode apagar dados e cache quando falta espaço |
+
+**O que mudou:**
+- **Cache versionado por hash.** O `sw.js` é gerado pelo build com o SHA-256 do `index.html` (`src/sw/sw.js` é o modelo). Cada publicação gera um service worker novo.
+- **Instalação conferida, tudo ou nada.** O service worker baixa os 8 arquivos do núcleo e só aceita o `index.html` se o hash bater. Se o GitHub Pages ainda entrega a página anterior (propagação), a instalação falha, a versão anterior segue funcionando offline e o navegador tenta depois. O cache antigo só é apagado quando o novo está completo.
+- **Só entra no cache o que foi conferido:** a página só substitui a cópia se tiver o hash desta versão; resposta de erro ou de outro endereço nunca entra.
+- **Erro do servidor na navegação mostra a cópia guardada.**
+- **Cartão "Funcionamento offline"** (Conta e sincronização, todos os perfis): service worker ativo e versão, arquivos guardados (8 de 8), página confere pelo SHA-256, versões antigas no aparelho, armazenamento persistente, espaço usado, data do último backup exportado; botão "Baixar de novo e conferir" quando falta algo.
+- **Armazenamento persistente** pedido uma vez por aparelho (o navegador pode recusar; o cartão mostra).
+
+**Migração:** testada a partir do `sw.js` e do `index.html` publicados (v18.6, cache `d50551d3dc`): o service worker novo instala, assume, apaga o cache antigo e o app abre a v18.7 offline. Os dados (localStorage e nuvem) não passam pelo service worker e não são tocados.
+
+**Bug encontrado nos testes e corrigido:** um service worker antigo ainda terminando pedidos recriava o próprio cache logo depois de apagado. Agora ele só grava se o cache dele ainda existe, e o service worker novo limpa versões antigas também depois da navegação e no diagnóstico.
+
+**Testes:** `tests/e2e/pwa.mjs` (15 verificações, Chromium e WebKit no CI): migração do service worker publicado; instalação conferida; cache versionado; erro 500 mostra a cópia; página inesperada online não substitui a cópia offline; sw novo com página antiga no servidor é recusado sem deixar cache parcial; atualização normal assume, guarda tudo e apaga a anterior; fechar e reabrir offline abre a versão nova; cartão de diagnóstico na tela. `arch.test.mjs` confere que o `sw.js` é o gerado, com hash e versão certos e todos os arquivos existentes. Node 72/72.
+
 ## 6. Para publicar (requer sua autorização)
 1. Conferir a execução do workflow *Testes* na branch (inclui WebKit e o job *banco*).
 1b. Aplicar a migração 001 seguindo `supabase/README.md` (ensaio num projeto de teste primeiro). A ordem entre banco e app é indiferente.
