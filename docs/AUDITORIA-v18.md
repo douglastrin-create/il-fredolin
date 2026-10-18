@@ -146,6 +146,19 @@ Num iPhone espera-se algo como 2–4× isso: ainda abaixo de 60 ms. **Recomenda�
 | Migração 002 | 22:10 | anônimo sem EXECUTE nas 6 funções; `search_path` fixo; Security Advisor: restam 2 avisos (1 intencional, 1 de painel) |
 | App v18.0 publicado (`main` = `9d128e1`, avanço direto) | 22:14 | CI verde nos 3 jobs antes do merge; GitHub Pages implantado com o mesmo commit; cache `il-fredolin-d50551d3dc` |
 
+## 5-E. v18.1 — fidelidade científica sem novas medições (branch; publicação a autorizar)
+
+| Entrega | O que faz | Evidência |
+|---|---|---|
+| **O que medir** (Laudo → nova seção; especificação §30) | Lista as medições que mais aumentariam a confiança nas previsões **desta** receita, com equipamento, procedimento e onde registrar. Ordem: efeito calculado pelo motor quando calculável (ex.: Brix da fruta em °C de serviço), senão a natureza do modelo; dividido pelos lotes que já o corrigiram; ponderado pelo custo de medir | `doe.test.mjs` (morango: Brix em 1º; Brix medido sai da lista; calibrado perde prioridade; laboratório atrás do caseiro) |
+| **Experimentos** (Lotes e qualidade → nova aba; §28) | Fatorial 2^k (1–3 fatores) com réplicas, pontos centrais e ordem sorteada reproduzível; fatores de ingrediente mantêm o peso do lote (compensação, com corrida inviável sinalizada); um lote por corrida (o plano viaja no lote e sincroniza); análise por mínimos quadrados com efeitos, erro puro, p (t de Student) e termo próprio de curvatura | `doe.test.mjs` (p contra tabelas; recupera efeitos e interação plantados; curvatura não infla o erro; sem réplicas não inventa erro-padrão) e `tests/e2e/experiments.mjs` (fluxo completo pela interface: 13/13) |
+| **pH medido** no lote | Campo novo; conta para a lista de medições | E2E |
+| **Etiquetas de natureza** | + quenelle, gelo em volume, derretimento, doçura × temperatura; registro de modelos ganhou `melt` e `ice-volume` | `registry.test.mjs` |
+
+**Correções feitas pelos próprios testes nesta rodada:** (1) o critério inicial de prioridade punha o Brix do morango, maior incerteza calculada, em 10º, por pesos arbitrários; trocado por critério baseado em efeito calculado. (2) A medição de textura recebia a incerteza total, inclusive a parte que vem do Brix das frutas; agora recebe só a parcela do modelo. (3) Sem termo de curvatura, os pontos centrais inflavam o erro residual (0,45 em vez de ~0,04) e enfraqueciam todos os testes de significância. (4) Rótulos: contagem negativa de termos descartados, faixa com duplo sinal, concordância.
+
+**Limites honestos:** a prioridade de "O que medir" é uma ordem transparente, não um cálculo formal de valor da informação. A análise de experimentos vale só para os fatores e a faixa testados. Com poucos graus de liberdade (ex.: 1), o p é frágil.
+
 ## 6. Para publicar (requer sua autorização)
 1. Conferir a execução do workflow *Testes* na branch (inclui WebKit e o job *banco*).
 1b. Aplicar a migração 001 seguindo `supabase/README.md` (ensaio num projeto de teste primeiro). A ordem entre banco e app é indiferente.

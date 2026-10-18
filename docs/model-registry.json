@@ -1,32 +1,262 @@
 {
-  "schema": "il-fredolin/model-registry@1",
-  "auditedCommit": "52f99f0",
-  "classes": {
-    "D": "determinístico por definição ou balanço",
-    "M": "mecanístico (leis físicas)",
-    "SE": "semiempírico",
-    "H": "heurístico",
-    "C": "ajustável pelos lotes medidos (calibração)",
-    "V": "validado experimentalmente em escopo definido"
+ "schema": "il-fredolin/model-registry@1",
+ "auditedCommit": "52f99f0",
+ "classes": {
+  "D": "determinístico por definição ou balanço",
+  "M": "mecanístico (leis físicas)",
+  "SE": "semiempírico",
+  "H": "heurístico",
+  "C": "ajustável pelos lotes medidos (calibração)",
+  "V": "validado experimentalmente em escopo definido"
+ },
+ "validationNote": "Nenhum modelo tem classe V: não existe conjunto de medições independentes versionado.",
+ "models": [
+  {
+   "id": "composition",
+   "fn": [
+    "analyzeRaw",
+    "compOf"
+   ],
+   "class": [
+    "D"
+   ],
+   "outputs": [
+    "sol",
+    "fat",
+    "pac",
+    "pod",
+    "wat"
+   ],
+   "verification": "runTests: soma de composição 98–100,6%",
+   "limits": "Composição dos ingredientes sem fonte nem incerteza por item"
   },
-  "validationNote": "Nenhum modelo tem classe V: não existe conjunto de medições independentes versionado.",
-  "models": [
-    {"id": "composition", "fn": ["analyzeRaw", "compOf"], "class": ["D"], "outputs": ["sol", "fat", "pac", "pod", "wat"], "verification": "runTests: soma de composição 98–100,6%", "limits": "Composição dos ingredientes sem fonte nem incerteza por item"},
-    {"id": "fpd", "fn": ["fpdSE", "fpdNorrish", "seFromFpd"], "class": ["SE"], "sources": ["Goff & Hartel, tabela de FPD × equivalente de sacarose (≤180 g/100 g água)", "Norrish (K = −6,47) + Clausius–Clapeyron, ΔHf 6008 J/mol"], "verification": "tests/node/engine.test.mjs: monotonia, inversão, continuidade em 180 g", "limits": "ΔHf constante; equivalente de sacarose para todos os solutos"},
-    {"id": "salts", "fn": ["analyzeRaw"], "class": ["SE"], "sources": ["Leighton: 2,37 × MSNF / água"], "limits": "Só sais do leite"},
-    {"id": "frozen-fraction", "fn": ["frozenPct", "tempForFrozen", "seRequired"], "class": ["M"], "dependsOn": ["fpd"], "parameters": {"SE_Cg": 400}, "verification": "engine.test.mjs: monotonia e teto do Cg′", "limits": "Cg′ único da sacarose"},
-    {"id": "heat-transfer", "fn": ["heatSim", "poteModel", "hardenModel", "poteReady"], "class": ["M"], "method": "condução 1-D em esfera de mesmo raio que pote H=D; capacidade térmica aparente; passo explícito com critério 0,45·C/G", "parameters": {"h_cozinha_W_m2K": 10, "h_freezer_frost_free_W_m2K": 14}, "verification": "engine.test.mjs: erro de energia ≤0,7%, malha N=10 vs 40 <2%, concordância ±3% com método da entalpia", "limits": "h estimado; sem parede/tampa/contato; potes com H≠D"},
-    {"id": "viscosity", "fn": ["mixViscosity"], "class": ["SE", "H"], "limits": "Coeficientes da fase sérica e dos hidrocoloides (VISK) sem medição"},
-    {"id": "overrun", "fn": ["analyzeRaw:ovModel"], "class": ["H", "C"], "limits": "Incrementos por processo; teto por máquina"},
-    {"id": "fat-destabilization", "fn": ["analyzeRaw:destab"], "class": ["H"], "limits": "Combinação linear sem dado de glóbulo"},
-    {"id": "ice-crystal-size", "fn": ["analyzeRaw:crystal"], "class": ["H"], "formula": "28 + 0,6·(100 − índice)", "limits": "Índice convertido em µm; não é medição microscópica"},
-    {"id": "texture-stability", "fn": ["chemistry:shelfVit", "kinetics"], "class": ["SE", "H", "C"], "formula": "(50³ − d₀³)/K; K = 9000·fatores·WLF(C1 17,44; C2 51,6)", "limits": "Não é prazo de validade sanitária; K não calibrado", "uiLabel": "Estabilidade da textura (estimativa)"},
-    {"id": "tg-prime", "fn": ["chemistry"], "class": ["SE"], "limits": "Média ponderada simples de Tg′"},
-    {"id": "ph", "fn": ["chemistry"], "class": ["H"], "limits": "Sem equilíbrio ácido-base nem pKa"},
-    {"id": "sensory-temperature", "fn": ["podTempFactor", "chemistry:aroma"], "class": ["H"], "limits": "Sem painel sensorial de suporte"},
-    {"id": "quenelle", "fn": ["quenelleModel", "icePhaseVol"], "class": ["SE", "H", "C"], "limits": "Coesão heurística; alvo ajustado por lotes"},
-    {"id": "batch-freezer", "fn": ["maqEnergy", "maqPlan"], "class": ["M", "C"], "limits": "Capacidade líquida constante deduzida do ciclo do usuário; batchMax sem fonte"},
-    {"id": "uncertainty", "fn": ["uncertainty"], "class": ["H"], "method": "perturbação um-a-um + 0,4 °C fixo; ±1,65σ", "limits": "Sem correlações; cobertura nunca verificada"},
-    {"id": "calibration", "fn": ["fitCalibration"], "class": ["C"], "method": "média posterior normal–normal com prior equivalente a 3 lotes em zero", "limits": "Sem variância estimada nem intervalo posterior"}
-  ]
+  {
+   "id": "fpd",
+   "fn": [
+    "fpdSE",
+    "fpdNorrish",
+    "seFromFpd"
+   ],
+   "class": [
+    "SE"
+   ],
+   "sources": [
+    "Goff & Hartel, tabela de FPD × equivalente de sacarose (≤180 g/100 g água)",
+    "Norrish (K = −6,47) + Clausius–Clapeyron, ΔHf 6008 J/mol"
+   ],
+   "verification": "tests/node/engine.test.mjs: monotonia, inversão, continuidade em 180 g",
+   "limits": "ΔHf constante; equivalente de sacarose para todos os solutos"
+  },
+  {
+   "id": "salts",
+   "fn": [
+    "analyzeRaw"
+   ],
+   "class": [
+    "SE"
+   ],
+   "sources": [
+    "Leighton: 2,37 × MSNF / água"
+   ],
+   "limits": "Só sais do leite"
+  },
+  {
+   "id": "frozen-fraction",
+   "fn": [
+    "frozenPct",
+    "tempForFrozen",
+    "seRequired"
+   ],
+   "class": [
+    "M"
+   ],
+   "dependsOn": [
+    "fpd"
+   ],
+   "parameters": {
+    "SE_Cg": 400
+   },
+   "verification": "engine.test.mjs: monotonia e teto do Cg′",
+   "limits": "Cg′ único da sacarose"
+  },
+  {
+   "id": "heat-transfer",
+   "fn": [
+    "heatSim",
+    "poteModel",
+    "hardenModel",
+    "poteReady"
+   ],
+   "class": [
+    "M"
+   ],
+   "method": "condução 1-D em esfera de mesmo raio que pote H=D; capacidade térmica aparente; passo explícito com critério 0,45·C/G",
+   "parameters": {
+    "h_cozinha_W_m2K": 10,
+    "h_freezer_frost_free_W_m2K": 14
+   },
+   "verification": "engine.test.mjs: erro de energia ≤0,7%, malha N=10 vs 40 <2%, concordância ±3% com método da entalpia",
+   "limits": "h estimado; sem parede/tampa/contato; potes com H≠D"
+  },
+  {
+   "id": "viscosity",
+   "fn": [
+    "mixViscosity"
+   ],
+   "class": [
+    "SE",
+    "H"
+   ],
+   "limits": "Coeficientes da fase sérica e dos hidrocoloides (VISK) sem medição"
+  },
+  {
+   "id": "overrun",
+   "fn": [
+    "analyzeRaw:ovModel"
+   ],
+   "class": [
+    "H",
+    "C"
+   ],
+   "limits": "Incrementos por processo; teto por máquina"
+  },
+  {
+   "id": "fat-destabilization",
+   "fn": [
+    "analyzeRaw:destab"
+   ],
+   "class": [
+    "H"
+   ],
+   "limits": "Combinação linear sem dado de glóbulo"
+  },
+  {
+   "id": "ice-crystal-size",
+   "fn": [
+    "analyzeRaw:crystal"
+   ],
+   "class": [
+    "H"
+   ],
+   "formula": "28 + 0,6·(100 − índice)",
+   "limits": "Índice convertido em µm; não é medição microscópica"
+  },
+  {
+   "id": "texture-stability",
+   "fn": [
+    "chemistry:shelfVit",
+    "kinetics"
+   ],
+   "class": [
+    "SE",
+    "H",
+    "C"
+   ],
+   "formula": "(50³ − d₀³)/K; K = 9000·fatores·WLF(C1 17,44; C2 51,6)",
+   "limits": "Não é prazo de validade sanitária; K não calibrado",
+   "uiLabel": "Estabilidade da textura (estimativa)"
+  },
+  {
+   "id": "tg-prime",
+   "fn": [
+    "chemistry"
+   ],
+   "class": [
+    "SE"
+   ],
+   "limits": "Média ponderada simples de Tg′"
+  },
+  {
+   "id": "ph",
+   "fn": [
+    "chemistry"
+   ],
+   "class": [
+    "H"
+   ],
+   "limits": "Sem equilíbrio ácido-base nem pKa"
+  },
+  {
+   "id": "sensory-temperature",
+   "fn": [
+    "podTempFactor",
+    "chemistry:aroma"
+   ],
+   "class": [
+    "H"
+   ],
+   "limits": "Sem painel sensorial de suporte"
+  },
+  {
+   "id": "quenelle",
+   "fn": [
+    "quenelleModel",
+    "icePhaseVol"
+   ],
+   "class": [
+    "SE",
+    "H",
+    "C"
+   ],
+   "limits": "Coesão heurística; alvo ajustado por lotes"
+  },
+  {
+   "id": "batch-freezer",
+   "fn": [
+    "maqEnergy",
+    "maqPlan"
+   ],
+   "class": [
+    "M",
+    "C"
+   ],
+   "limits": "Capacidade líquida constante deduzida do ciclo do usuário; batchMax sem fonte"
+  },
+  {
+   "id": "uncertainty",
+   "fn": [
+    "uncertainty"
+   ],
+   "class": [
+    "H"
+   ],
+   "method": "perturbação um-a-um + 0,4 °C fixo; ±1,65σ",
+   "limits": "Sem correlações; cobertura nunca verificada"
+  },
+  {
+   "id": "calibration",
+   "fn": [
+    "fitCalibration"
+   ],
+   "class": [
+    "C"
+   ],
+   "method": "média posterior normal–normal com prior equivalente a 3 lotes em zero",
+   "limits": "Sem variância estimada nem intervalo posterior"
+  },
+  {
+   "id": "melt",
+   "fn": [
+    "meltModel"
+   ],
+   "class": [
+    "H",
+    "C"
+   ],
+   "limits": "Regra prática; corrigida pelos lotes com derretimento medido"
+  },
+  {
+   "id": "ice-volume",
+   "fn": [
+    "icePhaseVol"
+   ],
+   "class": [
+    "SE"
+   ],
+   "sources": [
+    "Muse & Hartel (2004): dureza acompanha o volume de gelo"
+   ],
+   "limits": "Densidades de fase fixas; ar previsto (heurístico) entra no volume"
+  }
+ ]
 }

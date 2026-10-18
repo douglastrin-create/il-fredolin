@@ -24,6 +24,8 @@ jobs:
       - run: npm i --no-save playwright@1.56.0 && npx playwright install --with-deps chromium webkit
       - name: Fumaça em Chromium e WebKit (motor do Safari)
         run: node tests/e2e/smoke.mjs
+      - name: Fluxo pela interface — O que medir e Experimentos
+        run: node tests/e2e/experiments.mjs
   banco:
     runs-on: ubuntu-latest
     services:
