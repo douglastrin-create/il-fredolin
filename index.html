@@ -1091,7 +1091,7 @@ const NKB_TOPICS=[
  {n:'Proteínas funcionais',t:'Entram pela receita (leite em pó, WPC, gema), não pelo neutro: o motor conta no MSNF e na proteína, mas não tem modelo funcional próprio para espuma ou emulsão de proteína.',src:[]},
  {n:'Gema como emulsificante',t:'Foi o emulsificante original do sorvete.',src:['guelphE']},
  {n:'Polissorbato 80',t:'Éster de sorbitano com ácido oleico; emulsificante sintético. Não está no banco do app (o laboratório não exige sintéticos).',src:['guelphE']},
- {n:'Fibras solúveis além da inulina (polidextrose, dextrina resistente)',t:'Sem dado de composição conferido no app: não entram em blends até haver ficha com fonte.',src:[]},
+ {n:'Fibras solúveis além da inulina (polidextrose, fibra solúvel de milho)',t:'Estão no banco como ingredientes de receita (composição de ficha típica, sem fonte primária) e o gerador do sem açúcar usa a fibra de milho. Não são componentes de neutro, e a tolerância intestinal delas não tem fonte registrada no app.',src:[]},
  {n:'Maturação',t:'O app modela a hidratação das gomas na maturação (curva por temperatura e tempo). No estudo de 2013 as misturas maturaram uma noite a 4 °C. Tempo mínimo com fonte: sem dado registrado.',src:['bahram13']}
 ];
 /* ---------- GORDURA SÓLIDA (SFC) ----------
@@ -1712,7 +1712,7 @@ function diagnoseCore(st,m){
  if(m.A.ery/T*100>6)add('warn','Ingredientes','Eritritol acima de 6%','O eritritol tem baixa solubilidade a frio: recristaliza (textura arenosa) e dá sensação refrescante de menta.','Limite a ~5% e complete com alulose, inulina ou maltitol.');
  if((m.A.sor+m.A.xyl+m.A.mlt)/T*100>6)add('warn','Ingredientes','Polióis laxativos acima de 6%','Sorbitol, xilitol e maltitol têm efeito laxativo dose-dependente; uma porção de gelato com mais de 6% já pode incomodar. A advertência de rótulo é obrigatória na UE acima de 10% de polióis adicionados (Reg. 1169/2011, anexo III) — no Brasil, confira a regra vigente da ANVISA para o seu produto.','Reduza e combine com eritritol ou fibras.');
  if(m.A.gly/T*100>2)add('warn','Ingredientes','Glicerol acima de 2%','Dá sabor amargo/quente e textura escorregadia.','Use no máximo 1–1,5%.');
- if((m.A.inu+m.A.fos)/T*100>5)add('warn','Ingredientes','Fibras solúveis acima de 5%','Inulina/FOS em excesso causam desconforto intestinal e textura gomosa.','Reduza para 3–4%.');
+ if((m.A.inu+m.A.fos)/T*100>5)add('warn','Ingredientes','Fibras solúveis acima de 5%','Inulina/FOS em excesso deixam a textura gomosa (prática de formulação). A tolerância intestinal está no aviso de fibra por porção.','Reduza para 3–4% e complete o corpo com fibra de milho ou polidextrose.');
  if(m.alc>3.5)add('crit','Ingredientes','Álcool acima de 3,5% ('+f1(m.alc)+'% etanol)','O etanol tem o PAC mais alto da receita (740): o gelato não firma na vitrine.','Reduza o destilado ou sirva como "affogato" sobre o gelato.');
  else if(m.alc>2)add('warn','Ingredientes','Álcool relevante ('+f1(m.alc)+'% etanol)','Cada 1% de etanol amolece muito; já está considerado no PAC.','Adicione após a pasteurização para não evaporar o aroma.');
  if(m.salt>.9&&tbase(st.tipo)==='gastro')add('warn','Sabor','Sal alto mesmo para salgado ('+f2(m.salt)+'%)','No frio o sal é menos percebido, mas acima de ~0,9% ele domina quando o gelato é servido como prato; gelatos salgados de alta cozinha ficam em 0,3–0,8%. Como guarnição em porção pequena, mais sal pode ser intencional.','Baixe o sal e use glicose ou trealose para o PAC.')
@@ -2347,13 +2347,15 @@ function nnls(A,b){const n=A[0].length;const x=new Array(n).fill(0);const P=new 
    Resolve as gramas dos ingredientes de base por mínimos quadrados ponderados com gramas ≥ 0:
    massa e congelamento (PAC exigido pela vitrine) são praticamente rígidos; doçura, gordura, MSNF e sólidos
    são metas ponderadas. Nunca "desiste": devolve a receita viável mais próxima e diz quais metas cedeu e quanto. */
-const GEN_VARS={crema:['leite','creme35','lpd','sacarose','dextrose'],frutta:['leite','creme35','lpd','sacarose','dextrose'],gastro:['leite','creme35','lpd','dextrose'],semacucar:['leite','creme35','lpd','eritritol','inulina','sucralose'],sorbetto:['agua','sacarose','dextrose','malto'],vegan:['agua','cococreme','sacarose','dextrose','malto']};
+const GEN_VARS={crema:['leite','creme35','lpd','sacarose','dextrose'],frutta:['leite','creme35','lpd','sacarose','dextrose'],gastro:['leite','creme35','lpd','dextrose'],semacucar:['leite','creme35','lpd','alulose','fibramilho','sucralose'],sorbetto:['agua','sacarose','dextrose','malto'],vegan:['agua','cococreme','sacarose','dextrose','malto']};
 const GEN_TOL={fat:.6,msnf:.6,pod:1,sol:1.2};
 /* v18.4 · famílias: ingredientes-base próprios onde a base muda (água, iogurte, leite de cabra, creme e gema);
    as demais usam os do comportamento-base (tbase). Metas padrão = meio das faixas da família. */
 Object.assign(GEN_VARS,{granita:['agua','sacarose','dextrose'],paleta_fruta:['agua','sacarose','dextrose','malto'],froyo:['iogurte','leite','lpd','sacarose','dextrose'],
  dondurma:['cabra','creme35','lpd','sacarose','dextrose'],semifreddo:['creme35','leite','lpd','sacarose','dextrose'],kulfi:['leite','creme35','lpd','sacarose','dextrose']});
 const genVars=t=>GEN_VARS[t]||GEN_VARS[tbase(t)]||GEN_VARS.crema;
+/* sólidos são meta nas bases sem leite e no sem açúcar (o corpo vem da fibra, não do leite); nas lácteas resultam das outras metas */
+const genSolTgt=t=>!genVars(t).includes('lpd')||tbase(t)==='semacucar';
 const genDef=t=>{if(GEN_DEF[t])return GEN_DEF[t];const P=PROF[t]||PROF.crema,mid=r=>Math.round((r[0]+r[1])/2*2)/2;return{fat:mid(P.fat),msnf:mid(P.msnf),pod:mid(P.pod),sol:mid(P.sol)};};
 function generate(o){
  const P=PROF[o.tipo]||PROF.crema,B=+o.batch||1000,VARS=genVars(o.tipo).map(id=>id==='dextrose'&&DEX_FORM()!=='anid'?'dextrosem':id),proc=o.proc||{};
@@ -2363,9 +2365,12 @@ function generate(o){
  if(P.yolkSolMin&&!fixed.some(f=>ING_BY[f.id]&&ING_BY[f.id].yolk))fixed.push({id:'gema',g:Math.round(B*P.yolkSolMin/.475/100*1.05)});
  /* frozen yogurt: iogurte mínimo da família (SDSU: de cultura sem incubação até 15–20% de iogurte na mistura) */
  if(P.yogMin&&!fixed.some(f=>/iogurt|grego|kefir/.test(f.id)))fixed.push({id:'iogurte',g:Math.round(B*P.yogMin/100)});
+ /* sem açúcar: eritritol fixo em 4,5% (acima de ~5–6% recristaliza a frio, regra do próprio laudo); alulose e fibra de milho completam PAC e corpo.
+    Até a v18.5 o gerador usava eritritol + inulina livres e chegava a ~16% de inulina (≈ 14 g por porção) */
+ if(tbase(o.tipo)==='semacucar'&&!fixed.some(f=>f.id==='eritritol'))fixed.push({id:'eritritol',g:Math.round(B*.045)});
  const F0={w:0,fat:0,msnf:0,pac:0,pod:0,sol:0,hf:0,mass:0};fixed.forEach(f=>{const c=contrib(f.id);F0.mass+=f.g;for(const k in c)F0[k]+=c[k]*f.g;});
  if(F0.mass>=B*.98)return{ok:false,msg:'Os ingredientes fixos já somam o lote inteiro; aumente o lote ou reduza o sabor.'};
- const C=VARS.map(id=>contrib(id));const fzT=(P.fz[0]+P.fz[1])/2;const dairy=VARS.includes('lpd');
+ const C=VARS.map(id=>contrib(id));const fzT=(P.fz[0]+P.fz[1])/2;const dairy=VARS.includes('lpd'),solTgt=genSolTgt(o.tipo);
  /* pesos: rígidas ≫ metas; a prioridade das metas depende do tipo */
  const tgt={pod:+o.pod,fat:+o.fat,msnf:+o.msnf,sol:+o.sol};
  /* nas bases lácteas os sólidos resultam das outras metas: só entram na conta se saírem da faixa do perfil (2ª passada) */
@@ -2382,14 +2387,14 @@ function generate(o){
   const hi=id=>C[VARS.indexOf(id)]&&C[VARS.indexOf(id)].pod>3;
   const rec=fixed.concat(VARS.map((id,i)=>({id,g:x[i]}))).filter(r=>r.g>=.3||(hi(r.id)&&r.g>=.01)).map(r=>({id:r.id,g:hi(r.id)?Math.round(r.g*100)/100:Math.round(r.g*10)/10}));
   return{rec,m:analyze({tipo:o.tipo,vit:o.vit,recipe:rec,proc,brix:{}})};};
- const W={mass:1e4,pac:3e3,pod:tbase(o.tipo)==='gastro'?.6:4,fat:3,msnf:2.5,sol:dairy?0:1.2};
+ const W={mass:1e4,pac:3e3,pod:tbase(o.tipo)==='gastro'?.6:4,fat:3,msnf:2.5,sol:solTgt?1.2:0};
  let r=solve(W,tgt.sol);
- if(dairy){const rg=r.m.P.sol;if(r.m.sol>rg[1]+.5||r.m.sol<rg[0]-.5)r=solve({...W,sol:.8},r.m.sol>rg[1]?rg[1]:rg[0]);}
+ if(!solTgt){const rg=r.m.P.sol;if(r.m.sol>rg[1]+.5||r.m.sol<rg[0]-.5)r=solve({...W,sol:.8},r.m.sol>rg[1]?rg[1]:rg[0]);}
  const recR=r.rec,m=r.m;
  if(Math.abs(m.fzVit-m.fzMid)>3.2)return{ok:false,msg:'Com esses ingredientes fixos não é possível chegar ao congelamento certo a '+f1(+o.vit)+' °C (fica '+f0(m.fzVit)+'% de água congelada, alvo '+fRg(P.fz)+'%). Reduza o sabor que mais pesa no PAC (álcool, sal, açúcares do sabor) ou mude a vitrine.'};
  const dropped=[],miss={};['pod','fat','msnf','sol'].forEach(k=>{if(!isFinite(tgt[k]))return;if(k==='msnf'&&!dairy)return;
   /* base láctea: sólidos não são meta, mas sair da faixa da família também é aviso (ex.: muita pasta de fruto seco) */
-  if(k==='sol'&&dairy){const rg=P.sol;if(m.sol>rg[1]+GEN_TOL.sol||m.sol<rg[0]-GEN_TOL.sol){dropped.push(k);miss[k]=m.sol;}return;}
+  if(k==='sol'&&!solTgt){const rg=P.sol;if(m.sol>rg[1]+GEN_TOL.sol||m.sol<rg[0]-GEN_TOL.sol){dropped.push(k);miss[k]=m.sol;}return;}
   const got=m[k];if(Math.abs(got-tgt[k])>GEN_TOL[k]){dropped.push(k);miss[k]=got;}});
  return{ok:true,recipe:recR,dropped,miss,m};}
 /* ===================== DESIGN INVERSO · ALTERNATIVAS E COMPROMISSOS (v18.4) =====================
@@ -2416,7 +2421,7 @@ function paretoFront(opts,crits){const better=(a,b,k)=>{const c=FRONT_CRIT[k];re
 function genFrontier(o,crits){
  crits=(crits||[]).filter(k=>FRONT_CRIT[k]);if(crits.length<2)return{ok:false,msg:'Escolha pelo menos dois critérios.'};
  const P=PROF[o.tipo]||PROF.crema,ids=genVars(o.tipo),dairy=ids.includes('lpd'),hasFat=ids.some(id=>ING_BY[id]&&contrib(id).fat>.05);
- const pods=frontLv(P.pod,5),fats=hasFat?frontLv(P.fat,4):[o.fat],msnfs=dairy?frontLv(P.msnf,3):[o.msnf],sols=dairy?[o.sol]:frontLv(P.sol,3);
+ const st=genSolTgt(o.tipo),pods=frontLv(P.pod,5),fats=hasFat?frontLv(P.fat,4):[o.fat],msnfs=dairy&&!st?frontLv(P.msnf,3):[o.msnf],sols=st?frontLv(P.sol,3):[o.sol];
  const inR=(v,r,t)=>v>=r[0]-t&&v<=r[1]+t,seen=new Set(),opts=[];let tried=0;
  for(const pod of pods)for(const fat of fats)for(const msnf of msnfs)for(const sol of sols){tried++;
   const r=generate({...o,pod,fat,msnf,sol});if(!r.ok)continue;
@@ -3489,10 +3494,10 @@ function labGerar(){
   ${[['fat','Gordura (%)',P.fat],['msnf','MSNF (%)',P.msnf],['pod','Doçura POD (%)',P.pod],['sol','Sólidos (%)',P.sol]].map(([k,n,rg])=>`<label class="field"><span class="lbl">${n}</span><input type="number" id="gen-${k}" data-i="gen" data-k="${k}" value="${g[k]}" step=".5"><span class="hint">Faixa ${rg[0]}–${rg[1]}</span></label>`).join('')}
   <label class="field"><span class="lbl">Estabilizante</span><select id="gen-stab" data-c="gen" data-k="stabId">${ingOpts(g.stabId,stabFilter)}</select></label>
   <label class="field"><span class="lbl">Dose (g/kg)</span><input type="number" id="gen-dose" data-i="gen" data-k="stabGkg" value="${g.stabGkg}" step=".5" min="0"></label>
- </div><p class="note">Congelamento é sempre meta obrigatória (${fT(P.fz[0])}–${fT(P.fz[1])}% a ${f1(S.vit)} °C). ${tbase(g.tipo)==='sorbetto'||tbase(g.tipo)==='vegan'?'Os sólidos entram como meta.':'Sólidos resultam das demais metas.'} Se alguma meta for impossível com os ingredientes fixos, o motor a libera e avisa.</p>
+ </div><p class="note">Congelamento é sempre meta obrigatória (${fT(P.fz[0])}–${fT(P.fz[1])}% a ${f1(S.vit)} °C). ${genSolTgt(g.tipo)?'Os sólidos entram como meta.':'Sólidos resultam das demais metas.'} Se alguma meta for impossível com os ingredientes fixos, o motor a libera e avisa.</p>
  <div class="row"><button class="btn pri" data-a="genRun">Gerar receita</button><button class="btn sm" data-a="genDefaults">Metas padrão do tipo</button></div></div>
  ${r?(r.ok?`<div class="card"><div class="row"><h2 style="margin:0">Receita gerada</h2><span class="sp"></span>${(()=>{const st=stReal(stOf(r.recipe,g.tipo)),gs=score(st,r.m,diagnose(st,r.m)).total;return`<span class="chip ${scoreCls(gs)}">Índice ${gs}</span>`;})()}</div>
-  ${r.dropped.length?`<p class="c-warn" style="margin:8px 0">Com esses ingredientes fixos nem todas as metas cabem juntas; o motor priorizou congelamento, doçura e gordura e chegou o mais perto possível: ${r.dropped.map(k=>({pod:'doçura',fat:'gordura',msnf:'MSNF',sol:'sólidos'})[k]+' '+f1(r.miss[k])+'% ('+(k==='sol'&&genVars(g.tipo).includes('lpd')?'faixa '+fRg(P.sol):'meta '+f1(g[k]))+'%)').join(' · ')}.</p>`:''}
+  ${r.dropped.length?`<p class="c-warn" style="margin:8px 0">Com esses ingredientes fixos nem todas as metas cabem juntas; o motor priorizou congelamento, doçura e gordura e chegou o mais perto possível: ${r.dropped.map(k=>({pod:'doçura',fat:'gordura',msnf:'MSNF',sol:'sólidos'})[k]+' '+f1(r.miss[k])+'% ('+(k==='sol'&&!genSolTgt(g.tipo)?'faixa '+fRg(P.sol):'meta '+f1(g[k]))+'%)').join(' · ')}.</p>`:''}
   <div class="tw"><table class="tbl"><thead><tr><th>Ingrediente</th><th class="r">Gramas</th><th class="r">%</th></tr></thead><tbody>${r.recipe.map(x=>`<tr><td>${esc(ING_BY[x.id].n)}</td><td class="r mono">${x.g<10?f1(x.g):f0(x.g)} g</td><td class="r mono t2">${f1(x.g/r.m.tot*100)}%</td></tr>`).join('')}</tbody></table></div>
   <div class="row note" style="gap:16px;margin:10px 0">${[['Congelada',f0(r.m.fzVit)+'%'],['POD',f1(r.m.pod)+'%'],['Gordura',f1(r.m.fat)+'%'],['MSNF',f1(r.m.msnf)+'%'],['Sólidos',f1(r.m.sol)+'%'],['Lactose/água',f1(r.m.lacW)+'%'],['Serviço',f1(r.m.serveT)+' °C']].map(([a,b])=>`<span>${a} <b class="mono" style="color:var(--t1)">${b}</b></span>`).join('')}</div>
   <div class="row"><button class="btn okb" data-a="genToBench">Levar para a bancada</button><button class="btn sm" data-a="genToVar">Adicionar às variações</button></div></div>`

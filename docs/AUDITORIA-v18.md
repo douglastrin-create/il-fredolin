@@ -266,9 +266,13 @@ A tela diz quantas combinações foram testadas, quantas ficaram viáveis e quan
 
 **Inulina:** o texto cita Bonnema et al. (2010): adultos saudáveis toleraram bem até 10 g/dia de inulina nativa e 5 g/dia de oligofrutose. Regra nova no laudo, "fibra fermentável por porção": aviso quando uma porção passa do tolerado num dia, informação a partir da metade. Isso torna visível o limite do "sem açúcar" registrado na v18.4 (≈ 15 g de inulina por porção de 90 g na receita gerada).
 
+**Gerador do sem açúcar refeito** (corrige o limite da v18.4). Antes, eritritol e inulina entravam livres e os sólidos não eram meta: o gerador ia para 40% de sólidos com ~16% de inulina (≈ 14 g por porção) ou para 9,5% de eritritol, e o próprio laudo acusava sólidos, fibra, eritritol e viscosidade. Agora o eritritol fica fixo em 4,5% (o laudo avisa acima de 6%: recristaliza a frio), alulose e fibra solúvel de milho completam PAC e corpo, e os sólidos viram meta (em vez de resultado). Em 32, 35 e 38% de sólidos, a −11 e −13 °C: meta atingida, sem inulina, e o laudo sem aviso de fibra, eritritol ou sólidos; resta "armazenamento longe da transição vítrea", comum a todo sem açúcar. A fronteira de alternativas do sem açúcar agora varia os sólidos.
+
+**Correção minha:** na primeira versão desta seção (e na mensagem de entrega) eu disse que polidextrose não estava no banco. Está: polidextrose e fibra solúvel de milho são ingredientes de receita (composição de ficha típica, sem fonte primária). O tema da ficha foi corrigido.
+
 **Fontes consultadas nesta rodada:** Goff (Guelph), caps. Stabilizers e Emulsifiers; Bahram Parvar et al. (2013, J. Agr. Sci. Tech.); Patel (INFLIBNET); Goycoolea et al. (1995); Bonnema et al. (2010); Srijunthongsiri & Pongsawatmanit (2006); SupplySide (amido de mandioca); fichas de fabricante Colony Gums (tara), Sosa (pectinas), JRS (fibra de citros). Os estudos de Nottingham (2017) e Ankara (2021), que já estavam no app, passaram a ser citados nas fichas.
 
-**Testes:** `stabilization.test.mjs` (7: toda ficha cita fonte registrada; campos sem fonte continuam vazios; sinergias só entre pares presentes e sem coeficiente; notas citam a fonte; origem natural × não natural; resultados observados com médias, desvio e lotes de outro blend ignorados; regra da inulina). E2E com 12 verificações novas, incluindo lote medido na comparação e 390 px sem rolagem horizontal. Node 60/60.
+**Testes:** `stabilization.test.mjs` (7: toda ficha cita fonte registrada; campos sem fonte continuam vazios; sinergias só entre pares presentes e sem coeficiente; notas citam a fonte; origem natural × não natural; resultados observados com médias, desvio e lotes de outro blend ignorados; regra da inulina). E2E com 12 verificações novas, incluindo lote medido na comparação e 390 px sem rolagem horizontal. Node 61/61.
 
 ## 6. Para publicar (requer sua autorização)
 1. Conferir a execução do workflow *Testes* na branch (inclui WebKit e o job *banco*).

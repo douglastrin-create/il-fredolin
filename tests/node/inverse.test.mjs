@@ -36,6 +36,22 @@ test('sem açúcar chega à doçura com sucralose em centésimos de grama', () =
   }
 });
 
+test('sem açúcar: sólidos como meta, eritritol ≤ 5% e sem inulina; laudo sem aviso de fibra nem de eritritol', () => {
+  for (const sol of [32, 35, 38]) for (const vit of [-11, -13]) {
+    const r = E.generate(base('semacucar', { sol, vit, stabId: 'neutro', stabGkg: 3 }));
+    assert.ok(r.ok && !r.dropped.length, `sol ${sol} a ${vit}: ${r.dropped}`);
+    assert.ok(Math.abs(r.m.sol - sol) <= 1.2, 'sólidos ' + r.m.sol);
+    const ery = r.recipe.find(x => x.id === 'eritritol');
+    assert.ok(ery && ery.g / r.m.tot <= .05, 'eritritol ' + (ery && ery.g));
+    assert.ok(!r.recipe.some(x => x.id === 'inulina'), 'sem inulina');
+    const st = E.stTest({ tipo: 'semacucar', vit, recipe: r.recipe }, vit);
+    const W = Array.from(E.diagnose(st, E.analyze(st))).filter(f => f.sev === 'warn' || f.sev === 'crit').map(f => f.title).join(' / ');
+    assert.ok(!/fibra|Eritritol|Sólidos totais/i.test(W), W);
+  }
+  const f = E.genFrontier(base('semacucar'), ['sug', 'sol', 'kcal']);
+  assert.ok(f.ok && f.front.length >= 2, 'fronteira do sem açúcar varia os sólidos: ' + (f.front && f.front.length));
+});
+
 test('base láctea: sólidos fora da faixa da família viram aviso', () => {
   const r = E.generate(base('semifreddo', { fixed: [{ id: 'pistache', g: 100 }] }));
   assert.ok(r.ok);
