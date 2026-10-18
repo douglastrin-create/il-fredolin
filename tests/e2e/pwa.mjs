@@ -54,6 +54,9 @@ const caches_ = pg => pg.evaluate(async () => (await caches.keys()).filter(k => 
   const ch = p0.evaluate(() => new Promise(res => { navigator.serviceWorker.addEventListener('controllerchange', () => res(true)); setTimeout(() => res(false), 8000); }));
   await p0.evaluate(async () => { const r = await navigator.serviceWorker.getRegistration(); await r.update().catch(() => { }); });
   const took = await ch; await p0.reload(); await p0.waitForTimeout(3500);
+  /* abrir de novo com internet (uso real): o service worker novo confere o próprio cache, repara se um service worker
+     antigo o apagou (defeito da v18.7) e só então apaga as versões mais antigas */
+  await p0.reload(); await p0.waitForTimeout(6000);
   const k1 = await p0.evaluate(async () => (await caches.keys()).filter(k => k.startsWith('il-fredolin-')).join(','));
   if (OFF) await c0.setOffline(true); await p0.reload(); await p0.waitForTimeout(1000);
   const vOff = await p0.evaluate(() => typeof VERSION !== 'undefined' && VERSION).catch(() => null);
@@ -66,6 +69,11 @@ let d = await diag(pg);
 check(d.version === verOf(v1.html) && d.miss && d.miss.length === 0 && d.indexOk === true, `instala ${d.version}: ${d.have && d.have.length} arquivos guardados, página confere pelo SHA-256`);
 const c1 = await caches_(pg);
 check(c1.length === 1 && c1[0] === 'il-fredolin-' + v1.sw.match(/INDEX_SHA='([0-9a-f]{12})/)[1], 'cache versionado com o hash da página: ' + c1.join(','));
+
+/* 1b. autorreparo: o cache desta versão é apagado (por um service worker antigo, pelo sistema ou pelo usuário) */
+await pg.evaluate(async () => { for (const k of await caches.keys()) await caches.delete(k); });
+await pg.reload(); await pg.waitForTimeout(5000);
+d = await diag(pg); check(d.miss && d.miss.length === 0 && d.indexOk === true, 'cache apagado: na próxima abertura online o app baixa de novo, confere e se repara');
 
 /* 2. erro do servidor durante a navegação: mostra a cópia guardada, não a página de erro */
 override = { status: 500, body: '<h1>500 erro do servidor</h1>' };

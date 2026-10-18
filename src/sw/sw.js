@@ -30,13 +30,23 @@ async function fetchVerified(u){
  if(!buf.byteLength)throw new Error(u+': vazio');
  return r;}
 /* guarda tudo ou nada: se um arquivo falhar, nada desta versão entra e a anterior continua */
+/* cada cache guarda quando foi montado ('./__sw_meta'): a limpeza só apaga versões MAIS ANTIGAS que a própria.
+   (v18.8: o service worker da v18.7 apagava qualquer cache que não fosse o dele, inclusive o da versão nova
+   que já tinha assumido, se ainda terminava uma navegação. Ver selfHeal.) */
+const META='./__sw_meta';
 async function precache(){const got=[];for(const u of CORE)got.push([u,await fetchVerified(u)]);
- const c=await caches.open(CACHE);for(const [u,r] of got)await c.put(u,r);await c.put('./',(await c.match('./index.html')).clone());}
+ const c=await caches.open(CACHE);for(const [u,r] of got)await c.put(u,r);await c.put('./',(await c.match('./index.html')).clone());
+ await c.put(META,new Response(JSON.stringify({ver:VERSION,sha:INDEX_SHA,at:Date.now()}),{headers:{'Content-Type':'application/json'}}));}
+async function metaOf(name){try{const r=await (await caches.open(name)).match(META);return r?await r.json():null;}catch(e){return null;}}
+async function complete(){if(!await caches.has(CACHE))return false;const c=await caches.open(CACHE);for(const u of CORE)if(!await c.match(u))return false;return true;}
+/* autorreparo: se o cache desta versão sumiu ou ficou incompleto (ex.: apagado por um service worker antigo), baixa e confere de novo */
+async function selfHeal(){if(await complete())return true;try{await precache();return true;}catch(e){return false;}}
 self.addEventListener('install',e=>{e.waitUntil(precache().then(()=>self.skipWaiting()));});
 /* apaga as versões antigas só se a desta estiver completa. Roda na ativação e de novo depois (navegação, diagnóstico):
    um service worker antigo ainda terminando pedidos pode recriar o próprio cache logo depois da ativação */
-async function cleanup(){if(!await caches.has(CACHE))return;const c=await caches.open(CACHE);for(const u of CORE)if(!await c.match(u))return;
- const ks=await caches.keys();await Promise.all(ks.filter(k=>k.startsWith('il-fredolin-')&&k!==CACHE).map(k=>caches.delete(k)));}
+async function cleanup(){if(!await complete())return;const me=await metaOf(CACHE);const myAt=me&&me.at||0;
+ const ks=(await caches.keys()).filter(k=>k.startsWith('il-fredolin-')&&k!==CACHE);
+ for(const k of ks){const o=await metaOf(k);if(!o||o.at<myAt)await caches.delete(k);}}
 self.addEventListener('activate',e=>{e.waitUntil(cleanup().then(()=>self.clients.claim()));});
 /* procura no cache desta versão e, se faltar, em versões anteriores ainda guardadas */
 async function fromCache(req){const own=await caches.open(CACHE);const hit=await own.match(req,{ignoreSearch:true});if(hit)return hit;return caches.match(req,{ignoreSearch:true});}
@@ -53,7 +63,7 @@ async function fromNet(req,key){const ctl=new AbortController();const t=setTimeo
  catch(e){clearTimeout(t);throw e;}}
 self.addEventListener('fetch',e=>{const req=e.request;if(req.method!=='GET')return;const u=new URL(req.url);
  if(u.origin===location.origin){
-  if(req.mode==='navigate'){e.waitUntil(new Promise(r=>setTimeout(r,3000)).then(cleanup).catch(()=>{}));e.respondWith(fromNet(req,'./index.html').catch(async()=>(await fromCache('./index.html'))||(await fromCache('./'))||Response.error()));return;}
+  if(req.mode==='navigate'){e.waitUntil(new Promise(r=>setTimeout(r,3000)).then(selfHeal).then(ok=>ok&&cleanup()).catch(()=>{}));e.respondWith(fromNet(req,'./index.html').catch(async()=>(await fromCache('./index.html'))||(await fromCache('./'))||Response.error()));return;}
   if(u.pathname.endsWith('/sw.js'))return;
   e.respondWith(fromNet(req).catch(async()=>(await fromCache(req))||Response.error()));return;}
  if(u.hostname==='fonts.googleapis.com'||u.hostname==='fonts.gstatic.com'){
