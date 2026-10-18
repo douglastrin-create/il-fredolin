@@ -3,6 +3,13 @@
 - `schema.sql` — estado do banco em produção em 17/10/2026, reconstruído do catálogo. Documento de referência: não rode no projeto da equipe.
 - `migrations/` — mudanças numeradas. Cada `NNN.sql` tem um `NNN.down.sql` que desfaz.
 
+## Estado em produção (projeto `zmnocgqkvzjjtddnzzhn`)
+
+| Migração | Situação |
+|---|---|
+| 001 · segurança e versão | **Aplicada em 17/10/2026 22:05** (SQL Editor). Conferida: `ver` ativa, convites exigem e-mail confirmado, 0 markup fora de `fin` (2 valores movidos), gatilho ligado |
+| 002 · permissões de funções | Pronta e testada; aguardando autorização |
+
 ## Migração 001 (v18): o que muda
 
 | # | Problema no banco atual | O que a migração faz |
@@ -38,6 +45,16 @@ Prova: `tests/db/policies.sql` tem 29 verificações. O esquema atual falha em 8
 6. **Abra o app** uma vez em cada aparelho com internet para ele carregar a versão nova.
 
 **Para desfazer:** rode `migrations/20261018_001_v18_seguranca_versao.down.sql` do mesmo jeito. O markup volta para as receitas, e versão e conflitos deixam de existir.
+
+## Migração 002 (v18): avisos do Security Advisor
+
+Responde a 2 dos 4 avisos do assistente de segurança do Supabase (todos anteriores à v18):
+- **Function Search Path Mutable** (2 funções de gatilho) → `search_path` fixo.
+- **Anônimo executa funções SECURITY DEFINER** (`can_read`, `can_write`, `my_role`) → execução só para usuário logado. O app só chama funções depois do login, e as regras de segurança valem só para logados.
+- **Usuário logado executa SECURITY DEFINER**: é intencional (é assim que o app entra na equipe e que a RLS funciona). Fica como está.
+- **Proteção contra senhas vazadas**: é configuração do painel, não SQL (*Authentication → Providers/Passwords → Leaked password protection*). Pode depender do plano.
+
+Teste: `tests/db/policies.sql` (31/31 com 001+002) e PostgREST real: logado chama `claim_invites`/`has_workspace` (200); anônimo recebe 401.
 
 ## Conferências que valem a pena
 

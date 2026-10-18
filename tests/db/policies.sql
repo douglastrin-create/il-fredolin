@@ -31,6 +31,7 @@ insert into records(workspace_id,col,id,data,updated_at) select id,'lots','L1','
 insert into records(workspace_id,col,id,data,updated_at) select id,'fin','lib:r1','{"v":{"leite":3.9}}',1000 from workspaces;
 insert into records(workspace_id,col,id,data,updated_at) select id,'inv','E1','{"ingId":"leite","qty":5000}',1000 from workspaces;
 create temp table ws as select id from workspaces;  grant select on ws to authenticated, anon;
+grant execute on all functions in schema public to anon;  -- como o Supabase faz por padrão (as migrações podem retirar)
 -- migrações que existirem rodam aqui (run.sh injeta), simulando produção já com dados
 \if :{?MIGRATION}
 \i :MIGRATION
@@ -138,5 +139,12 @@ select _as('00000000-0000-0000-0000-00000000000b','chef@if.br');
 insert into records(workspace_id,col,id,data,updated_at,updated_by,srv_at) select id,'nx','n1','{}',7000,'00000000-0000-0000-0000-00000000000a','2000-01-01' from ws;
 reset role;
 select _ok('autor e hora do servidor não podem ser forjados', (select updated_by='00000000-0000-0000-0000-00000000000b' and srv_at>'2020-01-01' from records where col='nx' and id='n1'));
+
+-- ---------- 6. funções internas fora do alcance do anônimo ----------
+select _anon();
+do $$ begin perform my_role((select id from ws)); perform _ok('anônimo não executa funções internas (my_role, can_read)', false);
+exception when insufficient_privilege then perform _ok('anônimo não executa funções internas (my_role, can_read)', true); end $$;
+reset role;
+select _ok('funções de gatilho com search_path fixo', (select bool_and(proconfig is not null) from pg_proc where proname in ('members_keep_maestro','members_lower_email')));
 
 select case when ok then 'ok   ' else 'FALHA' end || ' | ' || nome || case when ok or det='' then '' else ' — '||det end from _t order by n;

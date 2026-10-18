@@ -14,7 +14,7 @@ insert into records(workspace_id,col,id,data,updated_at) values
  ('11111111-1111-1111-1111-111111111111','inv','E1','{"qty":5000}',1000);
 SQL
 snap(){ $P -d fred_rt -c "select string_agg(col||':'||id||'='||data::text||'@'||updated_at,' | ' order by col,id) from records"; }
-schema(){ pg_dump -s -n public fred_rt | grep -vE '^(--|.(un)?restrict )' | sed '/^$/d'; }
+schema(){ pg_dump -s -n public fred_rt | grep -vE '^(--|.(un)?restrict )' | sed '/^$/d' | sort; }  # ordem das concessões (ACL) é irrelevante
 d0=$(snap); s0=$(schema)
 for f in $(ls supabase/migrations/*.sql | grep -v '\.down\.sql$'); do $P -d fred_rt -f "$f" >/dev/null 2>&1; done
 mid=$(snap); echo "$mid" | grep -q '"markup"' && { echo "FALHA: markup ainda nas receitas após migrar"; exit 1; }
