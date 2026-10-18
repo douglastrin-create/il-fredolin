@@ -82,3 +82,16 @@ Se você conectar este repositório ao Claude, as atualizações podem ser publi
 - **E-mails de confirmação**: o envio gratuito do Supabase tem limite de poucos e-mails por hora. Para a equipe basta; se precisar de mais, dá para configurar um SMTP próprio em Authentication → Emails.
 - **O que é público**: o site (motor de cálculo e interface) pode ser aberto por quem tiver o endereço, mas **não mostra dado nenhum** sem login e convite. Receitas, lotes, estoque, custos e a biblioteca dos mestres ficam no banco, protegidos por perfil.
 - **Backup**: de tempos em tempos, **Conta e sincronização → Exportar backup** (Maestro).
+
+---
+
+## Para quem mexe no código (v18.6)
+
+O código-fonte fica em `src/`, separado por camada (núcleo científico, produto, dados, segurança, interface). O `index.html` publicado é **montado** a partir dele:
+
+```
+node tools/build.mjs            # gera o index.html a partir de src/
+node --test tests/node/*.test.mjs
+```
+
+Não edite o `index.html` direto: o CI recusa. A organização, as regras entre camadas e os contratos de dados estão em `docs/ARQUITETURA.md`.

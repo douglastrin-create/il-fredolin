@@ -274,6 +274,18 @@ A tela diz quantas combinações foram testadas, quantas ficaram viáveis e quan
 
 **Testes:** `stabilization.test.mjs` (7: toda ficha cita fonte registrada; campos sem fonte continuam vazios; sinergias só entre pares presentes e sem coeficiente; notas citam a fonte; origem natural × não natural; resultados observados com médias, desvio e lotes de outro blend ignorados; regra da inulina). E2E com 12 verificações novas, incluindo lote medido na comparação e 390 px sem rolagem horizontal. Node 61/61.
 
+## 5-J. v18.6 — reestruturação modular progressiva (especificação §50)
+
+**Decisão:** separar o código-fonte em módulos sem mudar o app em produção. O código vive em `src/` (57 módulos em `core`, `product`, `data`, `security`, `ui`, `tests`, `shell`), e `tools/build.mjs` monta o `index.html`. O arquivo continua único (offline, GitHub Pages sem build, Web Worker extraído do mesmo trecho). Separei nos limites que já existiam (marcadores e cabeçalhos de seção), e **a montagem reproduziu a v18.5 byte a byte** (sha `78fdf962b04e`) antes de qualquer mudança; a única diferença da v18.6 no arquivo publicado é o número da versão.
+
+**Não fiz:** módulos ES com `import`/`export` nem empacotador. Mudariam o Web Worker e o cache offline sem ganho imediato; ficam como último passo, se valer a pena (spec: "não transforme modularização em reescrita").
+
+**Regras entre camadas** (`tools/layers.mjs`): o núcleo não usa produto, dados, segurança nem interface; produto não usa dados, segurança nem interface; dados e segurança não usam interface. A análise achou **74 usos cruzados**: 51 eram arquivos na camada errada ou nomes locais iguais a globais (ex.: `S` é soluto na curva de congelamento e estado da tela). Corrigi movendo arquivos (perfis e processo-padrão para o núcleo; armazenamento local separado da interface; tela de equipe separada da entrada; sensibilidade para produto). **Restam 23 dívidas reais**, registradas com motivo: a sincronização chama `render()` e telas de conflito; o motor lê a preferência de dextrose da tela; a quenelle consulta o banco de defeitos; o gerador usa as metas padrão das bases. Dependência nova falha o CI; dívida paga também, até sair da lista.
+
+**Contratos de dados** (`docs/ARQUITETURA.md` e `tests/node/contracts.test.mjs`): entrada do motor (linha `{id, g}` em gramas; estado `{tipo, vit °C, recipe, proc}`), saída (unidade e faixa física de sol, gordura, MSNF, água, congelada, POD, serviço, overrun, derretimento, cristais, viscosidade, custo, nutrição), perfis de tipo, e versões de todos os formatos persistidos (app, backup schema 2, registro na nuvem, registro de modelos, manifesto, dívidas, chaves locais).
+
+**Testes:** `arch.test.mjs` (6: index.html = montagem de src/; 27 marcadores únicos; trecho do Web Worker só com núcleo e produto; camadas = dívidas registradas; verificador ignora comentários, textos e locais; todas as camadas presentes) e `contracts.test.mjs` (4). CI ganhou duas etapas: montagem confere e camadas sem dependência nova. Node 71/71.
+
 ## 6. Para publicar (requer sua autorização)
 1. Conferir a execução do workflow *Testes* na branch (inclui WebKit e o job *banco*).
 1b. Aplicar a migração 001 seguindo `supabase/README.md` (ensaio num projeto de teste primeiro). A ordem entre banco e app é indiferente.

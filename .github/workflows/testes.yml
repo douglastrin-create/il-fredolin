@@ -13,6 +13,10 @@ jobs:
         with: { fetch-depth: 0 }
       - uses: actions/setup-node@v4
         with: { node-version: 22 }
+      - name: index.html é a montagem de src/ (edite em src/ e rode node tools/build.mjs)
+        run: node tools/build.mjs --check
+      - name: Camadas sem dependência nova (core não usa interface, dados não usam telas)
+        run: node tools/layers.mjs
       - name: Motor científico, sincronização e regressão
         run: node --test tests/node/*.test.mjs
   navegador:

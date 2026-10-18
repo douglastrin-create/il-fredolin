@@ -1,0 +1,144 @@
+{
+ "schema": "il-fredolin/layers-known@1",
+ "note": "Dívidas registradas em 18/10/2026 (v18.6). Dependência nova falha o CI; dependência removida precisa sair daqui.",
+ "known": [
+  {
+   "file": "core/composition/dextrose.js",
+   "uses": "S",
+   "from": "ui/estado.js",
+   "why": "DEX_FORM lê a preferência S.dexForm da tela (com guarda typeof); o certo é receber a preferência como parâmetro"
+  },
+  {
+   "file": "core/microstructure/quenelle.js",
+   "uses": "DEFECTS",
+   "from": "product/formulation/defeitos.js",
+   "why": "o modelo de quenelle consulta o banco de defeitos (esfarela) para o risco de esfarelar"
+  },
+  {
+   "file": "core/microstructure/quenelle.js",
+   "uses": "rankDefect",
+   "from": "product/formulation/defeitos.js",
+   "why": "o modelo de quenelle consulta o banco de defeitos (esfarela) para o risco de esfarelar"
+  },
+  {
+   "file": "core/optimization/gerador.js",
+   "uses": "GEN_DEF",
+   "from": "product/formulation/bases.js",
+   "why": "metas padrão do gerador (GEN_DEF) ficam junto das bases de referência"
+  },
+  {
+   "file": "data/local/colecoes.js",
+   "uses": "$",
+   "from": "ui/components/nucleo.js",
+   "why": "aviso de falha de gravação usa o seletor $ da interface"
+  },
+  {
+   "file": "data/local/store.js",
+   "uses": "APP_MODE",
+   "from": "ui/modo.js",
+   "why": "sincronização chama render(), lê o estado da tela e abre a tela de conflito"
+  },
+  {
+   "file": "data/local/store.js",
+   "uses": "conflictCopy",
+   "from": "ui/pages/v13.js",
+   "why": "sincronização chama render(), lê o estado da tela e abre a tela de conflito"
+  },
+  {
+   "file": "data/local/store.js",
+   "uses": "libConflict",
+   "from": "ui/pages/v13.js",
+   "why": "sincronização chama render(), lê o estado da tela e abre a tela de conflito"
+  },
+  {
+   "file": "data/local/store.js",
+   "uses": "render",
+   "from": "ui/app.js",
+   "why": "sincronização chama render(), lê o estado da tela e abre a tela de conflito"
+  },
+  {
+   "file": "data/local/store.js",
+   "uses": "S",
+   "from": "ui/estado.js",
+   "why": "sincronização chama render(), lê o estado da tela e abre a tela de conflito"
+  },
+  {
+   "file": "data/local/store.js",
+   "uses": "setsFromCloud",
+   "from": "ui/sets.js",
+   "why": "sincronização chama render(), lê o estado da tela e abre a tela de conflito"
+  },
+  {
+   "file": "data/local/store.js",
+   "uses": "U",
+   "from": "ui/estado.js",
+   "why": "sincronização chama render(), lê o estado da tela e abre a tela de conflito"
+  },
+  {
+   "file": "data/sync/equipe.js",
+   "uses": "$",
+   "from": "ui/components/nucleo.js",
+   "why": "entrada e equipe: o objeto AUTH monta parte da tela de login"
+  },
+  {
+   "file": "data/sync/equipe.js",
+   "uses": "esc",
+   "from": "ui/components/nucleo.js",
+   "why": "entrada e equipe: o objeto AUTH monta parte da tela de login"
+  },
+  {
+   "file": "data/sync/equipe.js",
+   "uses": "fromPreset",
+   "from": "ui/estado.js",
+   "why": "entrada e equipe: o objeto AUTH monta parte da tela de login"
+  },
+  {
+   "file": "data/sync/equipe.js",
+   "uses": "render",
+   "from": "ui/app.js",
+   "why": "entrada e equipe: o objeto AUTH monta parte da tela de login"
+  },
+  {
+   "file": "data/sync/equipe.js",
+   "uses": "renderNow",
+   "from": "ui/app.js",
+   "why": "entrada e equipe: o objeto AUTH monta parte da tela de login"
+  },
+  {
+   "file": "data/sync/equipe.js",
+   "uses": "U",
+   "from": "ui/estado.js",
+   "why": "entrada e equipe: o objeto AUTH monta parte da tela de login"
+  },
+  {
+   "file": "data/sync/supabase.js",
+   "uses": "$",
+   "from": "ui/components/nucleo.js",
+   "why": "cliente da nuvem chama render() e as telas de conflito/recusa"
+  },
+  {
+   "file": "data/sync/supabase.js",
+   "uses": "conflictCopy",
+   "from": "ui/pages/v13.js",
+   "why": "cliente da nuvem chama render() e as telas de conflito/recusa"
+  },
+  {
+   "file": "data/sync/supabase.js",
+   "uses": "denied",
+   "from": "ui/app.js",
+   "why": "cliente da nuvem chama render() e as telas de conflito/recusa"
+  },
+  {
+   "file": "data/sync/supabase.js",
+   "uses": "libConflict",
+   "from": "ui/pages/v13.js",
+   "why": "cliente da nuvem chama render() e as telas de conflito/recusa"
+  },
+  {
+   "file": "data/sync/supabase.js",
+   "uses": "render",
+   "from": "ui/app.js",
+   "why": "cliente da nuvem chama render() e as telas de conflito/recusa"
+  }
+ ]
+}
