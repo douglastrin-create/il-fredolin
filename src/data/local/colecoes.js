@@ -1,3 +1,9 @@
+/* v18.10 · CANAL DE EVENTOS entre dados e tela. Os dados avisam ("changed", "vit", "session") e a tela decide o que
+   fazer (redesenhar, ajustar a vitrine, voltar ao estado inicial). Evento sem assinante fica na fila e é entregue
+   quando a tela assina (a tela só assina no fim do carregamento). */
+const APPEV={h:{},q:[],
+ on(e,f){(this.h[e]=this.h[e]||[]).push(f);const keep=[];this.q.forEach(x=>{if(x[0]===e){try{f(x[1]);}catch(err){console.error(err);}}else keep.push(x);});this.q=keep;},
+ emit(e,d){const L=this.h[e];if(!L||!L.length){if(this.q.length<100)this.q.push([e,d]);return;}L.forEach(f=>{try{f(d);}catch(err){console.error(err);}});}};
 /* v18 (auditoria): gravar pode falhar (cota cheia do Safari, modo privado). Antes o erro era engolido e a alteração
    simplesmente não ficava no aparelho. Agora set() devolve true/false, guarda quais chaves falharam (LS.bad) e avisa. */
 /* v18.9 · com o IndexedDB ativo (kv-boot.js), cada gravação vai para os dois; a leitura usa a cópia vencedora da

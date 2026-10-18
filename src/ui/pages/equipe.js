@@ -1,3 +1,22 @@
+/* v18.10 · tela de entrada (antes dentro do objeto AUTH, na camada de dados) */
+AUTH.view=function(){const f=this.f,st=this.state,m=this.mode,busy=this.busy;
+  const inp=(k,label,type,extra)=>`<label class="field"><span class="lbl">${label}</span><input type="${type}" id="au-${k}" data-i="auth" data-k="${k}" value="${esc(f[k])}" ${extra||''}></label>`;
+  const box=(title,lead,body)=>`<div class="authbox"><div class="authhex"></div><h1>${title}</h1>${lead?`<p class="lead">${lead}</p>`:''}${this.err?`<p class="autherr" role="alert">${esc(this.err)}</p>`:''}${this.msg?`<p class="authmsg">${esc(this.msg)}</p>`:''}${body}</div>`;
+  const btn=(label,act,cls)=>`<button class="btn ${cls||'pri'} wide" data-a="${act}"${busy?' disabled':''}>${busy&&act==='authGo'?'Aguarde…':label}</button>`;
+  if(st==='boot'||st==='loading')return box('Il Fredolin','Abrindo seu laboratório…','');
+  if(st==='setup')return box('Configurar o aplicativo','Cole os dados do seu projeto Supabase (Project Settings → API). O ideal é deixá-los no arquivo config.js do site, assim a equipe não precisa digitar nada.',
+   inp('url','Project URL','url','placeholder="https://xxxx.supabase.co" autocomplete="off"')+inp('key','Chave anon (public)','text','autocomplete="off"')+btn('Salvar e continuar','authGo'));
+  if(st==='offline')return box('Sem conexão','O primeiro acesso precisa de internet para confirmar seu perfil. Depois disso o app funciona sem conexão.',btn('Tentar de novo','authRetry'));
+  if(st==='newpass')return box('Nova senha','Crie a nova senha da sua conta.',inp('pw','Nova senha','password','autocomplete="new-password"')+inp('pw2','Repita a senha','password','autocomplete="new-password"')+btn('Salvar senha','authGo'));
+  if(st==='create')return box('Bem-vindo ao Il Fredolin','Você é a primeira pessoa a entrar: crie o espaço da sua produção e torne-se o <b>Maestro</b>. Depois convide o Chef e o Sous Chef pela página Equipe.',inp('name','Nome do espaço','text','maxlength="40"')+btn('Criar o espaço e entrar como Maestro','authGo')+`<button class="btn sm wide ghost" data-a="logout">Sair</button>`);
+  if(st==='noinvite')return box('Aguardando convite','A conta <b>'+esc(this.email())+'</b> ainda não faz parte da equipe. Peça ao Maestro para convidar exatamente este e-mail na página Equipe e toque em "Verificar de novo".',btn('Verificar de novo','authRetry')+`<button class="btn sm wide ghost" data-a="logout">Entrar com outra conta</button>`);
+  const tabs=`<div class="chips authtabs">${[['login','Entrar'],['signup','Primeiro acesso'],['recover','Esqueci a senha']].map(([k,n])=>`<button data-a="authMode" data-v="${k}" aria-pressed="${m===k}">${n}</button>`).join('')}</div>`;
+  if(m==='recover')return box('Esqueci a senha','Enviaremos um link para criar uma nova senha.',tabs+inp('email','E-mail','email','autocomplete="email" autocapitalize="off"')+btn('Enviar link','authGo'));
+  if(m==='signup')return box('Primeiro acesso','Use o e-mail em que o Maestro enviou o convite e crie sua senha.',tabs+inp('email','E-mail','email','autocomplete="email" autocapitalize="off"')+inp('pw','Crie uma senha','password','autocomplete="new-password"')+inp('pw2','Repita a senha','password','autocomplete="new-password"')+btn('Criar conta','authGo'));
+  return box('Il Fredolin','Laboratório de gelato da equipe.',tabs+inp('email','E-mail','email','autocomplete="username" autocapitalize="off"')+inp('pw','Senha','password','autocomplete="current-password"')+btn('Entrar','authGo'));};
+/* ---------- Equipe (Maestro) ---------- */
+async function loadTeam(){if(!ME.ws)return;  /* v18.0.1: espaço ainda não conhecido (início da sessão) → não consulta workspace_id=null */
+ U.teamBusy=true;try{U.team=await SB.get('members?select=email,name,role,user_id,created_at&workspace_id=eq.'+ME.ws+'&order=created_at.asc');U.teamErr='';}catch(e){U.teamErr=e.message;}U.teamBusy=false;render();}
 function pgEquipe(){if(APP_MODE!=='app')return'';if(!U.team&&!U.teamBusy&&!U.teamErr)loadTeam();
  const I=U.invite||{email:'',role:'sous',name:''};const T=U.team||[];
  const roleSel=(id,val,attrs)=>`<select id="${id}" ${attrs}>${['maestro','chef','sous'].map(r=>`<option value="${r}"${r===val?' selected':''}>${ROLE_N[r]}</option>`).join('')}</select>`;

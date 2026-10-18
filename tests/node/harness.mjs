@@ -50,7 +50,7 @@ export function loadSync(html = readApp(), { quotaBytes } = {}) {
   const stubs = `${lsDecl[0]}
     const plain=r=>JSON.parse(JSON.stringify(r));let ROLE='maestro';let ME={uid:'u1',ws:'w1',email:'a@b.c'};
     const COLS={lib:{get:()=>[],set(){}},lots:{get:()=>[],set(){}}};const STORE={setStatus(){},saveLocal(){},after(){}};
-    const MASTERS=[];function masterDexFix(){}function render(){}function safeRec(r){return r;}function libConflict(){return false;}function conflictCopy(r){return r;}
+    const MASTERS=[];const APPEV={emit(){},on(){}};function masterDexFix(){}function render(){}function safeRec(r){return r;}function libConflict(){return false;}function conflictCopy(r){return r;}
     function toast(t){__toasts.push(t);}const AUTH={lost(){}};`;
   ctx.__toasts = toasts;
   vm.runInContext(stubs + '\n' + segment(html, '62-supabase.js', '66-team.js') + `\n;globalThis.__S={SUPA_BACKEND,LS,SB};`, ctx, { filename: 'index.html#sync' });

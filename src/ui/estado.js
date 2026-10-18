@@ -1,5 +1,7 @@
 
 /* ---------- estado da tela (S, persistido) e efêmero (U) ---------- */
+/* v18.10 · o núcleo pergunta a forma da dextrose preferida por esta função (antes lia S direto) */
+DEX_PREF=()=>(typeof S!=='undefined'&&S&&S.dexForm)||'mono';
 function fromPreset(p){return{name:p.name,tipo:p.tipo,vit:p.vit,recipe:p.recipe.map(([id,g])=>({id,g})),proc:Object.assign({},PROC0),brix:{},costs:{},page:'bancada',defect:'duro'};}
 let S=LS.get(KEY)||fromPreset(PRESETS[0]);
 /* garante todos os campos do estado; roda no boot e antes de cada render (estados antigos ou importados) */

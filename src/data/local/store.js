@@ -16,8 +16,8 @@ function syncRegistry(){const keepC=new Set(CUST.map(c=>c.id)),keepN=new Set(NXL
 const STORE={backend:null,status:'local',msg:'Salvando somente neste aparelho.',tomb:LS.get(TOMBKEY)||{},
  saveLocal(c){LS.set(COLS[c].lk,COLS[c].get());},
  saveTomb(){LS.set(TOMBKEY,this.tomb);},
- after(c){if(c==='ings'||c==='nx')syncRegistry();if(c==='inv')invRecompute(INV);if(c==='lots')fitCalibration(LOTS);if(c==='vit'){const v=VITS.find(x=>x.id==='main')||VITS.find(x=>!x.kind);if(v)S.vitrine={temp:v.temp,items:v.items||[]};if(typeof setsFromCloud==='function')setsFromCloud();}},
- setStatus(st,msg){this.status=st;this.msg=msg;render();},
+ after(c){if(c==='ings'||c==='nx')syncRegistry();if(c==='inv')invRecompute(INV);if(c==='lots')fitCalibration(LOTS);if(c==='vit'){const v=VITS.find(x=>x.id==='main')||VITS.find(x=>!x.kind);APPEV.emit('vit',v);}},
+ setStatus(st,msg){this.status=st;this.msg=msg;APPEV.emit('changed');},
  put(c,rec){const arr=COLS[c].get();const k=arr.findIndex(x=>String(x.id)===String(rec.id));
   /* receitas guardam de qual versão partiram (base): assim duas edições paralelas viram conflito, não perda */
   if(c==='lib')rec.base=k>=0?(arr[k]===rec?rec.base||0:arr[k].updatedAt||0):0;
@@ -51,11 +51,7 @@ const CLAUDE_BACKEND={db:null,uid:null,
    const r=st.merge(COLS[c].get(),new Map(snap.docs.map(d=>[d.id,d.data()])),st.tomb[c],c);
    r.push.forEach(x=>col.doc(String(x.id)).set(plain(x)).catch(()=>{}));
    st.replace(c,r.list);
-   col.onSnapshot(sn=>{if(sn.metadata&&sn.metadata.hasPendingWrites)return;st.replace(c,sn.docs.map(d=>d.data()));render();},()=>{});}
+   col.onSnapshot(sn=>{if(sn.metadata&&sn.metadata.hasPendingWrites)return;st.replace(c,sn.docs.map(d=>d.data()));APPEV.emit('changed');},()=>{});}
   st.setStatus('cloud','Sincronizado com sua conta: biblioteca, lotes, ingredientes, neutros e estoque aparecem em todos os seus aparelhos.');return true;}
 };
-async function saveFile(name,data){try{const d=window.claude&&typeof window.claude.use==='function'?await claude.use('downloads'):null;if(d){await d.save({filename:name,data});toast('Arquivo pronto');return;}}catch(e){if(e&&e.code==='declined')return;}
- /* fora do artefato: download comum do navegador */
- try{if(APP_MODE==='app'){const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([data],{type:'application/octet-stream'}));a.download=name;document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove();},500);toast('Arquivo pronto');return;}}catch(e){}
- U.exp=data;render();}
 

@@ -1130,7 +1130,6 @@ const PRESETS=[
  {name:'Cocco vegano',tipo:'vegan',vit:-13,recipe:[['agua',430],['cococreme',260],['sacarose',140],['dextrosem',92.9],['malto',30],['inulina',30],['ervilha',12],['neutro',5],['sal',.8]]}
 ];
 
-const GEN_DEF={crema:{fat:8,msnf:9.5,pod:18,sol:38},frutta:{fat:3,msnf:6,pod:21,sol:35},gastro:{fat:9,msnf:9,pod:6,sol:34},semacucar:{fat:9,msnf:9,pod:16,sol:34},sorbetto:{fat:0,msnf:0,pod:25,sol:31},vegan:{fat:8,msnf:0,pod:18.5,sol:37}};
 
 /* ==== 12-masters.js ==== */
 const MASTERS=(()=>{try{return JSON.parse(localStorage.getItem('fredolin_app_ref'))||[];}catch(e){return[];}})();
@@ -1416,12 +1415,14 @@ function poteModel(m,prIn){if(m.empty||!(m.wat>0))return null;const pr=Object.as
 function icePhaseVol(m,T){const W=m.wat||0,ice=W*m.fz(T)/100;const vMix=W+(m.fat||0)/.93+Math.max(0,(m.sol||0)-(m.fat||0))/1.55+(m.alc||0)/.79;const vP=vMix+ice*(1/.917-1)+vMix*(m.ov||0)/100;return vP>0?ice/.917/vP:0;}
 function tempAtFz(m,f){let lo=-45,hi=-.05;if(m.fz(hi)>=f)return hi;if(m.fz(lo)<f)return lo;for(let k=0;k<44;k++){const mid=(lo+hi)/2;if(m.fz(mid)>=f)lo=mid;else hi=mid;}return(lo+hi)/2;}
 const QREF=.39;
+/* v18.10 · risco de esfarelar vem do banco de defeitos (produto), injetado por defeitos.js; sem ele, 0 */
+var QN_CRUMB=null;
 function quenelleModel(m){if(!m||m.empty||!(m.wat>0))return null;if(m._qn)return m._qn;const P=m.P;
  const phiServe=icePhaseVol(m,m.serveT);
  /* coesão (0–1): rede de gordura parcialmente coalescida, viscosidade da fase sérica, estabilizante na faixa; esfarelado tira */
  const fatOK=m.fat>4?clamp((m.destab||0)/20,0,1):.6;const v=m.visc||0;const viscOK=v<25?.3:v<50?.3+.7*(v-25)/25:v<=400?1:v<=800?1-.4*(v-400)/400:.5;
  const stabOK=m.hydro>=P.stab[0]&&m.hydro<=P.stab[1]*1.2?1:m.hydro<P.stab[0]?.55:.75;
- let crumb=0;try{const d=DEFECTS.find(x=>x.id==='esfarela');const R=d?rankDefect(d,m):[];crumb=R.length?R[0].s:0;}catch(e){}
+ let crumb=0;try{crumb=QN_CRUMB?QN_CRUMB(m):0;}catch(e){}
  const C=clamp((.4*fatOK+.35*viscOK+.25*stabOK)*(1-.5*crumb),0,1);
  const H=clamp(((m.melt||0)-40)/50,0,1);
  const cal=CAL.on&&CAL.qShift?CAL.qShift:0;
@@ -1605,7 +1606,9 @@ function findInRecipe(st,ids){for(const id of ids){const r=(st.recipe||[]).find(
 var DEX_OVR=null;
 /* dextrose para sugestões: a que já está na receita; senão a forma preferida */
 const dexPref=st=>{const r=(st&&st.recipe)||[];return r.some(x=>x.id==='dextrosem')?'dextrosem':r.some(x=>x.id==='dextrose')?'dextrose':(DEX_FORM()==='anid'?'dextrose':'dextrosem');};
-function DEX_FORM(){if(DEX_OVR)return DEX_OVR;try{return(typeof S!=='undefined'&&S&&S.dexForm)||'mono';}catch(e){return'mono';}}
+/* v18.10 · a preferência vem da tela por injeção (DEX_PREF); o núcleo não lê o estado da tela. No Web Worker fica 'mono'. */
+var DEX_PREF=()=>'mono';
+function DEX_FORM(){if(DEX_OVR)return DEX_OVR;try{return DEX_PREF()||'mono';}catch(e){return'mono';}}
 /* laudo e índice ficam guardados no próprio resultado da análise (que já é memorizado pelo conteúdo da receita) */
 function diagnose(st,m){return m._F||(m._F=Object.freeze(diagnoseCore(st,m)));}
 function diagnoseCore(st,m){
@@ -2292,6 +2295,9 @@ function diagnoseSymptoms(sel,m){const S0=new Set(sel||[]);return DEFECTS.map(d=
 function defectRisks(m){if(!m||m.empty)return[];return DEFECTS.map(d=>{const R=rankDefect(d,m);return R.length?{d,R,s:R[0].s}:null;}).filter(x=>x&&x.s>=.3).sort((a,b)=>b.s-a.s);}
 
 
+
+/* v18.10 · injeta no modelo de quenelle (núcleo) o risco de esfarelar do banco de defeitos */
+QN_CRUMB=m=>{const d=DEFECTS.find(x=>x.id==='esfarela');const R=d?rankDefect(d,m):[];return R.length?R[0].s:0;};
 /* ---------- NEUTROS, GERADOR E SENSIBILIDADE ---------- */
 function blendShares(parts){const t=Object.values(parts).reduce((a,b)=>a+(+b||0),0)||1;const o={};for(const k in parts)if(+parts[k]>0)o[k]=+parts[k]/t*100;return o;}
 function blendIngredient(nx){const sh=blendShares(nx.parts);const c={};let cost=0,animal=0;const parts={};
@@ -2382,6 +2388,8 @@ Object.assign(GEN_VARS,{granita:['agua','sacarose','dextrose'],paleta_fruta:['ag
 const genVars=t=>GEN_VARS[t]||GEN_VARS[tbase(t)]||GEN_VARS.crema;
 /* sólidos são meta nas bases sem leite e no sem açúcar (o corpo vem da fibra, não do leite); nas lácteas resultam das outras metas */
 const genSolTgt=t=>!genVars(t).includes('lpd')||tbase(t)==='semacucar';
+/* v18.10 · metas padrão do gerador (antes junto das bases de referência, na camada de produto) */
+const GEN_DEF={crema:{fat:8,msnf:9.5,pod:18,sol:38},frutta:{fat:3,msnf:6,pod:21,sol:35},gastro:{fat:9,msnf:9,pod:6,sol:34},semacucar:{fat:9,msnf:9,pod:16,sol:34},sorbetto:{fat:0,msnf:0,pod:25,sol:31},vegan:{fat:8,msnf:0,pod:18.5,sol:37}};
 const genDef=t=>{if(GEN_DEF[t])return GEN_DEF[t];const P=PROF[t]||PROF.crema,mid=r=>Math.round((r[0]+r[1])/2*2)/2;return{fat:mid(P.fat),msnf:mid(P.msnf),pod:mid(P.pod),sol:mid(P.sol)};};
 function generate(o){
  const P=PROF[o.tipo]||PROF.crema,B=+o.batch||1000,VARS=genVars(o.tipo).map(id=>id==='dextrose'&&DEX_FORM()!=='anid'?'dextrosem':id),proc=o.proc||{};
@@ -2762,6 +2770,12 @@ const MODEL_NAT={ph:['heurístico','Estimado pela fonte ácida dominante e pelo 
 const natTag=id=>{const n=MODEL_NAT[id];if(!n)return'';const cal=id==='overrun'&&typeof CAL!=='undefined'&&CAL.on&&CAL.counts&&CAL.counts.ov?' · calibrado por '+CAL.counts.ov+' lote(s)':'';
  return` <span class="chip nat" role="link" tabindex="0" data-a="sciOpen" data-v="${esc(id)}" style="cursor:pointer" title="${esc(n[1])} Toque para ver a ficha do modelo." aria-label="${esc(n[0]+cal+'. '+n[1])}">${esc(n[0]+cal)}</span>`;};
 const norm=s=>String(s).normalize('NFD').replace(/[̀-ͯ]/g,'').toLowerCase();
+/* v18.10 · CANAL DE EVENTOS entre dados e tela. Os dados avisam ("changed", "vit", "session") e a tela decide o que
+   fazer (redesenhar, ajustar a vitrine, voltar ao estado inicial). Evento sem assinante fica na fila e é entregue
+   quando a tela assina (a tela só assina no fim do carregamento). */
+const APPEV={h:{},q:[],
+ on(e,f){(this.h[e]=this.h[e]||[]).push(f);const keep=[];this.q.forEach(x=>{if(x[0]===e){try{f(x[1]);}catch(err){console.error(err);}}else keep.push(x);});this.q=keep;},
+ emit(e,d){const L=this.h[e];if(!L||!L.length){if(this.q.length<100)this.q.push([e,d]);return;}L.forEach(f=>{try{f(d);}catch(err){console.error(err);}});}};
 /* v18 (auditoria): gravar pode falhar (cota cheia do Safari, modo privado). Antes o erro era engolido e a alteração
    simplesmente não ficava no aparelho. Agora set() devolve true/false, guarda quais chaves falharam (LS.bad) e avisa. */
 /* v18.9 · com o IndexedDB ativo (kv-boot.js), cada gravação vai para os dois; a leitura usa a cópia vencedora da
@@ -2797,8 +2811,16 @@ let EXEC=safeList(LS.get(EXECKEY)),VITS=safeList(LS.get(VITSKEY));
 function registerCustom(ci){const ing=I(ci.id,ci.n,'Meus ingredientes',ci.c,Object.assign({},ci.x||{},{custom:1}));const k=ING.findIndex(x=>x.id===ci.id);if(k>=0)ING[k]=ing;else ING.push(ing);ING_BY[ci.id]=ing;ING_VER++;return ing;}
 NXLIB.forEach(registerNeutro);CUST.forEach(registerCustom);invRecompute(INV);fitCalibration(LOTS);
 {const calPref=LS.get(K10.cal);if(calPref&&calPref.on===false)CAL.on=false;}
+/* ---------- conflito de edição (receita editada em dois aparelhos sem ver a versão do outro) ---------- */
+/* cur = cópia local; rd = registro remoto; ts = hora da edição remota. Conflito: a cópia local é uma edição feita aqui
+   (sem _by), o remoto não partiu dela (base diferente) e o conteúdo difere. */
+function libConflict(cur,rd,ts){if(!cur||cur._by||!(ts>(cur.updatedAt||0)))return false;if((rd.base||0)===(cur.updatedAt||0))return false;
+ try{return JSON.stringify(cur.st)!==JSON.stringify(rd.st);}catch(e){return false;}}
+function conflictCopy(cur){const d=new Date();const c=JSON.parse(JSON.stringify(cur));c.id=String(Date.now())+'c';c.name=cur.name+' (conflito '+d.toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit'})+' '+d.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'})+')';delete c._by;delete c.base;c.conflict=1;if(c.st)c.st.name=c.name;return c;}
 
 /* ---------- estado da tela (S, persistido) e efêmero (U) ---------- */
+/* v18.10 · o núcleo pergunta a forma da dextrose preferida por esta função (antes lia S direto) */
+DEX_PREF=()=>(typeof S!=='undefined'&&S&&S.dexForm)||'mono';
 function fromPreset(p){return{name:p.name,tipo:p.tipo,vit:p.vit,recipe:p.recipe.map(([id,g])=>({id,g})),proc:Object.assign({},PROC0),brix:{},costs:{},page:'bancada',defect:'duro'};}
 let S=LS.get(KEY)||fromPreset(PRESETS[0]);
 /* garante todos os campos do estado; roda no boot e antes de cada render (estados antigos ou importados) */
@@ -2929,7 +2951,7 @@ const isMac=()=>{try{return /Mac|iPhone|iPad/.test(navigator.platform||navigator
 const kbd=k=>`<kbd>${isMac()?'⌘':'Ctrl '}${k}</kbd>`;
 
 /* ---------- marca ---------- */
-const VERSION='v18.9';
+const VERSION='v18.10';
 const brandHTML=()=>`<div class="brand"><div class="hex"></div><div><b>Il <span>Fredolin</span></b><small>Gelato Lab ${VERSION}${APP_MODE==='app'&&ME.email?' · '+ROLE_N[ROLE]:''}</small></div></div>`;
 
 /* ---------- termômetro da receita: vitrine, serviço ideal (com faixa de incerteza) e freezer numa régua só ---------- */
@@ -5008,12 +5030,6 @@ function histHTML(l){const H=l.hist||[];if(!H.length)return'<p class="note" styl
   return`<div class="card flat" style="margin:6px 0;padding:10px 12px"><div class="row"><span class="mono" style="font-size:12px">${esc(h.date||'')}</span>${h.note?`<span class="t2" style="font-size:13px">${esc(h.note)}</span>`:''}<span class="sp"></span><button class="btn sm" data-a="histLoad" data-v="${l.id}|${k}">Abrir na bancada</button></div>
    <p class="note" style="margin:6px 0 0">${df.length?'Depois desta versão: '+df.map(([id,a,b,d])=>esc(ING_BY[id]?ING_BY[id].n:id)+' '+(a?f1(a):'0')+' → '+(b?f1(b):'0')+' g').join(' · '):'Nenhuma mudança de ingredientes (só processo ou nome).'}</p></div>`;}).join('');}
 
-/* ---------- conflito de edição (receita editada em dois aparelhos sem ver a versão do outro) ---------- */
-/* cur = cópia local; rd = registro remoto; ts = hora da edição remota. Conflito: a cópia local é uma edição feita aqui
-   (sem _by), o remoto não partiu dela (base diferente) e o conteúdo difere. */
-function libConflict(cur,rd,ts){if(!cur||cur._by||!(ts>(cur.updatedAt||0)))return false;if((rd.base||0)===(cur.updatedAt||0))return false;
- try{return JSON.stringify(cur.st)!==JSON.stringify(rd.st);}catch(e){return false;}}
-function conflictCopy(cur){const d=new Date();const c=JSON.parse(JSON.stringify(cur));c.id=String(Date.now())+'c';c.name=cur.name+' (conflito '+d.toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit'})+' '+d.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'})+')';delete c._by;delete c.base;c.conflict=1;if(c.st)c.st.name=c.name;return c;}
 
 /* ---------- FRUTAS DA ESTAÇÃO ---------- */
 function pgSazonal(){const mo=new Date().getMonth()+1;const sel=+U.sazM||mo;const L=SAZON.filter(([id])=>ING_BY[id]);
@@ -5537,8 +5553,8 @@ function syncRegistry(){const keepC=new Set(CUST.map(c=>c.id)),keepN=new Set(NXL
 const STORE={backend:null,status:'local',msg:'Salvando somente neste aparelho.',tomb:LS.get(TOMBKEY)||{},
  saveLocal(c){LS.set(COLS[c].lk,COLS[c].get());},
  saveTomb(){LS.set(TOMBKEY,this.tomb);},
- after(c){if(c==='ings'||c==='nx')syncRegistry();if(c==='inv')invRecompute(INV);if(c==='lots')fitCalibration(LOTS);if(c==='vit'){const v=VITS.find(x=>x.id==='main')||VITS.find(x=>!x.kind);if(v)S.vitrine={temp:v.temp,items:v.items||[]};if(typeof setsFromCloud==='function')setsFromCloud();}},
- setStatus(st,msg){this.status=st;this.msg=msg;render();},
+ after(c){if(c==='ings'||c==='nx')syncRegistry();if(c==='inv')invRecompute(INV);if(c==='lots')fitCalibration(LOTS);if(c==='vit'){const v=VITS.find(x=>x.id==='main')||VITS.find(x=>!x.kind);APPEV.emit('vit',v);}},
+ setStatus(st,msg){this.status=st;this.msg=msg;APPEV.emit('changed');},
  put(c,rec){const arr=COLS[c].get();const k=arr.findIndex(x=>String(x.id)===String(rec.id));
   /* receitas guardam de qual versão partiram (base): assim duas edições paralelas viram conflito, não perda */
   if(c==='lib')rec.base=k>=0?(arr[k]===rec?rec.base||0:arr[k].updatedAt||0):0;
@@ -5572,14 +5588,15 @@ const CLAUDE_BACKEND={db:null,uid:null,
    const r=st.merge(COLS[c].get(),new Map(snap.docs.map(d=>[d.id,d.data()])),st.tomb[c],c);
    r.push.forEach(x=>col.doc(String(x.id)).set(plain(x)).catch(()=>{}));
    st.replace(c,r.list);
-   col.onSnapshot(sn=>{if(sn.metadata&&sn.metadata.hasPendingWrites)return;st.replace(c,sn.docs.map(d=>d.data()));render();},()=>{});}
+   col.onSnapshot(sn=>{if(sn.metadata&&sn.metadata.hasPendingWrites)return;st.replace(c,sn.docs.map(d=>d.data()));APPEV.emit('changed');},()=>{});}
   st.setStatus('cloud','Sincronizado com sua conta: biblioteca, lotes, ingredientes, neutros e estoque aparecem em todos os seus aparelhos.');return true;}
 };
+
+/* v18.10 · salvar arquivo (download) é tela: saiu da camada de dados */
 async function saveFile(name,data){try{const d=window.claude&&typeof window.claude.use==='function'?await claude.use('downloads'):null;if(d){await d.save({filename:name,data});toast('Arquivo pronto');return;}}catch(e){if(e&&e.code==='declined')return;}
  /* fora do artefato: download comum do navegador */
  try{if(APP_MODE==='app'){const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([data],{type:'application/octet-stream'}));a.download=name;document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove();},500);toast('Arquivo pronto');return;}}catch(e){}
  U.exp=data;render();}
-
 /* ==== 60b-backup.js ==== */
 /* ===================== IL FREDOLIN · BACKUP E RESTAURAÇÃO (v18) =====================
    Antes: o backup levava só a vitrine principal (sem o set Professionale nem as lápides) e a importação gravava
@@ -5816,7 +5833,7 @@ const SUPA_BACKEND={running:null,again:false,cursor:LS.get(CURKEY)||'1970-01-01T
    rows.forEach(r=>{this.apply(r,changed);if(r.srv_at>max)max=r.srv_at;});if(rows.length<1000)break;off+=1000;}
   this.cursor=max;LS.set(CURKEY,max);LS.set(VERKEY,this.vers);
   if(changed.has('fin')){LS.set(FINKEY,FIN);['inv','ings','lib','exec','lots'].forEach(c=>{COLS[c].get().forEach(r=>withFin(c,r));changed.add(c);});changed.delete('fin');}
-  changed.forEach(c=>{STORE.saveLocal(c);STORE.after(c);});if(changed.size)render();},
+  changed.forEach(c=>{STORE.saveLocal(c);STORE.after(c);});if(changed.size)APPEV.emit('changed');},
  apply(r,changed){
   const pend=this.outbox.some(o=>o.col===r.col&&o.id===r.id);
   /* a edição pendente partiu da versão antiga: não atualiza a versão conhecida, para o servidor acusar o conflito */
@@ -5841,7 +5858,7 @@ const SUPA_BACKEND={running:null,again:false,cursor:LS.get(CURKEY)||'1970-01-01T
 const REFKEY='fredolin_app_ref';
 function setMasters(list){masterDexFix(list);MASTERS.splice(0,MASTERS.length,...list);try{localStorage.setItem(REFKEY,JSON.stringify(list));}catch(e){}}
 async function loadLibrary(){if(ROLE==='sous'){if(MASTERS.length)setMasters([]);return;}
- try{const rows=await SB.get('library?select=id,data&order=id.asc');if(Array.isArray(rows)&&rows.length){setMasters(rows.map(r=>r.data));render();}}catch(e){}}
+ try{const rows=await SB.get('library?select=id,data&order=id.asc');if(Array.isArray(rows)&&rows.length){setMasters(rows.map(r=>r.data));APPEV.emit('changed');}}catch(e){}}
 
 /* ==== 66-team.js ==== */
 /* ===================== IL FREDOLIN · ENTRADA E EQUIPE (aplicativo) =====================
@@ -5857,34 +5874,34 @@ const AUTH={state:'boot',mode:'login',f:{email:'',pw:'',pw2:'',name:'Il Fredolin
   if(h.get('access_token')){SB.setSess({access_token:h.get('access_token'),refresh_token:h.get('refresh_token'),expires_in:+h.get('expires_in')||3600,user:null});this.recovery=h.get('type')==='recovery';}
   if(h.get('error_description'))this.err=h.get('error_description').replace(/\+/g,' ');
   if(h.get('access_token')||h.get('error')){try{history.replaceState(null,'',location.pathname+location.search);}catch(e){}}
-  if(!SB.configured()){this.state='setup';return renderNow();}
-  if(!SB.sess){this.state='login';return renderNow();}
-  if(this.recovery){this.state='newpass';return renderNow();}
+  if(!SB.configured()){this.state='setup';return APPEV.emit('changed',{now:true});}
+  if(!SB.sess){this.state='login';return APPEV.emit('changed',{now:true});}
+  if(this.recovery){this.state='newpass';return APPEV.emit('changed',{now:true});}
   const me=LS.get(MEKEY);
   /* já entrou neste aparelho: abre na hora, mesmo sem internet, e confere o perfil em segundo plano */
   if(me&&me.uid===this.uid()&&me.ws){this.enter(me);this.recheck();return;}
-  this.state='loading';renderNow();await this.membership();},
+  this.state='loading';APPEV.emit('changed',{now:true});await this.membership();},
  async membership(){try{const rows=await SB.rpc('claim_invites');
    if(rows&&rows.length){const r=rows[0];this.enter({uid:this.uid(),email:this.email(),ws:r.workspace_id,wsName:r.workspace_name,role:r.role});return;}
-   this.state=(await SB.rpc('has_workspace'))?'noinvite':'create';renderNow();}
-  catch(e){this.err=e.message;this.state=e.offline?'offline':'login';renderNow();}},
+   this.state=(await SB.rpc('has_workspace'))?'noinvite':'create';APPEV.emit('changed',{now:true});}
+  catch(e){this.err=e.message;this.state=e.offline?'offline':'login';APPEV.emit('changed',{now:true});}},
  async recheck(){try{const rows=await SB.rpc('claim_invites');
    if(!rows||!rows.length){await this.signOut('Seu acesso à equipe foi removido pelo Maestro.');return;}
    const r=rows[0];if(r.role!==ME.role||r.workspace_id!==ME.ws){this.enter(Object.assign({},ME,{role:r.role,ws:r.workspace_id,wsName:r.workspace_name}));toast('Seu perfil agora é '+ROLE_N[r.role]+'.');}}
   catch(e){}},
  /* entra no espaço: troca de pessoa no aparelho apaga os dados locais; troca de perfil refaz a sincronização */
  enter(me){const owner=LS.get(OWNKEY);
-  if(owner!==me.uid){STORE.wipe();SUPA_BACKEND.reset();setMasters([]);S=fromPreset(PRESETS[0]);LS.set(OWNKEY,me.uid);}
+  if(owner!==me.uid){STORE.wipe();SUPA_BACKEND.reset();setMasters([]);APPEV.emit('session',{reset:true});LS.set(OWNKEY,me.uid);}
   else if(ME.uid===me.uid&&ME.role!==me.role){STORE.wipe();setMasters([]);SUPA_BACKEND.reset(true);}
   ME=me;ROLE=me.role;LS.set(MEKEY,me);this.state='ready';this.err='';this.msg='';
-  if(!can.page(S.page))S.page=homePage();renderNow();STORE.init();},
- lost(){if(this.state==='ready'){this.state='login';this.err='Sua sessão expirou. Entre de novo; seus dados continuam neste aparelho.';renderNow();}},
+  APPEV.emit('session',{enter:true});STORE.init();},
+ lost(){if(this.state==='ready'){this.state='login';this.err='Sua sessão expirou. Entre de novo; seus dados continuam neste aparelho.';APPEV.emit('changed',{now:true});}},
  async signOut(msg){try{await SUPA_BACKEND.sync();}catch(e){}await SB.signOut();STORE.wipe();SUPA_BACKEND.reset();setMasters([]);
-  LS.set(MEKEY,null);LS.set(OWNKEY,null);ME={uid:null,email:'',ws:null,wsName:'',role:'maestro'};ROLE='maestro';S=fromPreset(PRESETS[0]);
-  U.team=null;U.logoutAsk=false;this.state='login';this.mode='login';this.err=msg||'';this.msg='';this.f.pw='';renderNow();},
+  LS.set(MEKEY,null);LS.set(OWNKEY,null);ME={uid:null,email:'',ws:null,wsName:'',role:'maestro'};ROLE='maestro';APPEV.emit('session',{reset:true,logout:true});
+  this.state='login';this.mode='login';this.err=msg||'';this.msg='';this.f.pw='';APPEV.emit('changed',{now:true});},
  async go(){const f=this.f,email=f.email.trim().toLowerCase();this.err='';this.msg='';
-  const need=(c,m)=>{if(!c){this.err=m;renderNow();}return!c;};
-  this.busy=true;renderNow();
+  const need=(c,m)=>{if(!c){this.err=m;APPEV.emit('changed',{now:true});}return!c;};
+  this.busy=true;APPEV.emit('changed',{now:true});
   try{
    if(this.state==='setup'){if(need(/^https:\/\/.+/.test(f.url.trim())&&f.key.trim().length>20,'Cole a URL (https://…supabase.co) e a chave anon do seu projeto.'))return;
     LS.set('fredolin_app_cfg',{url:f.url.trim(),key:f.key.trim()});location.reload();return;}
@@ -5897,10 +5914,13 @@ const AUTH={state:'boot',mode:'login',f:{email:'',pw:'',pw2:'',name:'Il Fredolin
    if(this.mode==='signup'){if(need(f.pw===f.pw2,'As duas senhas precisam ser iguais.'))return;
     const has=await SB.signUp(email,f.pw);if(!has){this.mode='login';this.msg='Conta criada. Enviamos um link de confirmação para '+email+': toque nele e depois entre aqui com a sua senha.';return;}
     this.state='loading';await this.membership();return;}
-   await SB.signIn(email,f.pw);f.pw='';this.state='loading';renderNow();await this.membership();}
+   await SB.signIn(email,f.pw);f.pw='';this.state='loading';APPEV.emit('changed',{now:true});await this.membership();}
   catch(e){this.err=e.message;}
-  finally{this.busy=false;renderNow();}},
- view(){const f=this.f,st=this.state,m=this.mode,busy=this.busy;
+  finally{this.busy=false;APPEV.emit('changed',{now:true});}},
+};
+
+/* v18.10 · tela de entrada (antes dentro do objeto AUTH, na camada de dados) */
+AUTH.view=function(){const f=this.f,st=this.state,m=this.mode,busy=this.busy;
   const inp=(k,label,type,extra)=>`<label class="field"><span class="lbl">${label}</span><input type="${type}" id="au-${k}" data-i="auth" data-k="${k}" value="${esc(f[k])}" ${extra||''}></label>`;
   const box=(title,lead,body)=>`<div class="authbox"><div class="authhex"></div><h1>${title}</h1>${lead?`<p class="lead">${lead}</p>`:''}${this.err?`<p class="autherr" role="alert">${esc(this.err)}</p>`:''}${this.msg?`<p class="authmsg">${esc(this.msg)}</p>`:''}${body}</div>`;
   const btn=(label,act,cls)=>`<button class="btn ${cls||'pri'} wide" data-a="${act}"${busy?' disabled':''}>${busy&&act==='authGo'?'Aguarde…':label}</button>`;
@@ -5914,9 +5934,7 @@ const AUTH={state:'boot',mode:'login',f:{email:'',pw:'',pw2:'',name:'Il Fredolin
   const tabs=`<div class="chips authtabs">${[['login','Entrar'],['signup','Primeiro acesso'],['recover','Esqueci a senha']].map(([k,n])=>`<button data-a="authMode" data-v="${k}" aria-pressed="${m===k}">${n}</button>`).join('')}</div>`;
   if(m==='recover')return box('Esqueci a senha','Enviaremos um link para criar uma nova senha.',tabs+inp('email','E-mail','email','autocomplete="email" autocapitalize="off"')+btn('Enviar link','authGo'));
   if(m==='signup')return box('Primeiro acesso','Use o e-mail em que o Maestro enviou o convite e crie sua senha.',tabs+inp('email','E-mail','email','autocomplete="email" autocapitalize="off"')+inp('pw','Crie uma senha','password','autocomplete="new-password"')+inp('pw2','Repita a senha','password','autocomplete="new-password"')+btn('Criar conta','authGo'));
-  return box('Il Fredolin','Laboratório de gelato da equipe.',tabs+inp('email','E-mail','email','autocomplete="username" autocapitalize="off"')+inp('pw','Senha','password','autocomplete="current-password"')+btn('Entrar','authGo'));}
-};
-
+  return box('Il Fredolin','Laboratório de gelato da equipe.',tabs+inp('email','E-mail','email','autocomplete="username" autocapitalize="off"')+inp('pw','Senha','password','autocomplete="current-password"')+btn('Entrar','authGo'));};
 /* ---------- Equipe (Maestro) ---------- */
 async function loadTeam(){if(!ME.ws)return;  /* v18.0.1: espaço ainda não conhecido (início da sessão) → não consulta workspace_id=null */
  U.teamBusy=true;try{U.team=await SB.get('members?select=email,name,role,user_id,created_at&workspace_id=eq.'+ME.ws+'&order=created_at.asc');U.teamErr='';}catch(e){U.teamErr=e.message;}U.teamBusy=false;render();}
@@ -6036,6 +6054,11 @@ if(APP_MODE==='app'&&typeof KV!=='undefined'){const auto=async()=>{try{if(!KV.ok
  setTimeout(auto,15000);document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='hidden')auto();});}
 /* ==== 70-app.js ==== */
 /* ===================== IL FREDOLIN · APLICAÇÃO (render, ações, eventos) ===================== */
+/* v18.10 · a tela assina os avisos da camada de dados (antes os dados chamavam render() e mexiam em S/U direto) */
+APPEV.on('changed',d=>{if(d&&d.now)renderNow();else render();});
+APPEV.on('vit',v=>{if(v)S.vitrine={temp:v.temp,items:v.items||[]};if(typeof setsFromCloud==='function')setsFromCloud();});
+APPEV.on('session',d=>{d=d||{};if(d.reset)S=fromPreset(PRESETS[0]);if(d.logout){U.team=null;U.logoutAsk=false;}
+ if(d.enter){if(!can.page(S.page))S.page=homePage();renderNow();}});
 const VIEW={execucao:pgExecucao,equipe:pgEquipe,bancada:pgBancada,creator:pgCreator,laudo:pgLaudo,congelamento:pgCongel,quimica:pgQuimica,vitrine:pgVitrine,
  lotes:pgLotesQual,planejamento:pgPlanEst,estoque:pgEstoque,processo:pgProcesso,brix:pgBrix,defeitos:pgDefeitos,producao:pgProducao,
  ingredientes:pgIngredientes,rotulo:pgRotulo,custos:pgCustos,biblioteca:pgBiblioteca,dados:pgDados,

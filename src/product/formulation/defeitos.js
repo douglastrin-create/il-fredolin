@@ -355,3 +355,6 @@ function diagnoseSymptoms(sel,m){const S0=new Set(sel||[]);return DEFECTS.map(d=
 function defectRisks(m){if(!m||m.empty)return[];return DEFECTS.map(d=>{const R=rankDefect(d,m);return R.length?{d,R,s:R[0].s}:null;}).filter(x=>x&&x.s>=.3).sort((a,b)=>b.s-a.s);}
 
 
+
+/* v18.10 · injeta no modelo de quenelle (núcleo) o risco de esfarelar do banco de defeitos */
+QN_CRUMB=m=>{const d=DEFECTS.find(x=>x.id==='esfarela');const R=d?rankDefect(d,m):[];return R.length?R[0].s:0;};

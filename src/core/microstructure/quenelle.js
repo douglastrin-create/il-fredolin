@@ -10,12 +10,14 @@
 function icePhaseVol(m,T){const W=m.wat||0,ice=W*m.fz(T)/100;const vMix=W+(m.fat||0)/.93+Math.max(0,(m.sol||0)-(m.fat||0))/1.55+(m.alc||0)/.79;const vP=vMix+ice*(1/.917-1)+vMix*(m.ov||0)/100;return vP>0?ice/.917/vP:0;}
 function tempAtFz(m,f){let lo=-45,hi=-.05;if(m.fz(hi)>=f)return hi;if(m.fz(lo)<f)return lo;for(let k=0;k<44;k++){const mid=(lo+hi)/2;if(m.fz(mid)>=f)lo=mid;else hi=mid;}return(lo+hi)/2;}
 const QREF=.39;
+/* v18.10 · risco de esfarelar vem do banco de defeitos (produto), injetado por defeitos.js; sem ele, 0 */
+var QN_CRUMB=null;
 function quenelleModel(m){if(!m||m.empty||!(m.wat>0))return null;if(m._qn)return m._qn;const P=m.P;
  const phiServe=icePhaseVol(m,m.serveT);
  /* coesão (0–1): rede de gordura parcialmente coalescida, viscosidade da fase sérica, estabilizante na faixa; esfarelado tira */
  const fatOK=m.fat>4?clamp((m.destab||0)/20,0,1):.6;const v=m.visc||0;const viscOK=v<25?.3:v<50?.3+.7*(v-25)/25:v<=400?1:v<=800?1-.4*(v-400)/400:.5;
  const stabOK=m.hydro>=P.stab[0]&&m.hydro<=P.stab[1]*1.2?1:m.hydro<P.stab[0]?.55:.75;
- let crumb=0;try{const d=DEFECTS.find(x=>x.id==='esfarela');const R=d?rankDefect(d,m):[];crumb=R.length?R[0].s:0;}catch(e){}
+ let crumb=0;try{crumb=QN_CRUMB?QN_CRUMB(m):0;}catch(e){}
  const C=clamp((.4*fatOK+.35*viscOK+.25*stabOK)*(1-.5*crumb),0,1);
  const H=clamp(((m.melt||0)-40)/50,0,1);
  const cal=CAL.on&&CAL.qShift?CAL.qShift:0;

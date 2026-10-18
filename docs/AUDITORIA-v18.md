@@ -417,6 +417,31 @@ Na passagem v18.7 → v18.8 o defeito ainda acontece uma vez, porque é o códig
 
 Todas as suítes anteriores passam com o novo carregamento (25 páginas, offline real, PWA, Experimentos). Node 79/79.
 
+## 5-N. v18.10 — camadas sem dívida (§50)
+
+As 23 dependências proibidas registradas na v18.6 foram eliminadas. O verificador agora exige **zero**.
+
+| Dívida | Como foi paga |
+|---|---|
+| Núcleo lia a preferência de dextrose do estado da tela | Função injetada (`DEX_PREF`); no Web Worker vale "mono", como antes |
+| Quenelle (núcleo) consultava o banco de defeitos (produto) | Risco de esfarelar injetado por `defeitos.js` (`QN_CRUMB`); mesmo cálculo |
+| Gerador (núcleo) usava metas padrão das bases (produto) | `GEN_DEF` mudou para o núcleo |
+| Sincronização chamava `render()`, mexia em `S`/`U` e na vitrine | Canal de eventos `APPEV`: os dados avisam, a tela decide. Evento antes da assinatura fica na fila |
+| Detecção e cópia de conflito estavam numa tela | Movidas para `data/sync/conflitos.js` |
+| Tela de entrada e lista da equipe dentro da camada de dados | Movidas para `ui/pages/equipe.js` (`AUTH.view`, `loadTeam`) |
+| Salvar arquivo (download) na camada de dados | Movido para `ui/arquivo.js` |
+| `APP_MODE` (configuração) estava na interface | `data/modo.js` |
+
+**Correção do verificador:** ele não pulava expressões regulares literais, então `$` e `denied` dentro de `/…/` contavam como uso de nome. Agora pula, com teste. Conferi também por busca de texto independente: a camada de dados não chama mais nenhuma função de tela.
+
+**Testes:**
+- Node 81/81, com 2 novos: expressão regular no verificador; canal de eventos entregando na ordem, com fila e isolamento de erro da tela.
+- Integração real com PostgREST em dois aparelhos: 1 + 6, nos dois estados do banco.
+- Políticas do banco: 31/31.
+- 25 páginas, offline real, PWA e armazenamento.
+- E2E: a tela de entrada aparece sem sessão.
+- Os stubs de teste do código de sincronização ganharam o canal de eventos.
+
 ## 6. Para publicar (requer sua autorização)
 1. Conferir a execução do workflow *Testes* na branch (inclui WebKit e o job *banco*).
 1b. Aplicar a migração 001 seguindo `supabase/README.md` (ensaio num projeto de teste primeiro). A ordem entre banco e app é indiferente.

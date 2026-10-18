@@ -56,6 +56,21 @@ test('verificador de camadas: ignora comentários, textos e nomes locais; pega u
   for (const n of ['T', 'SE', 'S', 'm', 'p', 'q', 'v', 'err']) assert.ok(L.has(n), n);
 });
 
+test('verificador: expressão regular literal não conta como uso; divisão continua sendo código', () => {
+  const c = stripCode("const u=x.replace(/\\/+$/,'');const e=[/permission denied|42501/i,'m'];const d=a/b/render;");
+  assert.ok(!/denied|\$/.test(c), 'texto dentro de /regex/ é ignorado');
+  assert.ok(/render/.test(c), 'a/b/render é divisão: render continua visível');
+});
+
+test('canal de eventos dados → tela: entrega na ordem e guarda o que chegou antes da assinatura', async () => {
+  const src = fs.readFileSync(path.join(ROOT, 'src/data/local/colecoes.js'), 'utf8').match(/const APPEV=\{[\s\S]*?\n emit[^\n]*\n?/)[0];
+  const APPEV = new Function(src + ';return APPEV;')();
+  APPEV.emit('changed', 1); APPEV.emit('changed', 2); const got = [];
+  APPEV.on('changed', d => got.push(d)); APPEV.emit('changed', 3);
+  assert.deepEqual(got, [1, 2, 3]);
+  APPEV.on('x', () => { throw new Error('falha na tela'); }); assert.doesNotThrow(() => APPEV.emit('x'), 'erro da tela não derruba a camada de dados');
+});
+
 test('manifesto: toda camada esperada existe e nada em src/ fica fora da montagem', () => {
   const layers = new Set(readManifest().files.map(f => f.split('/')[0]));
   for (const l of ['shell', 'core', 'product', 'data', 'security', 'ui', 'tests']) assert.ok(layers.has(l), l);

@@ -31,6 +31,8 @@ Object.assign(GEN_VARS,{granita:['agua','sacarose','dextrose'],paleta_fruta:['ag
 const genVars=t=>GEN_VARS[t]||GEN_VARS[tbase(t)]||GEN_VARS.crema;
 /* sólidos são meta nas bases sem leite e no sem açúcar (o corpo vem da fibra, não do leite); nas lácteas resultam das outras metas */
 const genSolTgt=t=>!genVars(t).includes('lpd')||tbase(t)==='semacucar';
+/* v18.10 · metas padrão do gerador (antes junto das bases de referência, na camada de produto) */
+const GEN_DEF={crema:{fat:8,msnf:9.5,pod:18,sol:38},frutta:{fat:3,msnf:6,pod:21,sol:35},gastro:{fat:9,msnf:9,pod:6,sol:34},semacucar:{fat:9,msnf:9,pod:16,sol:34},sorbetto:{fat:0,msnf:0,pod:25,sol:31},vegan:{fat:8,msnf:0,pod:18.5,sol:37}};
 const genDef=t=>{if(GEN_DEF[t])return GEN_DEF[t];const P=PROF[t]||PROF.crema,mid=r=>Math.round((r[0]+r[1])/2*2)/2;return{fat:mid(P.fat),msnf:mid(P.msnf),pod:mid(P.pod),sol:mid(P.sol)};};
 function generate(o){
  const P=PROF[o.tipo]||PROF.crema,B=+o.batch||1000,VARS=genVars(o.tipo).map(id=>id==='dextrose'&&DEX_FORM()!=='anid'?'dextrosem':id),proc=o.proc||{};

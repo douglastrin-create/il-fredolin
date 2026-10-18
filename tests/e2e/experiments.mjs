@@ -13,6 +13,7 @@ await pg.goto(`http://localhost:${srv.address().port}/index.html`); await pg.wai
 const fails = []; const check = (ok, msg) => { console.log(`${ok ? '✓' : '✗'} ${msg}`); if (!ok) { fails.push(msg); if (process.env.CI) console.log(`::error title=E2E experimentos::${String(msg).replace(/\n/g, ' ').slice(0, 900)}`); } };
 process.on('uncaughtException', e => { if (process.env.CI) console.log(`::error title=E2E experimentos exceção::${String(e && e.stack || e).replace(/\n/g, ' | ').slice(0, 900)}`); console.error(e); process.exit(1); });
 process.on('unhandledRejection', e => { if (process.env.CI) console.log(`::error title=E2E experimentos exceção::${String(e && e.stack || e).replace(/\n/g, ' | ').slice(0, 900)}`); console.error(e); process.exit(1); });
+check(/Entrar|Il Fredolin/.test(await pg.locator('#main').innerText()) && await pg.evaluate(() => typeof AUTH.view === 'function' && AUTH.state !== 'ready'), 'sem sessão: a tela de entrada (agora na camada de interface) aparece');
 // entra como Maestro (sem servidor) e carrega a base de morango na bancada
 await pg.evaluate(() => { AUTH.state = 'ready'; ME.ws = null; S = fromPreset(PRESETS.find(p => /fragola/i.test(p.name))); S.page = 'laudo'; U.sub = { laudo: 'medir' }; renderNow(); });
 const medir = await pg.locator('#main').innerText();

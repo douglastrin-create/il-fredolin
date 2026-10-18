@@ -36,6 +36,12 @@ export function stripCode(src) {
     }
     if (c === '/' && d === '/') { while (i < n && src[i] !== '\n') i++; continue; }
     if (c === '/' && d === '*') { i += 2; while (i < n && !(src[i] === '*' && src[i + 1] === '/')) i++; i += 2; continue; }
+    /* expressão regular literal: "/" depois de operador, abertura ou início (não é divisão) */
+    if (c === '/' && /(^|[(,=:[!&|?{};+\-*%<>~^]|\breturn|\btypeof)\s*$/.test(out.slice(-12))) {
+      let j = i + 1, cls = false;
+      while (j < n && src[j] !== '\n') { const ch = src[j]; if (ch === '\\') { j += 2; continue; } if (ch === '[') cls = true; else if (ch === ']') cls = false; else if (ch === '/' && !cls) break; j++; }
+      if (src[j] === '/') { j++; while (j < n && /[a-z]/.test(src[j])) j++; out += ' '; i = j; continue; }
+    }
     if (c === '"' || c === "'") { const q = c; i++; while (i < n && src[i] !== q && src[i] !== '\n') { if (src[i] === '\\') i++; i++; } i++; out += ' '; continue; }
     if (c === '`') { stack.push('`'); out += ' '; i++; continue; }
     if (c === '{' && stack.length) { stack.push('{'); out += c; i++; continue; }

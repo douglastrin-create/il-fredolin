@@ -57,13 +57,18 @@ O trecho que roda no **Web Worker** vai de `core/util.js` até antes de `tests/g
 
 O verificador lê as declarações de topo de cada módulo e procura nomes de camadas proibidas. Ele ignora comentários, textos e variáveis locais com o mesmo nome. Exemplo: `S` é o soluto na curva de congelamento e também é o estado da tela.
 
-**Dívidas registradas** (`tools/layers-known.json`, 23 usos):
-- `core/composition/dextrose.js` lê a preferência de dextrose da tela (`S.dexForm`, com guarda). O certo é receber como parâmetro.
-- `core/microstructure/quenelle.js` consulta o banco de defeitos.
-- `core/optimization/gerador.js` usa as metas padrão (`GEN_DEF`), que estão junto das bases.
-- A sincronização (`data/local/store.js`, `data/sync/*`) chama `render()`, lê o estado da tela e abre as telas de conflito e de recusa.
+**Dívidas:** as 23 registradas na v18.6 foram pagas na v18.10. Hoje são **0**: dependência nova falha o CI.
 
-Dependência nova falha o CI. Dívida resolvida também falha até sair da lista, para a lista nunca ficar velha.
+Como foram pagas:
+- **Canal de eventos `APPEV`.** Os dados avisam ("changed", "vit", "session") e a tela decide o que fazer (redesenhar, ajustar a vitrine, voltar ao estado inicial). Evento emitido antes de a tela assinar fica na fila.
+- **Injeção no núcleo:** a forma de dextrose preferida (`DEX_PREF`) e o risco de esfarelar do banco de defeitos (`QN_CRUMB`).
+- **Mudanças de lugar:**
+  - as metas padrão do gerador (`GEN_DEF`) foram para o núcleo;
+  - a detecção de conflito, para `data/sync/conflitos.js`;
+  - `APP_MODE`, para `data/modo.js`;
+  - a tela de entrada (`AUTH.view`), a lista da equipe e o salvamento de arquivo, para a interface.
+
+O verificador passou a ignorar expressões regulares literais: `$` e `denied` dentro de `/…/` não são uso de nome.
 
 ### O que mudou de lugar ao separar
 
@@ -136,7 +141,7 @@ Principais campos de `PROC0`:
 
 | Formato | Versão | Onde |
 |---|---|---|
-| App | `VERSION = 'v18.9'` | `ui/shell.js` (mostrado no rodapé) |
+| App | `VERSION = 'v18.10'` | `ui/shell.js` (mostrado no rodapé) |
 | Backup (JSON) | `{app: 'Il Fredolin', schema: 2, …coleções, tomb}` | `data/local/backup.js` |
 | Registro na nuvem | linha `records {workspace_id, col, id, data, deleted, updated_at, ver, base_ver, force}` | `supabase/migrations/*`, `data/sync/supabase.js` |
 | Registro de modelos | `il-fredolin/model-registry@2` (campos do §46; embutido no app pelo build) | `docs/model-registry.json` |
@@ -148,8 +153,6 @@ Principais campos de `PROC0`:
 
 ## Próximos passos da modularização (progressivos)
 
-1. **Pagar as dívidas, uma por vez, com teste:**
-   - `DEX_FORM` passa a receber a preferência por parâmetro;
-   - a sincronização passa a emitir um evento ("dados mudaram"), e a interface decide quando chamar `render()`.
+1. ~~Pagar as dívidas~~: feito na v18.10.
 2. **Dividir os módulos grandes de interface** nos limites de página: `ui/pages/paginas.js` (705 linhas), `atelie.js` e `v13.js`.
 3. **Só depois, se valer a pena,** usar módulos ES de verdade (`import`/`export`) no núcleo. Isso pede um empacotador e muda o Web Worker, então só faz sentido com ganho claro.

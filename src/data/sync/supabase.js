@@ -116,7 +116,7 @@ const SUPA_BACKEND={running:null,again:false,cursor:LS.get(CURKEY)||'1970-01-01T
    rows.forEach(r=>{this.apply(r,changed);if(r.srv_at>max)max=r.srv_at;});if(rows.length<1000)break;off+=1000;}
   this.cursor=max;LS.set(CURKEY,max);LS.set(VERKEY,this.vers);
   if(changed.has('fin')){LS.set(FINKEY,FIN);['inv','ings','lib','exec','lots'].forEach(c=>{COLS[c].get().forEach(r=>withFin(c,r));changed.add(c);});changed.delete('fin');}
-  changed.forEach(c=>{STORE.saveLocal(c);STORE.after(c);});if(changed.size)render();},
+  changed.forEach(c=>{STORE.saveLocal(c);STORE.after(c);});if(changed.size)APPEV.emit('changed');},
  apply(r,changed){
   const pend=this.outbox.some(o=>o.col===r.col&&o.id===r.id);
   /* a edição pendente partiu da versão antiga: não atualiza a versão conhecida, para o servidor acusar o conflito */
@@ -141,5 +141,5 @@ const SUPA_BACKEND={running:null,again:false,cursor:LS.get(CURKEY)||'1970-01-01T
 const REFKEY='fredolin_app_ref';
 function setMasters(list){masterDexFix(list);MASTERS.splice(0,MASTERS.length,...list);try{localStorage.setItem(REFKEY,JSON.stringify(list));}catch(e){}}
 async function loadLibrary(){if(ROLE==='sous'){if(MASTERS.length)setMasters([]);return;}
- try{const rows=await SB.get('library?select=id,data&order=id.asc');if(Array.isArray(rows)&&rows.length){setMasters(rows.map(r=>r.data));render();}}catch(e){}}
+ try{const rows=await SB.get('library?select=id,data&order=id.asc');if(Array.isArray(rows)&&rows.length){setMasters(rows.map(r=>r.data));APPEV.emit('changed');}}catch(e){}}
 

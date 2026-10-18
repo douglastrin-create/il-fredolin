@@ -27,7 +27,7 @@ function device(role, html = readApp()) {
     const plain=r=>JSON.parse(JSON.stringify(r));let ROLE=${JSON.stringify(role)};let ME={uid:'${USERS[role][0]}',ws:'${WS}',email:'${USERS[role][1]}'};
     const DB={lib:[],exec:[],lots:[],ings:[],nx:[],inv:[],vit:[]};const COLS={};for(const c in DB)COLS[c]={get:()=>DB[c],set:v=>{DB[c]=v;}};
     const STORE={setStatus(){},saveLocal(){},after(){},put(c,r){r.updatedAt=Date.now();const a=DB[c],k=a.findIndex(x=>String(x.id)===String(r.id));if(k>=0)a[k]=r;else a.unshift(r);SUPA_BACKEND.push(c,r);}};
-    const MASTERS=[];function masterDexFix(){}function render(){}function safeRec(r){return r;}
+    const MASTERS=[];const APPEV={emit(){},on(){}};function masterDexFix(){}function render(){}function safeRec(r){return r;}
     function libConflict(){return false;}function conflictCopy(r){return Object.assign({},r,{id:r.id+'c'});}
     function toast(t){__toasts.push(t);}const AUTH={lost(){}};
     ${segment(html, '62-supabase.js', '66-team.js')}

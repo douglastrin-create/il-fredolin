@@ -13,5 +13,4 @@ const PRESETS=[
  {name:'Cocco vegano',tipo:'vegan',vit:-13,recipe:[['agua',430],['cococreme',260],['sacarose',140],['dextrosem',92.9],['malto',30],['inulina',30],['ervilha',12],['neutro',5],['sal',.8]]}
 ];
 
-const GEN_DEF={crema:{fat:8,msnf:9.5,pod:18,sol:38},frutta:{fat:3,msnf:6,pod:21,sol:35},gastro:{fat:9,msnf:9,pod:6,sol:34},semacucar:{fat:9,msnf:9,pod:16,sol:34},sorbetto:{fat:0,msnf:0,pod:25,sol:31},vegan:{fat:8,msnf:0,pod:18.5,sol:37}};
 

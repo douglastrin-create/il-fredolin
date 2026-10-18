@@ -1,5 +1,10 @@
 /* ==== 70-app.js ==== */
 /* ===================== IL FREDOLIN · APLICAÇÃO (render, ações, eventos) ===================== */
+/* v18.10 · a tela assina os avisos da camada de dados (antes os dados chamavam render() e mexiam em S/U direto) */
+APPEV.on('changed',d=>{if(d&&d.now)renderNow();else render();});
+APPEV.on('vit',v=>{if(v)S.vitrine={temp:v.temp,items:v.items||[]};if(typeof setsFromCloud==='function')setsFromCloud();});
+APPEV.on('session',d=>{d=d||{};if(d.reset)S=fromPreset(PRESETS[0]);if(d.logout){U.team=null;U.logoutAsk=false;}
+ if(d.enter){if(!can.page(S.page))S.page=homePage();renderNow();}});
 const VIEW={execucao:pgExecucao,equipe:pgEquipe,bancada:pgBancada,creator:pgCreator,laudo:pgLaudo,congelamento:pgCongel,quimica:pgQuimica,vitrine:pgVitrine,
  lotes:pgLotesQual,planejamento:pgPlanEst,estoque:pgEstoque,processo:pgProcesso,brix:pgBrix,defeitos:pgDefeitos,producao:pgProducao,
  ingredientes:pgIngredientes,rotulo:pgRotulo,custos:pgCustos,biblioteca:pgBiblioteca,dados:pgDados,
