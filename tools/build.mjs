@@ -31,9 +31,16 @@ export function readManifest() {
   return m;
 }
 
+/* o registro de modelos (docs/model-registry.json) entra no app no lugar do marcador, para a página Ciência do motor */
+const REG_MARK = '/*__MODEL_REGISTRY__*/null';
 export function build() {
   const m = readManifest();
-  return m.files.map(f => fs.readFileSync(path.join(SRC, f), 'utf8')).join('');
+  let out = m.files.map(f => fs.readFileSync(path.join(SRC, f), 'utf8')).join('');
+  if (out.includes(REG_MARK)) {
+    const reg = JSON.parse(fs.readFileSync(path.join(ROOT, 'docs', 'model-registry.json'), 'utf8'));
+    out = out.replace(REG_MARK, JSON.stringify(reg).replace(/</g, '\\u003c'));
+  }
+  return out;
 }
 
 /* service worker: leva o SHA-256 do index.html montado (a instalação confere) e a versão do app */

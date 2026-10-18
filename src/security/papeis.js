@@ -9,7 +9,7 @@ let ROLE='maestro';
 let ME={uid:null,email:'',ws:null,wsName:'',role:'maestro'};
 const ROLE_N={maestro:'Maestro',chef:'Chef',sous:'Sous Chef'};
 /* m = Maestro · c = Chef · s = Sous Chef */
-const PAGE_ROLES={bancada:'mc',creator:'mc',laudo:'mc',congelamento:'mc',quimica:'mc',vitrine:'mc',
+const PAGE_ROLES={ciencia:'mc',bancada:'mc',creator:'mc',laudo:'mc',congelamento:'mc',quimica:'mc',vitrine:'mc',
  linha:'mcs',execucao:'mcs',lotes:'mcs',planejamento:'mc',estoque:'mc',processo:'mc',brix:'mc',defeitos:'mcs',producao:'mcs',
  ingredientes:'mc',rotulo:'mcs',custos:'m',biblioteca:'mc',equipe:'m',dados:'mcs',
  componentes:'mc',degustacao:'mcs',sazonal:'mc'};
@@ -19,7 +19,7 @@ const SOUS_ACT=new Set(['go','sub','defMode','defSym','defClr','defOpen','defOpe
 const SOUS_INP=new Set(['flowLabel','flowMeas','prodG','lot','lotTxt','auth','panelTaster','panelNote','palQ']),SOUS_CHG=new Set(['defChk','lot','panelLot']);
 const CHEF_DENY_ACT=new Set(['expJson','expCsv','impGo','impDel','memInvite','memDel','memDelYes','teamReload']),CHEF_DENY_INP=new Set(['cost','costCap']),CHEF_DENY_CHG=new Set(['memRole']);
 /* telas de entrada e saída funcionam para qualquer perfil (inclusive antes de saber o perfil) */
-const ALWAYS_ACT=new Set(['offDiag','offRepair','appReload','authGo','authMode','authRetry','logout','logoutYes','logoutNo','syncNow','rejRetry','rejExport','rejDrop','rejDropYes','rejDropNo']);
+const ALWAYS_ACT=new Set(['sciOpen','offDiag','offRepair','appReload','authGo','authMode','authRetry','logout','logoutYes','logoutNo','syncNow','rejRetry','rejExport','rejDrop','rejDropYes','rejDropNo']);
 const can={
  page:k=>(PAGE_ROLES[k]||'m').includes(ROLE[0]),
  cost:()=>ROLE==='maestro',

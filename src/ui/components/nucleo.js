@@ -16,5 +16,5 @@ const MODEL_NAT={ph:['heurístico','Estimado pela fonte ácida dominante e pelo 
  'sensory-temperature':['heurístico','Queda de ~2,5% da doçura percebida por °C abaixo de −12 °C: coeficiente sem painel sensorial próprio.'],
  'stabilizer-function':['heurístico','Notas de 0 a 5 por componente (prática de formulação, sem medição) somadas pela dose; sinergias não entram na conta, só como descrição com fonte. Os lotes medidos mostram o resultado real.']};
 const natTag=id=>{const n=MODEL_NAT[id];if(!n)return'';const cal=id==='overrun'&&typeof CAL!=='undefined'&&CAL.on&&CAL.counts&&CAL.counts.ov?' · calibrado por '+CAL.counts.ov+' lote(s)':'';
- return` <span class="chip nat" title="${esc(n[1])}" aria-label="${esc(n[0]+cal+'. '+n[1])}">${esc(n[0]+cal)}</span>`;};
+ return` <span class="chip nat" role="link" tabindex="0" data-a="sciOpen" data-v="${esc(id)}" style="cursor:pointer" title="${esc(n[1])} Toque para ver a ficha do modelo." aria-label="${esc(n[0]+cal+'. '+n[1])}">${esc(n[0]+cal)}</span>`;};
 const norm=s=>String(s).normalize('NFD').replace(/[̀-ͯ]/g,'').toLowerCase();

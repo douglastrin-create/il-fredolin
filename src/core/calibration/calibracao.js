@@ -3,8 +3,8 @@ function calOv(machine){return (CAL.on&&CAL.ov[machine])?CAL.ov[machine]:0;}
 /* ajuste bayesiano simples: média dos resíduos encolhida em direção a zero (prior de 3 lotes) */
 function fitCalibration(lots){
  const prev=CAL.on;CAL.on=false;const ovR={},fzR=[],mR=[],kR=[],pS=[],pF=[],qR=[],hR=[];let phN=0;const res=[];
- (lots||[]).forEach(L=>{if(!L.recipe||!L.recipe.length)return;const st={tipo:L.tipo,vit:L.meas&&L.meas.texTemp!=null&&L.meas.texTemp!==''?+L.meas.texTemp:L.vit,recipe:L.recipe,proc:L.proc||{},brix:L.brix||{},costs:{}};const m=analyzeRaw(st);const me=L.meas||{};const r={id:L.id,code:L.code};
-  const ov=measuredOverrun(me);if(ov!=null){const PF=PROF[L.tipo]||{};const mc=PF.proc&&PF.proc!=='batch'?'fam:'+L.tipo:(L.proc&&L.proc.machine)||'horiz';(ovR[mc]=ovR[mc]||[]).push(ov-m.ovModel);r.ov=[m.ovModel,ov];}
+ (lots||[]).forEach(L=>{if(!L.recipe||!L.recipe.length)return;const st={tipo:L.tipo,vit:L.meas&&L.meas.texTemp!=null&&L.meas.texTemp!==''?+L.meas.texTemp:L.vit,recipe:L.recipe,proc:L.proc||{},brix:L.brix||{},costs:{}};const m=analyzeRaw(st);const me=L.meas||{};const r={id:L.id,code:L.code,tipo:L.tipo};
+  const ov=measuredOverrun(me);if(ov!=null){const PF=PROF[L.tipo]||{};const mc=PF.proc&&PF.proc!=='batch'?'fam:'+L.tipo:(L.proc&&L.proc.machine)||'horiz';(ovR[mc]=ovR[mc]||[]).push(ov-m.ovModel);r.ov=[m.ovModel,ov];r.ovKey=mc;}
   if(me.tex!=null&&me.tex!==''){const tt=st.vit;const pred=(frozenPct(tt,m.SE,m.S)-m.fzMid)/3.5;fzR.push(-.8*(+me.tex-pred));r.tex=[Math.round(pred*10)/10,+me.tex];}
   if(me.melt10!=null&&me.melt10!==''){const pm=meltModel(m);mR.push(+me.melt10-pm);r.melt=[pm,+me.melt10];}
   if(me.icyDay!=null&&me.icyDay!==''&&+me.icyDay>0){const K=kinetics(m,st).Kvit;const implied=(Math.pow(50,3)-Math.pow(m.crystal,3))/(+me.icyDay);if(implied>0)kR.push(Math.log(implied/K));r.icy=+me.icyDay;}

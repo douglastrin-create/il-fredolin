@@ -1,6 +1,6 @@
 {
- "schema": "il-fredolin/model-registry@1",
- "auditedCommit": "52f99f0",
+ "schema": "il-fredolin/model-registry@2",
+ "auditedCommit": "5000ab2",
  "classes": {
   "D": "determinístico por definição ou balanço",
   "M": "mecanístico (leis físicas)",
@@ -21,14 +21,53 @@
     "D"
    ],
    "outputs": [
-    "sol",
-    "fat",
-    "pac",
-    "pod",
-    "wat"
+    {
+     "k": "sol, fat, msnf, wat",
+     "unit": "g/100 g"
+    },
+    {
+     "k": "pod",
+     "unit": "% sacarose eq."
+    },
+    {
+     "k": "pac",
+     "unit": "por kg"
+    }
    ],
-   "verification": "runTests: soma de composição 98–100,6%",
-   "limits": "Composição dos ingredientes sem fonte nem incerteza por item"
+   "verification": {
+    "software": [
+     "runTests › Composição de cada ingrediente",
+     "contracts.test.mjs › saída do motor"
+    ],
+    "math": []
+   },
+   "limits": "Composição dos ingredientes sem fonte nem incerteza por item",
+   "name": "Composição da mistura",
+   "version": "v9",
+   "equation": "x̄ = Σ gᵢ·xᵢ / Σ gᵢ para cada fração (água, gordura, proteína, lactose, açúcares, sólidos…); POD = Σ fração·PODK; PAC = Σ fração·PACK",
+   "parameters": [
+    {
+     "n": "PODK, PACK",
+     "v": "tabela por açúcar/poliol (sacarose = 100)",
+     "unit": "adimensional",
+     "src": "Corvitto; Goff & Hartel; prática para polióis"
+    }
+   ],
+   "hypotheses": [
+    "Composição de cada ingrediente fixa (sem lote/variedade)",
+    "Mistura ideal: frações somam sem interação",
+    "°Brix previsto (brixMix) soma só açúcares, polióis, fibras solúveis, sal e ácidos; o refratômetro também responde a proteínas e sais do leite, então em base láctea a leitura pode sair acima do previsto (hipótese a conferir com lotes medidos, sem correção aplicada)"
+   ],
+   "validity": "Qualquer receita com ingredientes do banco",
+   "dataOrigin": "Tabelas de composição por ingrediente (fonte por item quando registrada; muitas sem fonte nem incerteza)",
+   "method": "Soma ponderada exata",
+   "tolerance": null,
+   "uncertainty": "Não propagada da composição dos ingredientes; o °Brix medido da fruta substitui o valor de tabela",
+   "calibration": "°Brix por fruta (medição direta do ingrediente)",
+   "validation": {
+    "status": "sem validação independente",
+    "live": "grandeza sem medição prevista no lote"
+   }
   },
   {
    "id": "fpd",
@@ -44,8 +83,64 @@
     "Goff & Hartel, tabela de FPD × equivalente de sacarose (≤180 g/100 g água)",
     "Norrish (K = −6,47) + Clausius–Clapeyron, ΔHf 6008 J/mol"
    ],
-   "verification": "tests/node/engine.test.mjs: monotonia, inversão, continuidade em 180 g",
-   "limits": "ΔHf constante; equivalente de sacarose para todos os solutos"
+   "verification": {
+    "software": [
+     "runTests › Âncora: sacarose 64%",
+     "runTests › Âncora: leite integral"
+    ],
+    "math": [
+     "engine.test.mjs › curva de congelamento: monotônica, invertível e contínua"
+    ]
+   },
+   "limits": "ΔHf constante; equivalente de sacarose para todos os solutos",
+   "name": "Abaixamento do ponto de congelamento",
+   "version": "v17",
+   "equation": "FPD(SE) por tabela de Goff–Hartel até 180 g/100 g de água; acima, Norrish ln a_w = ln x_w + K·x_s² (K = −6,47) e Clausius–Clapeyron com ΔHf = 6008 J/mol",
+   "parameters": [
+    {
+     "n": "K (Norrish)",
+     "v": -6.47,
+     "unit": "adimensional",
+     "src": "Norrish"
+    },
+    {
+     "n": "ΔHf",
+     "v": 6008,
+     "unit": "J/mol",
+     "src": "gelo"
+    },
+    {
+     "n": "SE",
+     "v": "equivalente de sacarose",
+     "unit": "g/100 g de água",
+     "src": "Goff & Hartel, Ice Cream (7ª ed., 2013)"
+    }
+   ],
+   "outputs": [
+    {
+     "k": "FPD",
+     "unit": "°C"
+    }
+   ],
+   "hypotheses": [
+    "Todos os solutos convertidos em equivalente de sacarose",
+    "ΔHf constante na faixa"
+   ],
+   "validity": "SE até ~400 g/100 g de água (Cg′); sais do leite somados à parte",
+   "dataOrigin": "Goff & Hartel, Ice Cream (7ª ed., 2013)",
+   "method": "Interpolação na tabela; inversão por bisseção",
+   "tolerance": {
+    "ponto de congelamento": [
+     0.2,
+     "°C"
+    ]
+   },
+   "uncertainty": "Entra no orçamento de incerteza (±0,4 °C fixo + perturbação dos ingredientes)",
+   "calibration": null,
+   "validation": {
+    "status": "sem validação independente",
+    "live": "calculada no app a partir dos lotes medidos (validação cruzada deixa-um-fora)"
+   }
   },
   {
    "id": "salts",
@@ -58,7 +153,43 @@
    "sources": [
     "Leighton: 2,37 × MSNF / água"
    ],
-   "limits": "Só sais do leite"
+   "limits": "Só sais do leite",
+   "name": "Sais do leite",
+   "version": "v9",
+   "equation": "FPD_sais = 2,37 × MSNF / água",
+   "parameters": [
+    {
+     "n": "coeficiente",
+     "v": 2.37,
+     "unit": "°C",
+     "src": "Leighton"
+    }
+   ],
+   "outputs": [
+    {
+     "k": "S",
+     "unit": "°C"
+    }
+   ],
+   "hypotheses": [
+    "Sais proporcionais ao MSNF"
+   ],
+   "validity": "Bases lácteas",
+   "dataOrigin": "Leighton",
+   "method": "Fórmula fechada",
+   "tolerance": null,
+   "uncertainty": null,
+   "calibration": null,
+   "verification": {
+    "software": [
+     "runTests › Âncora: leite integral congela"
+    ],
+    "math": []
+   },
+   "validation": {
+    "status": "sem validação independente",
+    "live": "grandeza sem medição prevista no lote"
+   }
   },
   {
    "id": "frozen-fraction",
@@ -73,11 +204,56 @@
    "dependsOn": [
     "fpd"
    ],
-   "parameters": {
-    "SE_Cg": 400
+   "parameters": [
+    {
+     "n": "SE_Cg′",
+     "v": 400,
+     "unit": "g/100 g de água",
+     "src": "sacarose (Tm′ −32 a −36 °C)"
+    }
+   ],
+   "verification": {
+    "software": [
+     "runTests › Fração congelada cresce",
+     "contracts.test.mjs › saída do motor"
+    ],
+    "math": [
+     "engine.test.mjs › fração congelada respeita a água não congelável"
+    ]
    },
-   "verification": "engine.test.mjs: monotonia e teto do Cg′",
-   "limits": "Cg′ único da sacarose"
+   "limits": "Cg′ único da sacarose",
+   "name": "Fração de água congelada",
+   "version": "v17",
+   "equation": "f tal que FPD(SE/(1−f)) + S/(1−f) = −T, limitada por Cg′ (água não congelável)",
+   "outputs": [
+    {
+     "k": "fzVit, fzMid",
+     "unit": "% da água"
+    },
+    {
+     "k": "serveT",
+     "unit": "°C"
+    }
+   ],
+   "hypotheses": [
+    "Equilíbrio termodinâmico (sem super-resfriamento)",
+    "Cg′ único da sacarose"
+   ],
+   "validity": "−40 a 0 °C",
+   "dataOrigin": "Derivado de fpd",
+   "method": "Bisseção",
+   "tolerance": {
+    "temperatura de serviço": [
+     1.0,
+     "°C"
+    ]
+   },
+   "uncertainty": "Banda ±1,65σ no laudo (perturbação um-a-um)",
+   "calibration": "Textura na vitrine (escala −2…+2) desloca a temperatura ideal (CAL.tShift)",
+   "validation": {
+    "status": "sem validação independente",
+    "live": "calculada no app a partir dos lotes medidos (validação cruzada deixa-um-fora)"
+   }
   },
   {
    "id": "heat-transfer",
@@ -91,14 +267,62 @@
     "M",
     "C"
    ],
-   "method": "condução 1-D em esfera de mesmo raio que pote H=D; capacidade térmica aparente; passo explícito com critério 0,45·C/G",
-   "parameters": {
-    "h_cozinha_W_m2K": 10,
-    "h_freezer_frost_free_W_m2K": 14
+   "method": "Diferenças finitas explícitas, passo 0,45·C/G, malha radial",
+   "parameters": [
+    {
+     "n": "h freezer",
+     "v": 14,
+     "unit": "W/m²K",
+     "src": "prática (calibrável)"
+    },
+    {
+     "n": "h cozinha",
+     "v": 10,
+     "unit": "W/m²K",
+     "src": "prática"
+    }
+   ],
+   "verification": {
+    "software": [
+     "calib-thermal.test.mjs › recupera o h verdadeiro"
+    ],
+    "math": [
+     "engine.test.mjs › endurecimento (heatSim): converge com a malha"
+    ]
    },
-   "verification": "engine.test.mjs: erro de energia ≤0,7%, malha N=10 vs 40 <2%, concordância ±3% com método da entalpia",
    "limits": "h do freezer calibrável; h da cozinha (10) não; sem parede/tampa/contato; potes com H≠D",
-   "calibration": "h do freezer (H_FREEZER=14 W/m²K) × CAL.hMult, ajustado por lote a partir do núcleo medido e dos minutos no freezer (bisseção em log h, 3–80 W/m²K); medição descartada se ±0,5 °C de termômetro mudar h em mais de 60%; encolhimento com prior de 2 lotes"
+   "calibration": "Núcleo medido após N min → h (CAL.hMult); medição descartada se ±0,5 °C muda h > 60%",
+   "name": "Transferência de calor no pote",
+   "version": "v18.2",
+   "equation": "∂T/∂t = (1/ρc_ap) (1/r²) ∂/∂r (k r² ∂T/∂r); c_ap inclui o calor latente da curva de congelamento; borda com h (W/m²K)",
+   "outputs": [
+    {
+     "k": "núcleo no tempo",
+     "unit": "°C"
+    },
+    {
+     "k": "tempo de endurecimento",
+     "unit": "min"
+    }
+   ],
+   "hypotheses": [
+    "Pote H=D tratado como esfera de mesmo V/A",
+    "Sem parede, tampa nem contato com a prateleira",
+    "k e ρ por mistura de fases"
+   ],
+   "validity": "Potes de 100–5000 mL, freezer −10 a −40 °C",
+   "dataOrigin": "Propriedades térmicas por fração (água, gelo, sólidos, ar)",
+   "tolerance": {
+    "núcleo": [
+     2.0,
+     "°C"
+    ]
+   },
+   "uncertainty": "Sem banda; h calibrável pelo núcleo medido",
+   "validation": {
+    "status": "sem validação independente",
+    "live": "calculada no app a partir dos lotes medidos (validação cruzada deixa-um-fora)"
+   }
   },
   {
    "id": "viscosity",
@@ -109,7 +333,60 @@
     "SE",
     "H"
    ],
-   "limits": "Coeficientes da fase sérica e dos hidrocoloides (VISK) sem medição"
+   "limits": "Coeficientes da fase sérica e dos hidrocoloides (VISK) sem medição",
+   "name": "Viscosidade da mistura",
+   "version": "v13",
+   "equation": "η = 1,57·e^(0,027·sol/água·100) · (1 + 0,3·proteína%) · (1 − φ/0,64)^−1,6 · e^(Σ VISK_k·%_k + 0,2·inulina%), φ = fração de volume de gordura e fibra; limitado a 1–8000",
+   "parameters": [
+    {
+     "n": "1,57; 0,027",
+     "v": "fase sérica",
+     "unit": "mPa·s; por g/100 g de água",
+     "src": null
+    },
+    {
+     "n": "0,64; −1,6",
+     "v": "Krieger–Dougherty",
+     "unit": "adimensional",
+     "src": "Krieger–Dougherty (forma); expoente sem medição"
+    },
+    {
+     "n": "VISK",
+     "v": "por hidrocoloide",
+     "unit": "log mPa·s por % na mistura",
+     "src": null
+    }
+   ],
+   "outputs": [
+    {
+     "k": "visc",
+     "unit": "mPa·s a 4 °C"
+    }
+   ],
+   "hypotheses": [
+    "Contribuições independentes"
+   ],
+   "validity": "Misturas de gelato a 4 °C",
+   "dataOrigin": "Coeficientes sem medição",
+   "method": "Fórmula fechada",
+   "tolerance": {
+    "viscosidade": [
+     30,
+     "%"
+    ]
+   },
+   "uncertainty": null,
+   "calibration": null,
+   "verification": {
+    "software": [
+     "contracts.test.mjs › saída do motor"
+    ],
+    "math": []
+   },
+   "validation": {
+    "status": "sem validação independente",
+    "live": "calculada no app a partir dos lotes medidos (validação cruzada deixa-um-fora)"
+   }
   },
   {
    "id": "overrun",
@@ -120,7 +397,48 @@
     "H",
     "C"
    ],
-   "limits": "Incrementos por processo; teto por máquina"
+   "limits": "Incrementos por processo; teto por máquina",
+   "name": "Overrun",
+   "version": "v18.3",
+   "equation": "ov = base do processo + incrementos (gordura, proteína, estabilizante, emulsificante, tempo de batimento) limitado pelo máximo da máquina; fora da mantecadora: meio da faixa da família",
+   "parameters": [
+    {
+     "n": "máximo por máquina",
+     "v": "ex.: Maestro 35%",
+     "unit": "%",
+     "src": "prática"
+    }
+   ],
+   "outputs": [
+    {
+     "k": "ov",
+     "unit": "%"
+    }
+   ],
+   "hypotheses": [
+    "Efeitos aditivos"
+   ],
+   "validity": "Máquinas cadastradas; famílias com faixa de overrun",
+   "dataOrigin": "Prática",
+   "method": "Fórmula fechada",
+   "tolerance": {
+    "overrun": [
+     5,
+     "pontos percentuais"
+    ]
+   },
+   "uncertainty": null,
+   "calibration": "Overrun medido (copo) por máquina ou família (CAL.ov, encolhimento com prior de 3 lotes)",
+   "verification": {
+    "software": [
+     "families.test.mjs › fora da mantecadora, o overrun é o da família"
+    ],
+    "math": []
+   },
+   "validation": {
+    "status": "sem validação independente",
+    "live": "calculada no app a partir dos lotes medidos (validação cruzada deixa-um-fora)"
+   }
   },
   {
    "id": "fat-destabilization",
@@ -130,7 +448,34 @@
    "class": [
     "H"
    ],
-   "limits": "Combinação linear sem dado de glóbulo"
+   "limits": "Combinação linear sem dado de glóbulo",
+   "name": "Desestabilização da gordura",
+   "version": "v13",
+   "equation": "combinação linear de gordura, emulsificante, gordura sólida na saída (SFC) e cisalhamento",
+   "parameters": [],
+   "outputs": [
+    {
+     "k": "destab",
+     "unit": "índice"
+    }
+   ],
+   "hypotheses": [
+    "Linearidade"
+   ],
+   "validity": null,
+   "dataOrigin": "Prática",
+   "method": "Fórmula fechada",
+   "tolerance": null,
+   "uncertainty": null,
+   "calibration": null,
+   "verification": {
+    "software": [],
+    "math": []
+   },
+   "validation": {
+    "status": "sem validação independente",
+    "live": "grandeza sem medição prevista no lote"
+   }
   },
   {
    "id": "ice-crystal-size",
@@ -141,7 +486,47 @@
     "H"
    ],
    "formula": "28 + 0,6·(100 − índice)",
-   "limits": "Índice convertido em µm; não é medição microscópica"
+   "limits": "Índice convertido em µm; não é medição microscópica",
+   "name": "Tamanho de cristal (índice)",
+   "version": "v13",
+   "equation": "d = 28 + 0,6·(100 − índice de cristalização) µm",
+   "parameters": [
+    {
+     "n": "28, 0,6",
+     "v": "",
+     "unit": "µm",
+     "src": null
+    }
+   ],
+   "outputs": [
+    {
+     "k": "crystal",
+     "unit": "µm"
+    },
+    {
+     "k": "ci",
+     "unit": "0–100"
+    }
+   ],
+   "hypotheses": [
+    "Índice de risco convertido linearmente em µm"
+   ],
+   "validity": null,
+   "dataOrigin": "Prática",
+   "method": "Fórmula fechada",
+   "tolerance": null,
+   "uncertainty": null,
+   "calibration": null,
+   "verification": {
+    "software": [
+     "contracts.test.mjs › saída do motor"
+    ],
+    "math": []
+   },
+   "validation": {
+    "status": "sem validação independente",
+    "live": "grandeza sem medição prevista no lote"
+   }
   },
   {
    "id": "texture-stability",
@@ -156,7 +541,48 @@
    ],
    "formula": "(50³ − d₀³)/K; K = 9000·fatores·WLF(C1 17,44; C2 51,6)",
    "limits": "Não é prazo de validade sanitária; K não calibrado",
-   "uiLabel": "Estabilidade da textura (estimativa)"
+   "uiLabel": "Estabilidade da textura (estimativa)",
+   "name": "Estabilidade da textura",
+   "version": "v17",
+   "equation": "t = (50³ − d₀³)/K; K = 9000 · f_estab · f_choque · f_calib · 10^(W(19) − W(T + desvio − Tg′)), W(ΔT) = −17,44·ΔT/(51,6 + ΔT)",
+   "parameters": [
+    {
+     "n": "C1, C2",
+     "v": "17,44; 51,6",
+     "unit": "adimensional; K",
+     "src": "Williams–Landel–Ferry (universais)"
+    },
+    {
+     "n": "9000",
+     "v": 9000,
+     "unit": "µm³/dia",
+     "src": null
+    }
+   ],
+   "outputs": [
+    {
+     "k": "shelfVit",
+     "unit": "dias"
+    }
+   ],
+   "hypotheses": [
+    "Crescimento cúbico (Ostwald)",
+    "Constantes universais de WLF"
+   ],
+   "validity": "Não é prazo de validade sanitária",
+   "dataOrigin": "Taxa sem medição",
+   "method": "Fórmula fechada",
+   "tolerance": null,
+   "uncertainty": null,
+   "calibration": "Dia em que se percebeu gelo (CAL.kMult)",
+   "verification": {
+    "software": [],
+    "math": []
+   },
+   "validation": {
+    "status": "sem validação independente",
+    "live": "grandeza sem medição prevista no lote"
+   }
   },
   {
    "id": "tg-prime",
@@ -166,7 +592,41 @@
    "class": [
     "SE"
    ],
-   "limits": "Média ponderada simples de Tg′"
+   "limits": "Média ponderada simples de Tg′",
+   "name": "Tg′ da fase concentrada",
+   "version": "v13",
+   "equation": "Tg′ = Σ wᵢ·Tg′ᵢ (média ponderada)",
+   "parameters": [
+    {
+     "n": "Tg′ por soluto",
+     "v": "tabela TGP",
+     "unit": "°C",
+     "src": "literatura (valores típicos)"
+    }
+   ],
+   "outputs": [
+    {
+     "k": "tg",
+     "unit": "°C"
+    }
+   ],
+   "hypotheses": [
+    "Mistura linear (sem Gordon–Taylor)"
+   ],
+   "validity": null,
+   "dataOrigin": "Tabela TGP",
+   "method": "Média ponderada",
+   "tolerance": null,
+   "uncertainty": null,
+   "calibration": null,
+   "verification": {
+    "software": [],
+    "math": []
+   },
+   "validation": {
+    "status": "sem validação independente",
+    "live": "grandeza sem medição prevista no lote"
+   }
   },
   {
    "id": "ph",
@@ -176,7 +636,41 @@
    "class": [
     "H"
    ],
-   "limits": "Sem equilíbrio ácido-base nem pKa"
+   "limits": "Sem equilíbrio ácido-base nem pKa",
+   "name": "pH estimado",
+   "version": "v18.1",
+   "equation": "pela fonte ácida dominante e o tampão do leite (regra)",
+   "parameters": [],
+   "outputs": [
+    {
+     "k": "ph",
+     "unit": "pH"
+    }
+   ],
+   "hypotheses": [
+    "Sem equilíbrio ácido-base"
+   ],
+   "validity": null,
+   "dataOrigin": "Prática",
+   "method": "Regra",
+   "tolerance": {
+    "pH": [
+     0.2,
+     "pH"
+    ]
+   },
+   "uncertainty": null,
+   "calibration": "pH medido no lote (registro, sem ajuste)",
+   "verification": {
+    "software": [
+     "runTests › pH só em faixa física"
+    ],
+    "math": []
+   },
+   "validation": {
+    "status": "sem validação independente",
+    "live": "calculada no app a partir dos lotes medidos (validação cruzada deixa-um-fora)"
+   }
   },
   {
    "id": "sensory-temperature",
@@ -187,7 +681,42 @@
    "class": [
     "H"
    ],
-   "limits": "Sem painel sensorial de suporte"
+   "limits": "Sem painel sensorial de suporte",
+   "name": "Doçura percebida pela temperatura",
+   "version": "v13",
+   "equation": "POD percebida = POD × f(T), f = 1 + 0,025·(T + 12), limitado a 0,5–1,2 (−2,5% por °C abaixo de −12 °C)",
+   "parameters": [
+    {
+     "n": "0,025",
+     "v": 0.025,
+     "unit": "por °C",
+     "src": null
+    }
+   ],
+   "outputs": [
+    {
+     "k": "podPerc",
+     "unit": "%"
+    }
+   ],
+   "hypotheses": [
+    "Linear na temperatura",
+    "Mesmo coeficiente para todos os açúcares"
+   ],
+   "validity": null,
+   "dataOrigin": "Prática",
+   "method": "Fórmula fechada",
+   "tolerance": null,
+   "uncertainty": null,
+   "calibration": "Painel cego (escala do ponto ideal) vira preferência da casa",
+   "verification": {
+    "software": [],
+    "math": []
+   },
+   "validation": {
+    "status": "sem validação independente",
+    "live": "grandeza sem medição prevista no lote"
+   }
   },
   {
    "id": "quenelle",
@@ -200,7 +729,39 @@
     "H",
     "C"
    ],
-   "limits": "Coesão heurística; alvo ajustado por lotes"
+   "limits": "Coesão heurística; alvo ajustado por lotes",
+   "name": "Ponto de quenelle",
+   "version": "v17.9",
+   "equation": "temperatura em que a fração de gelo em volume cai na janela entre \"racha\" e \"desaba\"; janela ajustada pelos testes",
+   "parameters": [],
+   "outputs": [
+    {
+     "k": "T quenelle",
+     "unit": "°C"
+    }
+   ],
+   "hypotheses": [
+    "Coesão depende do volume de gelo"
+   ],
+   "validity": null,
+   "dataOrigin": "Prática + curva de congelamento",
+   "method": "Bisseção",
+   "tolerance": {
+    "temperatura de quenelle": [
+     1.0,
+     "°C"
+    ]
+   },
+   "uncertainty": null,
+   "calibration": "Teste de quenelle no lote (temperatura e resultado) desloca a janela (CAL.qShift)",
+   "verification": {
+    "software": [],
+    "math": []
+   },
+   "validation": {
+    "status": "sem validação independente",
+    "live": "calculada no app a partir dos lotes medidos (validação cruzada deixa-um-fora)"
+   }
   },
   {
    "id": "batch-freezer",
@@ -212,7 +773,46 @@
     "M",
     "C"
    ],
-   "limits": "Capacidade líquida constante deduzida do ciclo do usuário; batchMax sem fonte"
+   "limits": "Capacidade líquida constante deduzida do ciclo do usuário; batchMax sem fonte",
+   "name": "Mantecadora (energia e tempo)",
+   "version": "v17.10",
+   "equation": "calor a retirar = sensível + latente (gelo na saída); tempo = calor / capacidade líquida da máquina",
+   "parameters": [
+    {
+     "n": "capacidade líquida",
+     "v": "deduzida do ciclo do usuário",
+     "unit": "W",
+     "src": "usuário"
+    }
+   ],
+   "outputs": [
+    {
+     "k": "tempo de batimento",
+     "unit": "min"
+    }
+   ],
+   "hypotheses": [
+    "Capacidade constante"
+   ],
+   "validity": "Maestro Gelatiere (Maqp1) e máquinas cadastradas; carga até batchMax",
+   "dataOrigin": "Ciclo informado",
+   "method": "Balanço de energia",
+   "tolerance": {
+    "tempo de batimento": [
+     3,
+     "min"
+    ]
+   },
+   "uncertainty": null,
+   "calibration": null,
+   "verification": {
+    "software": [],
+    "math": []
+   },
+   "validation": {
+    "status": "sem validação independente",
+    "live": "calculada no app a partir dos lotes medidos (validação cruzada deixa-um-fora)"
+   }
   },
   {
    "id": "uncertainty",
@@ -222,8 +822,42 @@
    "class": [
     "H"
    ],
-   "method": "perturbação um-a-um + 0,4 °C fixo; ±1,65σ",
-   "limits": "Sem correlações; cobertura nunca verificada"
+   "method": "Diferenças finitas",
+   "limits": "Sem correlações; cobertura nunca verificada",
+   "name": "Orçamento de incerteza",
+   "version": "v17",
+   "equation": "σ² = Σ (∂y/∂xᵢ·δxᵢ)² + 0,4² ; banda ±1,65σ",
+   "parameters": [
+    {
+     "n": "0,4",
+     "v": 0.4,
+     "unit": "°C",
+     "src": "prática (modelo)"
+    }
+   ],
+   "outputs": [
+    {
+     "k": "banda de serviço",
+     "unit": "°C"
+    }
+   ],
+   "hypotheses": [
+    "Erros independentes",
+    "Linearidade local"
+   ],
+   "validity": null,
+   "dataOrigin": "Perturbação um-a-um",
+   "tolerance": null,
+   "uncertainty": "Cobertura nunca verificada",
+   "calibration": null,
+   "verification": {
+    "software": [],
+    "math": []
+   },
+   "validation": {
+    "status": "sem validação independente",
+    "live": "grandeza sem medição prevista no lote"
+   }
   },
   {
    "id": "calibration",
@@ -233,8 +867,44 @@
    "class": [
     "C"
    ],
-   "method": "média posterior normal–normal com prior equivalente a 3 lotes em zero",
-   "limits": "Sem variância estimada nem intervalo posterior"
+   "method": "Média posterior normal–normal",
+   "limits": "Sem variância estimada nem intervalo posterior",
+   "name": "Calibração pela produção",
+   "version": "v18.2",
+   "equation": "viés = Σ resíduos / (n + k), k = 3 (prior em zero; 2 para h e cinética)",
+   "parameters": [
+    {
+     "n": "k",
+     "v": 3,
+     "unit": "lotes",
+     "src": "escolha de projeto"
+    }
+   ],
+   "outputs": [
+    {
+     "k": "CAL",
+     "unit": "por grandeza"
+    }
+   ],
+   "hypotheses": [
+    "Resíduos independentes e de mesma variância"
+   ],
+   "validity": null,
+   "dataOrigin": "Lotes medidos",
+   "tolerance": null,
+   "uncertainty": "Sem variância posterior",
+   "calibration": null,
+   "verification": {
+    "software": [
+     "runTests › Calibração: 1 lote medido desloca pouco",
+     "calib-thermal.test.mjs › calibração combina lotes"
+    ],
+    "math": []
+   },
+   "validation": {
+    "status": "sem validação independente",
+    "live": "grandeza sem medição prevista no lote"
+   }
   },
   {
    "id": "melt",
@@ -245,7 +915,41 @@
     "H",
     "C"
    ],
-   "limits": "Regra prática; corrigida pelos lotes com derretimento medido"
+   "limits": "Regra prática; corrigida pelos lotes com derretimento medido",
+   "name": "Derretimento em 10 min",
+   "version": "v13",
+   "equation": "índice = 50 + (15 se estabilizante ≥ mínimo da faixa, senão −10) + (8 se há emulsificante) + lim((ov − 20)·0,6; −8; 10) + lim((sol − 34)·1,5; −10; 10) − lim((fzMid − fzVit)·1,5; −10; 15); melt10 = lim(55 − (índice − 50)·0,9; 3; 95) + viés calibrado",
+   "parameters": [],
+   "outputs": [
+    {
+     "k": "melt10",
+     "unit": "% em 10 min a 20 °C"
+    }
+   ],
+   "hypotheses": [
+    "Efeitos aditivos"
+   ],
+   "validity": null,
+   "dataOrigin": "Prática",
+   "method": "Fórmula fechada",
+   "tolerance": {
+    "derretido em 10 min": [
+     10,
+     "pontos percentuais"
+    ]
+   },
+   "uncertainty": null,
+   "calibration": "Derretimento medido (CAL.meltBias)",
+   "verification": {
+    "software": [
+     "contracts.test.mjs › saída do motor"
+    ],
+    "math": []
+   },
+   "validation": {
+    "status": "sem validação independente",
+    "live": "calculada no app a partir dos lotes medidos (validação cruzada deixa-um-fora)"
+   }
   },
   {
    "id": "ice-volume",
@@ -258,7 +962,41 @@
    "sources": [
     "Muse & Hartel (2004): dureza acompanha o volume de gelo"
    ],
-   "limits": "Densidades de fase fixas; ar previsto (heurístico) entra no volume"
+   "limits": "Densidades de fase fixas; ar previsto (heurístico) entra no volume",
+   "name": "Gelo em volume",
+   "version": "v17.9",
+   "equation": "φ_gelo = (gelo/0,917) / V_total; V_total = água + gordura/0,93 + sólidos/1,55 + álcool/0,79 + expansão do gelo + ar",
+   "parameters": [
+    {
+     "n": "densidades",
+     "v": "0,917; 0,93; 1,55; 0,79",
+     "unit": "g/mL",
+     "src": "valores de tabela"
+    }
+   ],
+   "outputs": [
+    {
+     "k": "fração de gelo",
+     "unit": "% do volume"
+    }
+   ],
+   "hypotheses": [
+    "Densidades fixas"
+   ],
+   "validity": null,
+   "dataOrigin": "Curva de congelamento + ar previsto",
+   "method": "Fórmula fechada",
+   "tolerance": null,
+   "uncertainty": null,
+   "calibration": null,
+   "verification": {
+    "software": [],
+    "math": []
+   },
+   "validation": {
+    "status": "sem validação independente",
+    "live": "grandeza sem medição prevista no lote"
+   }
   },
   {
    "id": "stabilizer-function",
@@ -269,9 +1007,44 @@
    "class": [
     "H"
    ],
-   "method": "notas de 0–5 por componente (NCOMP.f) ponderadas pela carga em relação ao meio da dose usual; perfil = 100·(1 − e^(−soma/8))",
+   "method": "Fórmula fechada",
    "limits": "Notas e doses usuais são prática de formulação, sem medição; soma aditiva, sem coeficientes de sinergia. Sinergias aparecem só como texto com fonte (NSYN). A ficha técnica (NKB) mostra apenas fatos com fonte e marca o que falta como 'sem dado registrado'.",
-   "evidence": "blendObserved: lotes medidos que usaram o blend (observacional)"
+   "evidence": "blendObserved: lotes medidos que usaram o blend (observacional)",
+   "name": "Perfil de funções do estabilizante",
+   "version": "v18.5",
+   "equation": "perfil_k = 100·(1 − e^(−Σ carga_i·nota_ik / 8)); carga = dose / meio da dose usual",
+   "parameters": [
+    {
+     "n": "notas 0–5",
+     "v": "NCOMP.f",
+     "unit": "adimensional",
+     "src": "prática"
+    }
+   ],
+   "outputs": [
+    {
+     "k": "anti, corpo, derr…",
+     "unit": "0–100"
+    }
+   ],
+   "hypotheses": [
+    "Aditivo, sem sinergia numérica"
+   ],
+   "validity": null,
+   "dataOrigin": "Prática; ficha técnica com fonte à parte (NKB)",
+   "tolerance": null,
+   "uncertainty": null,
+   "calibration": null,
+   "verification": {
+    "software": [
+     "stabilization.test.mjs › sinergias: só pares presentes"
+    ],
+    "math": []
+   },
+   "validation": {
+    "status": "sem validação independente",
+    "live": "grandeza sem medição prevista no lote"
+   }
   },
   {
    "id": "hydration-kinetics",
@@ -283,8 +1056,51 @@
    "class": [
     "H"
    ],
-   "method": "fração hidratada por temperatura (logística em torno da temperatura de hidratação do componente) e tempo (Q10 ≈ 2)",
-   "limits": "Temperaturas de hidratação de NCOMP.hyd: jataí (85 °C) e carragena/pectina (dissolução a quente) têm fonte na ficha; demais são prática. Fração solúvel a frio (HYD_C0) sem fonte."
+   "method": "Integração no tempo",
+   "limits": "Temperaturas de hidratação de NCOMP.hyd: jataí (85 °C) e carragena/pectina (dissolução a quente) têm fonte na ficha; demais são prática. Fração solúvel a frio (HYD_C0) sem fonte.",
+   "name": "Hidratação dos hidrocoloides",
+   "version": "v17",
+   "equation": "h_max(T) logística em torno da temperatura de hidratação; dh/dt = (h_max − h)/τ(T), τ com Q10 ≈ 2",
+   "parameters": [
+    {
+     "n": "Q10",
+     "v": 2,
+     "unit": "adimensional",
+     "src": null
+    }
+   ],
+   "outputs": [
+    {
+     "k": "fração hidratada",
+     "unit": "0–1"
+    }
+   ],
+   "hypotheses": [
+    "Hidratação não reverte ao resfriar"
+   ],
+   "validity": null,
+   "dataOrigin": "Temperaturas de NCOMP.hyd",
+   "tolerance": null,
+   "uncertainty": null,
+   "calibration": null,
+   "verification": {
+    "software": [],
+    "math": []
+   },
+   "validation": {
+    "status": "sem validação independente",
+    "live": "grandeza sem medição prevista no lote"
+   }
   }
- ]
+ ],
+ "fieldsNote": "Campos por modelo (§46): name, version, equation, parameters[{n,v,unit,src}], outputs[{k,unit}], hypotheses, validity, dataOrigin, method, tolerance{grandeza:[valor,unidade]} (critério de aceite na validação), uncertainty, calibration, validation, verification{software,math}. null = não estabelecido (não inventar). verification cita \"arquivo.test.mjs › trecho do título\" ou \"runTests › trecho\".",
+ "validationPolicy": {
+  "statuses": {
+   "sem dados": "nenhum lote medido para a grandeza",
+   "evidência inicial": "1 a 4 lotes medidos",
+   "avaliado": "5 ou mais lotes; erro de validação cruzada (deixa-um-fora) calculado",
+   "dentro da tolerância": "avaliado e RMSE fora-da-amostra ≤ tolerância, numa família"
+  },
+  "note": "A validação usa os lotes medidos da própria produção, com validação cruzada deixa-um-fora: cada lote é previsto com a calibração feita sem ele. Nenhum status vira classe V (validado) automaticamente: V exige conjunto independente versionado e revisão."
+ }
 }

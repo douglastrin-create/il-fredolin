@@ -54,7 +54,7 @@ test('versões dos formatos persistidos', () => {
   const p = B.backupPayload({ lots: [], lib: [] }, {}, {});
   assert.equal(p.app, 'Il Fredolin'); assert.equal(p.schema, 2, 'backup schema 2');
   const reg = JSON.parse(fs.readFileSync(new URL('../../docs/model-registry.json', import.meta.url)));
-  assert.equal(reg.schema, 'il-fredolin/model-registry@1');
+  assert.equal(reg.schema, 'il-fredolin/model-registry@2');
   const man = JSON.parse(fs.readFileSync(new URL('../../src/build.json', import.meta.url)));
   assert.equal(man.schema, 'il-fredolin/build@1');
 });

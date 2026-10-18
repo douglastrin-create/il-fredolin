@@ -12,8 +12,8 @@
      substitui a cópia guardada;
    · erro do servidor (404/500 durante uma publicação) mostra a cópia guardada, não a página de erro;
    · diagnóstico e reparo: o app pergunta o que está guardado (mensagem 'diag') e pode pedir para baixar de novo ('repair'). */
-const VERSION='v18.7';
-const INDEX_SHA='e9c3f846c1b6194e2acffd262cfd567966d33e9bbc24f068575f746411107d55';
+const VERSION='v18.8';
+const INDEX_SHA='da83fe1c272609ddeb91a0ce43983b21b1adc96228a8bfc367ca039722becb0b';
 const CACHE='il-fredolin-'+INDEX_SHA.slice(0,12);
 const CORE=['./index.html','./config.js','./manifest.webmanifest','./icons/icon-192.png','./icons/icon-512.png','./icons/apple-touch-icon.png','./icons/favicon-64.png','./icons/icon-maskable-512.png'];
 const hex=buf=>Array.from(new Uint8Array(buf),b=>b.toString(16).padStart(2,'0')).join('');

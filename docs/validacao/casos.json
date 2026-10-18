@@ -1,0 +1,436 @@
+{
+ "schema": "il-fredolin/validacao-casos@1",
+ "note": "Casos de referência por família e processo (§48–49). Só receita e processo ficam aqui; as previsões condicionais são recalculadas pelo motor atual (node tools/validacao.mjs) para nunca ficarem velhas. medicoes = null até existir um lote real: cada medição precisa de lote, data e instrumento (o teste recusa medição sem origem). Não inventar medições.",
+ "medicaoFormato": {
+  "lote": "código do lote em Lotes e qualidade",
+  "data": "AAAA-MM-DD",
+  "instrumento": "ex.: termômetro de espeto ±0,5 °C",
+  "valores": {
+   "ov": "%",
+   "melt10": "% em 10 min",
+   "brix": "°Bx",
+   "ph": "pH",
+   "coreT": "°C após coreMin",
+   "coreMin": "min",
+   "serveT_obs": "°C ao servir"
+  }
+ },
+ "casos": [
+  {
+   "id": "leite-fiordilatte",
+   "categoria": "Gelato de leite",
+   "tipo": "crema",
+   "vit": -13,
+   "preset": "Fiordilatte",
+   "proc": {
+    "machine": "maqp1",
+    "load": 1100,
+    "poteMl": 470,
+    "storeT": -18,
+    "serveFrom": "pote",
+    "waitMin": 10,
+    "ambT": 23
+   },
+   "cenario49": [
+    "Maestro ~1.100 g",
+    "sacarose + dextrose monoidratada",
+    "Fior di latte",
+    "pote 470 mL",
+    "−18 °C",
+    "temperagem antes do serviço"
+   ],
+   "medicoes": null
+  },
+  {
+   "id": "gemas-crema",
+   "categoria": "Gelato com gemas",
+   "tipo": "crema",
+   "vit": -13,
+   "preset": "Crema all'uovo",
+   "proc": {
+    "machine": "maqp1",
+    "load": 1100,
+    "poteMl": 470,
+    "storeT": -18,
+    "serveFrom": "pote",
+    "waitMin": 10,
+    "ambT": 23
+   },
+   "medicoes": null
+  },
+  {
+   "id": "baunilha-fava",
+   "categoria": "Gelato de leite (baunilha)",
+   "tipo": "crema",
+   "vit": -13,
+   "recipe": [
+    {
+     "id": "leite",
+     "g": 610
+    },
+    {
+     "id": "creme35",
+     "g": 150
+    },
+    {
+     "id": "lpd",
+     "g": 40
+    },
+    {
+     "id": "sacarose",
+     "g": 145
+    },
+    {
+     "id": "dextrosem",
+     "g": 41.5
+    },
+    {
+     "id": "neutro",
+     "g": 4
+    },
+    {
+     "id": "fava",
+     "g": 2
+    }
+   ],
+   "proc": {
+    "machine": "maqp1",
+    "load": 1100,
+    "poteMl": 470,
+    "storeT": -18,
+    "serveFrom": "pote",
+    "waitMin": 10,
+    "ambT": 23
+   },
+   "cenario49": [
+    "Baunilha"
+   ],
+   "medicoes": null
+  },
+  {
+   "id": "chocolate",
+   "categoria": "Chocolate",
+   "tipo": "crema",
+   "vit": -13,
+   "preset": "Cioccolato fondente",
+   "proc": {
+    "machine": "maqp1",
+    "load": 1100,
+    "poteMl": 470,
+    "storeT": -18,
+    "serveFrom": "pote",
+    "waitMin": 10,
+    "ambT": 23
+   },
+   "medicoes": null
+  },
+  {
+   "id": "oleaginosa-pistache",
+   "categoria": "Oleaginosas",
+   "tipo": "crema",
+   "vit": -13,
+   "preset": "Pistacchio",
+   "proc": {
+    "machine": "maqp1",
+    "load": 1100,
+    "poteMl": 470,
+    "storeT": -18,
+    "serveFrom": "pote",
+    "waitMin": 10,
+    "ambT": 23
+   },
+   "medicoes": null
+  },
+  {
+   "id": "oleaginosa-avela",
+   "categoria": "Oleaginosas",
+   "tipo": "crema",
+   "vit": -13,
+   "preset": "Nocciola",
+   "proc": {
+    "machine": "maqp1",
+    "load": 1100,
+    "poteMl": 470,
+    "storeT": -18,
+    "serveFrom": "pote",
+    "waitMin": 10,
+    "ambT": 23
+   },
+   "medicoes": null
+  },
+  {
+   "id": "sorbet-morango",
+   "categoria": "Sorbet de fruta",
+   "tipo": "sorbetto",
+   "vit": -13,
+   "preset": "Sorbetto di fragola",
+   "proc": {
+    "machine": "maqp1",
+    "load": 1100,
+    "poteMl": 470,
+    "storeT": -18,
+    "serveFrom": "pote",
+    "waitMin": 10,
+    "ambT": 23
+   },
+   "medicoes": null
+  },
+  {
+   "id": "vegetal-coco",
+   "categoria": "Sistema vegetal",
+   "tipo": "vegan",
+   "vit": -13,
+   "preset": "Cocco vegano",
+   "proc": {
+    "machine": "maqp1",
+    "load": 1100,
+    "poteMl": 470,
+    "storeT": -18,
+    "serveFrom": "pote",
+    "waitMin": 10,
+    "ambT": 23
+   },
+   "medicoes": null
+  },
+  {
+   "id": "aerado-semifreddo",
+   "categoria": "Produto aerado",
+   "tipo": "semifreddo",
+   "vit": -13,
+   "recipe": [
+    {
+     "id": "creme35",
+     "g": 450
+    },
+    {
+     "id": "gema",
+     "g": 120
+    },
+    {
+     "id": "sacarose",
+     "g": 170
+    },
+    {
+     "id": "leite",
+     "g": 160
+    },
+    {
+     "id": "agua",
+     "g": 100
+    }
+   ],
+   "proc": {
+    "storeT": -18,
+    "poteMl": 470
+   },
+   "medicoes": null
+  },
+  {
+   "id": "aerado-americano",
+   "categoria": "Produto aerado (overrun alto)",
+   "tipo": "americano",
+   "vit": -13,
+   "recipe": [
+    {
+     "id": "leite",
+     "g": 520
+    },
+    {
+     "id": "creme35",
+     "g": 300
+    },
+    {
+     "id": "lpd",
+     "g": 45
+    },
+    {
+     "id": "sacarose",
+     "g": 120
+    },
+    {
+     "id": "glicose38",
+     "g": 30
+    },
+    {
+     "id": "neutro",
+     "g": 3
+    }
+   ],
+   "proc": {
+    "machine": "maqp1",
+    "load": 1100,
+    "poteMl": 470,
+    "storeT": -18,
+    "serveFrom": "pote",
+    "waitMin": 10,
+    "ambT": 23
+   },
+   "medicoes": null
+  },
+  {
+   "id": "baixo-acucar",
+   "categoria": "Baixo teor de açúcar",
+   "tipo": "semacucar",
+   "vit": -12,
+   "generate": {
+    "sol": 35
+   },
+   "proc": {
+    "machine": "maqp1",
+    "load": 1100,
+    "poteMl": 470,
+    "storeT": -18,
+    "serveFrom": "pote",
+    "waitMin": 10,
+    "ambT": 23
+   },
+   "medicoes": null
+  },
+  {
+   "id": "nova-granita",
+   "categoria": "Família nova: granita",
+   "tipo": "granita",
+   "vit": -8,
+   "recipe": [
+    {
+     "id": "limao",
+     "g": 250
+    },
+    {
+     "id": "sacarose",
+     "g": 220
+    },
+    {
+     "id": "agua",
+     "g": 530
+    }
+   ],
+   "proc": {
+    "storeT": -18
+   },
+   "medicoes": null
+  },
+  {
+   "id": "nova-froyo",
+   "categoria": "Família nova: frozen yogurt",
+   "tipo": "froyo",
+   "vit": -6.5,
+   "recipe": [
+    {
+     "id": "iogurte",
+     "g": 450
+    },
+    {
+     "id": "leite",
+     "g": 300
+    },
+    {
+     "id": "lpd",
+     "g": 70
+    },
+    {
+     "id": "sacarose",
+     "g": 150
+    },
+    {
+     "id": "dextrosem",
+     "g": 25
+    },
+    {
+     "id": "neutro",
+     "g": 4
+    }
+   ],
+   "proc": {},
+   "medicoes": null
+  },
+  {
+   "id": "nova-dondurma",
+   "categoria": "Família nova: dondurma",
+   "tipo": "dondurma",
+   "vit": -12,
+   "recipe": [
+    {
+     "id": "cabra",
+     "g": 640
+    },
+    {
+     "id": "creme35",
+     "g": 90
+    },
+    {
+     "id": "lpd",
+     "g": 60
+    },
+    {
+     "id": "sacarose",
+     "g": 190
+    },
+    {
+     "id": "nx_salep",
+     "g": 9
+    },
+    {
+     "id": "agua",
+     "g": 10
+    }
+   ],
+   "proc": {},
+   "medicoes": null
+  },
+  {
+   "id": "estab-natural-dondoli",
+   "categoria": "Sistema estabilizante natural",
+   "tipo": "sorbetto",
+   "vit": -13,
+   "recipe": [
+    {
+     "id": "morango",
+     "g": 520
+    },
+    {
+     "id": "agua",
+     "g": 200
+    },
+    {
+     "id": "sacarose",
+     "g": 190
+    },
+    {
+     "id": "dextrosem",
+     "g": 60
+    },
+    {
+     "id": "limao",
+     "g": 25
+    },
+    {
+     "id": "nx_dondoli",
+     "g": 5
+    }
+   ],
+   "proc": {
+    "machine": "maqp1",
+    "load": 1100,
+    "poteMl": 470,
+    "storeT": -18,
+    "serveFrom": "pote",
+    "waitMin": 10,
+    "ambT": 23
+   },
+   "cenario49": [
+    "Sistemas estabilizantes naturais"
+   ],
+   "medicoes": null
+  },
+  {
+   "id": "cardamomo",
+   "categoria": "Gelato de leite (cardamomo)",
+   "pendente": "Cardamomo não está no banco de ingredientes: sem composição com fonte, o caso fica pendente (não inventar).",
+   "cenario49": [
+    "Cardamomo"
+   ],
+   "medicoes": null
+  }
+ ]
+}

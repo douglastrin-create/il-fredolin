@@ -107,5 +107,24 @@ await pg.click('#nxcmp-card button[data-a="nxCmpUse"][data-v="0"]'); await pg.wa
 check(!/Separação de soro/.test(await pg.locator('#nxcmp-tbl').innerText()), 'em sorbetto a linha de soro some');
 check(await pg.evaluate(() => document.documentElement.scrollWidth <= 390), 'laboratório sem rolagem horizontal a 390 px');
 await pg.evaluate(() => { LOTS = LOTS.filter(L => L.id !== 'e2e-nx'); });
+// Ciência do motor (v18.8): fichas dos 21 modelos, três níveis e validação deixa-um-fora com lotes medidos
+await pg.evaluate(() => { const p = PRESETS.find(x => x.name === 'Fiordilatte');
+  for (let i = 1; i <= 6; i++) LOTS.push({ id: 'val' + i, code: 'V' + i, date: '2026-10-1' + i, tipo: 'crema', vit: -13, recipe: p.recipe.map(([id, g]) => ({ id, g })), proc: { machine: 'maqp1' }, meas: { ov: 28 + i, melt10: 38 + i, brix: 33.2 }, pred: {} });
+  fitCalibration(LOTS); CAL.ver++; S.page = 'laudo'; U.sub = { laudo: 'resumo' }; renderNow(); });
+const tag = pg.locator('#main .chip.nat[data-v="overrun"]').first();
+if (await tag.count()) { await tag.click(); await pg.waitForTimeout(300); }
+else await pg.evaluate(() => { ACT.sciOpen('overrun'); });
+check(await pg.evaluate(() => S.page === 'ciencia' && U.sciOpen === 'overrun'), 'etiqueta de natureza abre a ficha do modelo na página Ciência do motor');
+const sci = await pg.locator('#main').innerText();
+check((await pg.locator('#main details.card').count()) === 21, 'página lista as 21 fichas de modelo');
+check(/Três níveis de avaliação/.test(sci) && /Verificação matemática/.test(sci) && /Nenhum modelo do app é classificado como validado/.test(sci), 'três níveis explicados, sem modelo "validado"');
+const val = await pg.locator('#sci-val').innerText();
+const vt = val.replace(/\n/g, ' '); const nOv = +(vt.match(/Overrun\s+(\d+)/) || [])[1];
+check(nOv >= 6 && /°Brix da mistura\s+6\b/.test(vt) && /pH\s+0\s+—/.test(vt), `validação conta os lotes medidos por grandeza (overrun ${nOv}, °Brix 6, pH 0 = sem dados)`);
+check(/avaliado|dentro da tolerância/.test(val), 'com 6 lotes o status passa de "evidência inicial"');
+const ficha = await pg.locator('#sci-overrun').innerText();
+check(/Equação/.test(ficha) && /Tolerância para validação/.test(ficha) && /5 pontos percentuais/.test(ficha) && /Validação com os seus lotes/.test(ficha), 'ficha do overrun com equação, tolerância e validação');
+check(await pg.evaluate(() => document.documentElement.scrollWidth <= 390), 'Ciência do motor sem rolagem horizontal a 390 px');
+await pg.evaluate(() => { LOTS = LOTS.filter(L => !String(L.id).startsWith('val')); fitCalibration(LOTS); CAL.ver++; });
 check(!errs.length, 'sem erros de página ' + errs.join(' | '));
 await b.close(); srv.close(); process.exit(fails.length ? 1 : 0);

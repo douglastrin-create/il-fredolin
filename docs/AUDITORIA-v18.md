@@ -312,6 +312,54 @@ A tela diz quantas combinações foram testadas, quantas ficaram viáveis e quan
 
 **Testes:** `tests/e2e/pwa.mjs` (15 verificações; Chromium completo; no WebKit, motor do Safari, tudo menos as recargas com rede desligada simulada, que o Playwright não suporta nesse motor — lá elas viram verificação online. A instalação conferida por SHA-256, a atualização, a recusa com página antiga e a migração passaram no WebKit): migração do service worker publicado; instalação conferida; cache versionado; erro 500 mostra a cópia; página inesperada online não substitui a cópia offline; sw novo com página antiga no servidor é recusado sem deixar cache parcial; atualização normal assume, guarda tudo e apaga a anterior; fechar e reabrir offline abre a versão nova; cartão de diagnóstico na tela. `arch.test.mjs` confere que o `sw.js` é o gerado, com hash e versão certos e todos os arquivos existentes. Node 72/72.
 
+## 5-L. v18.8 — ciência verificável (especificação §46–49)
+
+**Registro de modelos @2** (`docs/model-registry.json`, embutido no app pelo build). Os 21 modelos agora têm todos os campos do §46:
+- nome, versão, equação **conferida contra o código**, parâmetros com unidade e fonte (ou "sem fonte"), saídas com unidade;
+- hipóteses, onde vale, origem dos dados, método numérico;
+- tolerância usada como critério de aceite, incerteza, calibração;
+- verificação de software e verificação matemática, cada uma apontando para um teste que existe (o teste confere);
+- validação.
+
+Campo não estabelecido fica `null` e aparece como "não estabelecido". Ao conferir as equações, duas que eu tinha escrito de memória (doçura percebida e viscosidade) estavam imprecisas e foram corrigidas antes de entrar.
+
+**Três níveis (§47)**, página nova **Analisar → Ciência do motor**:
+
+| Nível | Situação hoje |
+|---|---|
+| Verificação de software | 12 dos 21 modelos têm teste específico |
+| Verificação matemática | 3 dos 21: curva de congelamento (monotonia, inversão, continuidade), fração congelada (Cg′), transferência de calor (convergência de malha e concordância com o método da entalpia). Os demais são fórmulas fechadas ou não têm propriedade testável registrada |
+| Validação científica | Calculada dos seus lotes medidos; nenhum modelo é declarado validado |
+
+**Validação deixa-um-fora** (`core/calibration/validacao.js`):
+- Cada lote medido é previsto com a calibração feita **sem ele**, para não conferir o modelo com o mesmo dado que o ajustou. O erro sem calibração também aparece.
+- Grandezas: overrun, derretido em 10 min, °Brix, pH, núcleo do pote e textura na vitrine.
+- Resultado por grandeza e por tipo de produto (§48: validar só no escopo em que há dados).
+- Status: sem dados → evidência inicial (1–4 lotes) → avaliado (≥ 5) → dentro da tolerância (erro fora-da-amostra ≤ tolerância registrada).
+- **Nenhum status promove um modelo a "validado" (classe V):** isso exige conjunto independente versionado e revisão.
+
+As etiquetas de natureza na tela (heurístico, semiempírico…) agora abrem a ficha do modelo.
+
+**Casos de referência (§48–49)** em `docs/validacao/casos.json`, 16 casos:
+- gelato de leite, gemas, baunilha, chocolate, duas oleaginosas, sorbet, vegetal;
+- dois aerados, baixo açúcar, três famílias novas;
+- estabilizante natural (Dondoli).
+
+O processo do §49 vale para todos: Maestro com 1.100 g, sacarose e dextrose monoidratada, pote de 470 mL a −18 °C, 10 min de temperagem.
+
+Só receita e processo ficam guardados. As previsões condicionais são recalculadas pelo motor atual (`node tools/validacao.mjs` → `docs/validacao/PREVISOES.md`), para nunca ficarem velhas. Medições ficam `null` até existir um lote real, e o teste recusa medição sem lote, data e instrumento.
+
+**Cardamomo ficou pendente:** não está no banco de ingredientes, e a composição não foi inventada.
+
+**O que os casos mostram (previsão, não medição):** com pote de 470 mL vindo de −18 °C, depois de 10 min na cozinha a camada de servir ainda está a −13,6 a −14,4 °C. Ela só chega ao ponto ideal de cada receita depois de ~13–16 min nas cremas. É um bom primeiro experimento: medir a temperatura da colher aos 10 e aos 15 min.
+
+**Hipótese registrada, sem correção aplicada:** o °Brix previsto soma só açúcares e solutos dissolvidos. O refratômetro também responde a proteínas e sais do leite, então em base láctea a leitura pode sair acima do previsto. A validação vai mostrar.
+
+**Testes:**
+- `validation.test.mjs` (7): campos do §46 em todo modelo; toda verificação citada existe; registro embutido igual ao de `docs/`; deixa-um-fora nunca usa o próprio lote (conta conferida à mão); status por quantidade e tolerância; ponta a ponta de lotes a calibração a validação; casos cobrem todas as famílias pedidas, medição só com origem, previsões finitas e lote escalado para a carga.
+- E2E com 8 verificações novas: etiqueta abre a ficha, 21 fichas, três níveis, contagem por grandeza, status, ficha com equação e tolerância, 390 px.
+- Node 79/79.
+
 ## 6. Para publicar (requer sua autorização)
 1. Conferir a execução do workflow *Testes* na branch (inclui WebKit e o job *banco*).
 1b. Aplicar a migração 001 seguindo `supabase/README.md` (ensaio num projeto de teste primeiro). A ordem entre banco e app é indiferente.
