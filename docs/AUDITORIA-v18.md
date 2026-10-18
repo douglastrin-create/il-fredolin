@@ -355,6 +355,14 @@ Só receita e processo ficam guardados. As previsões condicionais são recalcul
 
 **Hipótese registrada, sem correção aplicada:** o °Brix previsto soma só açúcares e solutos dissolvidos. O refratômetro também responde a proteínas e sais do leite, então em base láctea a leitura pode sair acima do previsto. A validação vai mostrar.
 
+**Defeito da v18.7 (publicada) encontrado pelo CI e corrigido nesta versão.** Na troca de versão, o service worker antigo ainda termina a última navegação que atendeu. A limpeza adiada dele (3 s) apagava qualquer cache que não fosse o seu, inclusive o da versão nova, que já tinha assumido. O aparelho ficava com a cópia offline da versão anterior e o diagnóstico acusaria cache incompleto. Os dados não foram afetados: não passam pelo cache.
+
+Correção na v18.8:
+1. **Autorreparo:** depois de cada abertura online, o service worker confere o próprio cache e, se sumiu ou ficou incompleto, baixa de novo e confere o hash.
+2. **Limpeza segura:** cada cache guarda quando foi montado (`./__sw_meta`), e a limpeza só apaga versões **mais antigas**. Isso protege todas as próximas trocas.
+
+Na passagem v18.7 → v18.8 o defeito ainda acontece uma vez, porque é o código da v18.7 que roda. O autorreparo da v18.8 recompõe o cache na abertura seguinte com internet. Os testes cobrem a migração real a partir da v18.7 publicada (Chromium e WebKit) e o autorreparo com o cache apagado.
+
 **Testes:**
 - `validation.test.mjs` (7): campos do §46 em todo modelo; toda verificação citada existe; registro embutido igual ao de `docs/`; deixa-um-fora nunca usa o próprio lote (conta conferida à mão); status por quantidade e tolerância; ponta a ponta de lotes a calibração a validação; casos cobrem todas as famílias pedidas, medição só com origem, previsões finitas e lote escalado para a carga.
 - E2E com 8 verificações novas: etiqueta abre a ficha, 21 fichas, três níveis, contagem por grandeza, status, ficha com equação e tolerância, 390 px.
