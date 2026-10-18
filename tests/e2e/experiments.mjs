@@ -117,6 +117,7 @@ const tag = pg.locator('#main .chip.nat[data-v="overrun"]').first();
 if (await tag.count()) { await tag.click(); await pg.waitForTimeout(300); }
 else await pg.evaluate(() => { ACT.sciOpen('overrun'); });
 check(await pg.evaluate(() => S.page === 'ciencia' && U.sciOpen === 'overrun'), 'etiqueta de natureza abre a ficha do modelo na página Ciência do motor');
+await pg.waitForSelector('#sci-val', { timeout: 10000 }); await pg.waitForTimeout(200);
 const sci = await pg.locator('#main').innerText();
 check((await pg.locator('#main details.card').count()) === 21, 'página lista as 21 fichas de modelo');
 check(/Três níveis de avaliação/.test(sci) && /Verificação matemática/.test(sci) && /Nenhum modelo do app é classificado como validado/.test(sci), 'três níveis explicados, sem modelo "validado"');
