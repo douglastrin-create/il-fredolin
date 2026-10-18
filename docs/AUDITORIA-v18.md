@@ -442,6 +442,66 @@ As 23 dependências proibidas registradas na v18.6 foram eliminadas. O verificad
 - E2E: a tela de entrada aparece sem sessão.
 - Os stubs de teste do código de sincronização ganharam o canal de eventos.
 
+## 5-O. v18.11 — composição com procedência e incerteza honesta (§14, §22, §10)
+
+**Auditoria:**
+
+| # | Achado | Consequência |
+|---|---|---|
+| 1 | Dos 313 ingredientes, 89 citavam fonte (quase todos frutas da TACO). Leite, creme e leite em pó não tinham | Nada distinguia composição conhecida de estimada |
+| 2 | **O texto da faixa de incerteza dizia "gordura dos lácteos ±3%", mas o código mudava a massa pesada** dos lácteos (e do cacau, oleaginosas e açúcares) | Simulava erro de balança, não de composição. O lácteo aparecia com 0,26 °C de efeito, quando ±3% de gordura dá ~0,04 °C |
+| 3 | Ingrediente sem fonte não entrava na incerteza | Não saber a composição não alargava a faixa |
+
+**Procedência por ingrediente**, derivada do que o banco registra, sem nada inventado:
+
+| Classe | Critério | Quantidade |
+|---|---|---|
+| Definição | Substância pura (≥ 95% de um componente) ou estequiometria (dextrose monoidratada = 90,9% glicose + 9,1% água) | 29 |
+| Tabela | TACO/USDA citada | 53 |
+| Ficha técnica | Citada | 39 |
+| Calculado | Neutros | 9 |
+| Sem fonte | Explicitamente | 183 |
+| Seu cadastro | Ingredientes próprios | — |
+
+**Três bases conferidas contra a USDA SR Legacy**, com os números da referência guardados e um teste que exige concordância ≤ 1 g/100 g:
+- leite (FDC 172217, gordura ajustada ao rótulo de 3,5%);
+- creme (FDC 170859, gordura ajustada a 35%);
+- leite em pó desnatado (FDC 170877).
+
+O teste achou que a proteína do leite em pó do banco (35 g) fica 1,2 g abaixo da USDA (36,2 g). A diferença foi **registrada na fonte, não corrigida**: mudar o valor alteraria todos os resultados com leite em pó, e isso fica para quando houver a ficha do fornecedor que você usa.
+
+**Incerteza que perturba a composição** (a água compensa), por grupo:
+- frutas: °Brix ±15% (±3% medido);
+- gordura de lácteos: ±3%;
+- gordura de cacau e oleaginosas: ±5%;
+- **sem fonte: ±10% nos sólidos**;
+- definição: desprezível.
+
+Os coeficientes são estimativas do app e estão declarados como tal no registro.
+
+Efeito nas receitas de referência (faixa de 90%):
+
+| Receita | Antes (±°C) | Agora (±°C) | Origem principal da faixa |
+|---|---|---|---|
+| Fior di latte | 0,80 | 0,66 | 100% da massa com fonte |
+| Cioccolato | 0,84 | 0,92 | Cacau, chocolate e invertido sem fonte |
+| Sorbetto de morango | 1,04 | 1,03 | °Brix do morango |
+| Cocco vegano | 0,69 | 0,79 | Creme de coco, inulina e proteína de ervilha sem fonte |
+
+**Na tela:**
+- Ingredientes: coluna e filtro de procedência, com a fonte no detalhe.
+- Laudo: "Composição: X% da massa vem de ingredientes com fonte…" e a lista dos sem fonte.
+- "O que medir" sugere a ficha técnica do fornecedor dos ingredientes sem fonte de maior efeito.
+
+**Balanço de massa (§14):** testado em todas as bases e casos de referência; a composição de cada receita soma 98–100,6% da massa.
+
+**Testes:**
+- `composition.test.mjs` (5): classes; referências USDA com tolerância e diferença registrada; balanço de massa; incerteza perturba a composição, só definição dá só o erro do modelo, sem fonte alarga e não sobram cópias temporárias; participação de procedência e sugestão da ficha.
+- E2E com 2 verificações novas.
+- Node 86/86.
+
+**Fica para depois:** 183 ingredientes sem fonte. Os de maior uso são candidatos à ficha do fornecedor ou à TACO: morango, cacau, chocolate 70%, pasta de pistache, avelã, gema pasteurizada, creme de coco, invertido e limão.
+
 ## 6. Para publicar (requer sua autorização)
 1. Conferir a execução do workflow *Testes* na branch (inclui WebKit e o job *banco*).
 1b. Aplicar a migração 001 seguindo `supabase/README.md` (ensaio num projeto de teste primeiro). A ordem entre banco e app é indiferente.

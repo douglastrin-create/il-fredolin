@@ -10,6 +10,7 @@
   "core/domain/processo.js",
   "core/stabilization/componentes.js",
   "core/ingredients/fisica.js",
+  "core/ingredients/procedencia.js",
   "product/formulation/bases.js",
   "product/formulation/mestres.js",
   "core/thermodynamics/curvas.js",

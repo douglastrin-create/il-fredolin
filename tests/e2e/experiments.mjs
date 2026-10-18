@@ -130,5 +130,12 @@ const ficha = await pg.locator('#sci-overrun').innerText();
 check(/Equação/.test(ficha) && /Tolerância para validação/.test(ficha) && /5 pontos percentuais/.test(ficha) && /Validação com os seus lotes/.test(ficha), 'ficha do overrun com equação, tolerância e validação');
 check(await pg.evaluate(() => document.documentElement.scrollWidth <= 390), 'Ciência do motor sem rolagem horizontal a 390 px');
 await pg.evaluate(() => { LOTS = LOTS.filter(L => !String(L.id).startsWith('val')); fitCalibration(LOTS); CAL.ver++; });
+// Procedência da composição (v18.11): filtro de ingredientes e linha de composição na incerteza
+await pg.evaluate(() => { S.page = 'ingredientes'; U.ingProv = 'sem'; U.ingCat = 'Todas'; renderNow(); });
+const ingTxt = await pg.locator('#main').innerText();
+check(/sem fonte \(\d+\)/.test(ingTxt) && /Procedência/.test(ingTxt) && (await pg.locator('#main table.tbl tbody tr').count()) > 50, 'Ingredientes: filtro "sem fonte" e coluna de procedência');
+await pg.evaluate(() => { U.ingProv = ''; S = fromPreset(PRESETS.find(p => /Cioccolato/.test(p.name))); S.page = 'laudo'; U.sub = { laudo: 'congelamento' }; renderNow(); });
+const lau = await pg.locator('#main').innerText();
+check(/Composição: \d+% da massa vem de ingredientes com fonte/.test(lau) && /Sem fonte \(sólidos\)/.test(lau), 'laudo mostra a parte da receita sem fonte e o efeito dela na faixa');
 check(!errs.length, 'sem erros de página ' + errs.join(' | '));
 await b.close(); srv.close(); process.exit(fails.length ? 1 : 0);

@@ -195,9 +195,10 @@ function aromaRows(m){return`<div class="kv"><span>Volatilidade do aroma a ${fT(
  <div class="kv"><span>Aroma efetivo na vitrine</span><span class="${m.aromaVit>=65?'c-ok':m.aromaVit>=45?'c-warn':'c-crit'}">${f0(m.aromaVit)}/100</span></div>
  ${m.lipoShare>0?`<div class="kv"><span>Sabor lipossolúvel (cacau, oleaginosas)</span><span>${f0(m.lipoShare*100)}% do sabor</span></div>`:''}`;}
 function uncLine(m){const u=uncertainty(S);if(!u)return'';return`${f1(u.lo)} a ${f1(u.hi)} °C`;}
-function uncCard(m){const u=uncertainty(S);if(!u)return'';
+function uncCard(m){const u=uncertainty(S);if(!u)return'';const pv=recipeProv(S);
  return`<div class="kv"><span>Faixa provável (90%)</span><span>${f1(u.hi)} a ${f1(u.lo)} °C</span></div><div class="kv"><span>Água congelada na vitrine</span><span>${f0(u.fzHi)}–${f0(u.fzLo)}%</span></div>
- <p class="note" style="margin:6px 0 0">Variação natural dos ingredientes: ${u.parts.length?u.parts.map(p=>esc(p.n)+' ±'+f1(Math.abs(p.d)*1.65)+' °C').join(' · '):'só a do modelo'}. ${u.parts.some(p=>p.n.startsWith('Frutas'))?'Medir o Brix da fruta estreita a faixa.':''}</p>`;}
+ <p class="note" style="margin:6px 0 0">Variação natural dos ingredientes: ${u.parts.length?u.parts.map(p=>esc(p.n)+' ±'+f1(Math.abs(p.d)*1.65)+' °C').join(' · '):'só a do modelo'}. ${u.parts.some(p=>p.n.startsWith('Frutas'))?'Medir o Brix da fruta estreita a faixa.':''}</p>
+ <p class="note" style="margin:6px 0 0">Composição: <b>${f0(pv.known)}%</b> da massa vem de ingredientes com fonte, definição ou cadastro seu${pv.sem.length?'; sem fonte (estimados, ±10% nos sólidos): '+pv.sem.map(s=>esc(ING_BY[s.id]?ING_BY[s.id].n:s.id)).join(', '):''}.</p>`;}
 
 /* ---------- PROTOCOLO DE MEDIÇÃO DO LOTE ---------- */
 const MELT_MS=600000;let meltTick=null;

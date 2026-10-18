@@ -21,6 +21,12 @@ function measurePlan(st,m,cal,unc){if(!m||m.empty||!(m.wat>0))return[];cal=cal||
   why:frMiss.length?frMiss.length+' fruta(s) com Brix de tabela. O açúcar da fruta varia com variedade e maturação.':'Brix já medido nesta receita.',
   impact:d>0?'±'+f1(d)+' °C na temperatura de serviço':'',cls:'SE',acc:'barato',eff:frMiss.length?d:0,n:frMiss.length?0:9,
   equip:'Refratômetro 0–32 °Bx',how:'Esprema e filtre um pouco da fruta já preparada, uma gota no prisma, leia a 20 °C.'});}
+ /* 1b. v18.11 · ingrediente sem fonte: a ficha técnica do fornecedor tira a estimativa (±10% nos sólidos) da incerteza */
+ {const d=part('Sem fonte (sólidos)');const pv=recipeProv(st);if(pv.sem.length){const top=pv.sem.slice(0,3).map(s=>ING_BY[s.id]?ING_BY[s.id].n:s.id);
+  add({id:'fichaSemFonte',what:'Ficha técnica de: '+top.join(', '),field:'Acervo → Ingredientes (cadastre a composição do fornecedor)',
+   why:f0(100-pv.known)+'% da massa desta receita vem de ingredientes sem fonte de composição; o app os trata com ±10% nos sólidos.',
+   impact:d>0?'±'+f1(d)+' °C na temperatura de serviço':'',cls:'SE',acc:'casa',eff:d,n:0,
+   equip:'Ficha técnica ou tabela nutricional do fornecedor',how:'Copie água, gordura, proteína, açúcares e fibras por 100 g para um ingrediente próprio e use-o na receita.'});}}
  /* 2. Overrun pelo copo: o modelo de ar incorporado é heurístico */
  {const n=cnt.ov||0;add({id:'overrun',what:'Overrun pelo copo',field:'Lote → Copo com mistura / Copo com gelato',
   why:'O ar incorporado é estimado por regras do processo'+(n?'; já corrigido por '+n+' lote(s).':' e ainda não foi medido.'),

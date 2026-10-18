@@ -254,6 +254,7 @@ const CHG={
   const mk=/^meas\.ice(\d)$/.exec(t.dataset.k);if(mk){const me=L.meas=L.meas||{};const first=[1,3,7].find(d=>+me['ice'+d]>0);if(first&&(me.icyDay==null||me.icyDay===''||me._icyAuto)){me.icyDay=first;me._icyAuto=1;}else if(!first&&me._icyAuto){me.icyDay='';delete me._icyAuto;}}
   saveLotSoon(L);}},
  ingCat:t=>{U.ingCat=t.value;},
+ ingProv:t=>{U.ingProv=t.value;},
  ingAl:t=>{if(!U.ingEdit)return false;const a=U.ingEdit.x.al=U.ingEdit.x.al||[];const k=t.dataset.k;if(t.checked&&!a.includes(k))a.push(k);if(!t.checked)U.ingEdit.x.al=a.filter(x=>x!==k);},
  ingFlag:t=>{if(!U.ingEdit)return false;U.ingEdit.x[t.dataset.k]=t.checked?1:0;},
  vitAdd:t=>{if(!t.value)return false;const s=srcByKey(t.value);if(s){S.vitrine.items.push({name:s.name.replace(/^Receita da bancada · /,''),tipo:s.tipo,recipe:JSON.parse(JSON.stringify(s.recipe))});saveVit();}},

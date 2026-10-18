@@ -37,13 +37,16 @@
    "verification": {
     "software": [
      "runTests › Composição de cada ingrediente",
-     "contracts.test.mjs › saída do motor"
+     "contracts.test.mjs › saída do motor",
+     "composition.test.mjs › referências conferidas"
     ],
-    "math": []
+    "math": [
+     "composition.test.mjs › balanço de massa"
+    ]
    },
    "limits": "Composição dos ingredientes sem fonte nem incerteza por item",
    "name": "Composição da mistura",
-   "version": "v9",
+   "version": "v18.11",
    "equation": "x̄ = Σ gᵢ·xᵢ / Σ gᵢ para cada fração (água, gordura, proteína, lactose, açúcares, sólidos…); POD = Σ fração·PODK; PAC = Σ fração·PACK",
    "parameters": [
     {
@@ -59,10 +62,10 @@
     "°Brix previsto (brixMix) soma só açúcares, polióis, fibras solúveis, sal e ácidos; o refratômetro também responde a proteínas e sais do leite, então em base láctea a leitura pode sair acima do previsto (hipótese a conferir com lotes medidos, sem correção aplicada)"
    ],
    "validity": "Qualquer receita com ingredientes do banco",
-   "dataOrigin": "Tabelas de composição por ingrediente (fonte por item quando registrada; muitas sem fonte nem incerteza)",
+   "dataOrigin": "Composição por ingrediente com procedência explícita (ingProv): definição (substância pura ou estequiometria), tabela citada (TACO/USDA; 3 bases lácteas conferidas contra USDA SR com tolerância testada), ficha típica/fabricante citada, cadastro do usuário, calculado (neutros) ou sem fonte (estimado). Em 18/10/2026: 29 definição, 53 tabela, 39 ficha, 9 calculado, 183 sem fonte (313 no banco).",
    "method": "Soma ponderada exata",
    "tolerance": null,
-   "uncertainty": "Não propagada da composição dos ingredientes; o °Brix medido da fruta substitui o valor de tabela",
+   "uncertainty": "Por procedência, na faixa de serviço: sem fonte ±10% nos sólidos; frutas ±15% no °Brix (±3% medido); gordura de lácteos ±3% e de cacau/oleaginosas ±5%; definição desprezível. Os coeficientes são estimativas do app, não medições.",
    "calibration": "°Brix por fruta (medição direta do ingrediente)",
    "validation": {
     "status": "sem validação independente",
@@ -823,16 +826,22 @@
     "H"
    ],
    "method": "Diferenças finitas",
-   "limits": "Sem correlações; cobertura nunca verificada",
+   "limits": "Cobertura de 90% nunca conferida com medições; até a v18.10 os grupos lácteos/cacau/açúcares perturbavam a massa pesada, não a composição",
    "name": "Orçamento de incerteza",
-   "version": "v17",
-   "equation": "σ² = Σ (∂y/∂xᵢ·δxᵢ)² + 0,4² ; banda ±1,65σ",
+   "version": "v18.11",
+   "equation": "σ² = Σ_g (Δy_g)² + 0,4²; Δy_g = efeito na temperatura de serviço de perturbar a COMPOSIÇÃO do grupo g (°Brix, gordura ou sólidos; a água compensa); banda ±1,65σ",
    "parameters": [
     {
      "n": "0,4",
      "v": 0.4,
      "unit": "°C",
-     "src": "prática (modelo)"
+     "src": "prática (erro do modelo)"
+    },
+    {
+     "n": "CV por grupo",
+     "v": "Brix 15% (3% medido), gordura láctea 3%, gordura cacau/oleaginosas 5%, sem fonte 10% nos sólidos",
+     "unit": "relativo",
+     "src": "estimativa do app"
     }
    ],
    "outputs": [
@@ -842,7 +851,8 @@
     }
    ],
    "hypotheses": [
-    "Erros independentes",
+    "Grupos independentes entre si",
+    "Dentro de um grupo, variação totalmente correlacionada (conservador)",
     "Linearidade local"
    ],
    "validity": null,
@@ -851,7 +861,9 @@
    "uncertainty": "Cobertura nunca verificada",
    "calibration": null,
    "verification": {
-    "software": [],
+    "software": [
+     "composition.test.mjs › incerteza perturba a composição"
+    ],
     "math": []
    },
    "validation": {
