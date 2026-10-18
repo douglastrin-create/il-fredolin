@@ -57,5 +57,32 @@ check(await pg.evaluate(() => S.tipo === 'soft' && S.vit === -6.5), 'soft serve:
 await pg.evaluate(() => { S.page = 'laudo'; U.sub = { laudo: 'resumo' }; renderNow(); });
 const res = await pg.locator('#main').innerText();
 check(/Soft serve/.test(res) && /servido direto da máquina/.test(res) && /faixas com fonte/.test(res), 'Laudo mostra a família, o processo e a origem das faixas');
+// Design inverso (v18.4): Creator → Criar por alvo → 3 · Alternativas e compromissos
+await pg.evaluate(() => { S.page = 'creator'; S.creatorTab = 'gelato'; S.crSub = 'gerar'; S.tipo = 'crema'; S.vit = -12; S.lab.gen.tipo = 'crema'; S.lab.gen.fixed = [{ id: 'morango', g: 150 }]; Object.assign(S.lab.gen, genDef('crema')); S.lab.gen.crit = ['sug', 'sol']; U.gen = U.genFr = null; renderNow(); });
+check(await pg.locator('#front-card').isVisible(), 'cartão "3 · Alternativas e compromissos" aparece');
+await pg.click('#front-card button[data-a="frCrit"][data-v="melt"]'); await pg.waitForTimeout(100);
+check(await pg.evaluate(() => S.lab.gen.crit.join(',') === 'sug,sol,melt'), 'critério marcado pela interface');
+await pg.click('#front-card button[data-a="frRun"]'); await pg.waitForSelector('#front-tbl', { timeout: 5000 });
+const nAlt = await pg.locator('#front-tbl .front-opt').count(); const ftxt = await pg.locator('#front-card').innerText();
+check(nAlt >= 2 && /combinações de metas testadas/.test(ftxt) && (ftxt.match(/★/g) || []).length >= 3, `alternativas listadas (${nAlt}) com a melhor de cada critério marcada`);
+check(/estimativas heurísticas/.test(ftxt), 'derretimento identificado como estimativa');
+const nTot = await pg.evaluate(() => U.genFr.front.length);
+check(nAlt === Math.min(8, nTot), `no celular mostra até 8 de ${nTot} opções (${nAlt})`);
+if (nTot > 8) { await pg.click('#front-card button[data-a="frAll"]'); await pg.waitForTimeout(150);
+  check(await pg.locator('#front-tbl .front-opt').count() === nTot, '"Mostrar todas" lista todas as opções'); }
+check(await pg.evaluate(() => document.documentElement.scrollWidth <= 390), 'sem rolagem horizontal a 390 px');
+const alvo = await pg.evaluate(() => U.genFr.front[U.genFr.front.length - 1].tgt);
+await pg.locator('#front-tbl button[data-a="frPick"]').last().click(); await pg.waitForTimeout(300);
+const usado = await pg.evaluate(() => ({ g: { pod: S.lab.gen.pod, fat: S.lab.gen.fat, msnf: S.lab.gen.msnf }, ok: !!(U.gen && U.gen.ok), rec: U.gen && U.gen.recipe.map(r => r.id + r.g).join(), alt: U.genFr.front[U.genFr.front.length - 1].recipe.map(r => r.id + r.g).join() }));
+check(usado.ok && usado.g.pod === alvo.pod && usado.g.fat === alvo.fat && usado.rec === usado.alt, '"Usar esta" põe as metas no formulário e gera a mesma receita');
+check(/Receita gerada/.test(await pg.locator('#main').innerText()), 'receita escolhida aparece pronta para a bancada');
+await pg.evaluate(() => { S.lab.gen.crit = ['cost', 'sug', 'melt']; U.genFr = null; renderNow(); });
+await pg.click('#front-card button[data-a="frRun"]'); await pg.waitForSelector('#front-tbl', { timeout: 5000 });
+const nT2 = await pg.evaluate(() => U.genFr.front.length), nS2 = await pg.locator('#front-tbl .front-opt').count();
+check(nT2 <= 8 || nS2 === 8, `com custo: ${nS2} de ${nT2} opções na tela`);
+if (nT2 > 8) { await pg.click('#front-card button[data-a="frAll"]'); await pg.waitForTimeout(150);
+  check(await pg.locator('#front-tbl .front-opt').count() === nT2, '"Mostrar todas" lista todas as opções'); }
+await pg.evaluate(() => { S.lab.gen.crit = ['sug']; U.genFr = null; renderNow(); });
+check(await pg.locator('#front-card button[data-a="frRun"]').isDisabled(), 'com um critério só, o botão fica desativado');
 check(!errs.length, 'sem erros de página ' + errs.join(' | '));
 await b.close(); srv.close(); process.exit(fails.length ? 1 : 0);

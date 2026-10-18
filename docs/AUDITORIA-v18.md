@@ -201,6 +201,49 @@ O núcleo medido no endurecimento era registrado e **nunca usado**. Agora ele ca
 
 **Fontes consultadas:** Goff, *Ice Cream Technology e-book* (Univ. de Guelph), capítulos "Suggested mixes for ice cream" e "Formulation considerations"; 21 CFR § 135.110 (Cornell LII); SDSU Extension, "Soft serve frozen desserts and frozen yogurts: real and perceived differences"; "Preparation of Kulfi with incorporation of pineapple pulp" (phytojournal, 2021).
 
+## 5-H. v18.4 — design inverso: alternativas e compromissos (especificação §26–27)
+
+**Auditoria do gerador existente** (Creator → Criar por alvo): mínimos quadrados não negativos com massa e congelamento na vitrine como restrições rígidas, e POD, gordura, MSNF e sólidos como metas flexíveis. As metas que não cabem são liberadas e listadas. Três defeitos encontrados:
+
+| Defeito | Efeito | Correção |
+|---|---|---|
+| Famílias novas (v18.3) caíam nos ingredientes do gelato de leite (erro introduzido na v18.3; o teste interno só percorria os 6 tipos antigos) | Granita gerada com leite e creme; frozen yogurt sem iogurte | Ingredientes por família (`genVars`). Gema mínima automática no custard, iogurte ≥ 15% no frozen yogurt. Metas padrão pelo meio da faixa (`genDef`). O teste interno agora percorre os 17 tipos, na temperatura de serviço de cada processo |
+| "Sem açúcar" não chegava à doçura: só eritritol e inulina, POD ≈ 6 contra meta 14–19 | A receita saía pouco doce e o aviso só citava "doçura" | Sucralose entra entre as variáveis. Doses abaixo de 0,3 g não são mais cortadas para edulcorante de alta intensidade (fica em centésimos de grama: 0,13–0,21 g/kg) |
+| Base láctea com sólidos fora da faixa da família não gerava aviso | Ex.: semifreddo com 100 g de pasta de pistache saía com 55% de sólidos sem aviso | Vira aviso com a faixa da família |
+
+**Etapa 3 · Alternativas e compromissos:** em vez de uma receita só, o motor percorre uma grade de metas dentro da faixa da família, com os mesmos ingredientes fixos:
+- base láctea: POD (5 níveis) × gordura (4) × MSNF (3), 60 combinações;
+- base sem leite: POD × sólidos, 15 combinações.
+
+Cada ponto vira receita pelo mesmo `generate()`. Fica só o que respeita o congelamento e as faixas da família. Depois saem as receitas superadas em todos os critérios marcados (fronteira de Pareto), e opções iguais dentro da tolerância contam como uma.
+
+Critérios disponíveis:
+
+| Critério | Natureza |
+|---|---|
+| Menor custo (só Maestro, com os preços informados) | Conta de composição |
+| Menos açúcar (g/100 g) | Conta de composição |
+| Menos calorias | Conta de composição |
+| Mais corpo (sólidos) | Conta de composição |
+| Mais gordura | Conta de composição |
+| Derrete mais devagar | Estimativa heurística |
+| Cristais mais finos | Estimativa heurística |
+
+A tela diz quantas combinações foram testadas, quantas ficaram viáveis e quantas não são superadas. Marca com ★ a melhor em cada critério. No celular mostra até 8 opções (as melhores de cada critério e as demais espaçadas), com "Mostrar todas". "Usar esta" põe as metas no formulário e gera a receita pelo caminho normal, inclusive no modo pote.
+
+**O que a fronteira mostra de verdade:**
+- Em sorbetto, paleta de fruta, vegano e gastronômico, com os critérios açúcar/corpo/derretimento, sai **uma opção só**. Com esses ingredientes as metas não têm folga, e a tela diz isso em vez de inventar alternativas.
+- Na granita, açúcar e sólidos andam juntos: a fronteira é a própria escolha de doçura.
+
+**Tempo:** 4–190 ms por tipo (60 combinações). Roda depois de um clique, sem travar a tela.
+
+**Testes:**
+- `inverse.test.mjs` (8): ingredientes por família, gema e iogurte mínimos, sucralose, aviso de sólidos, `paretoFront` com dominância e empate, fronteira sem opção dominada em 5 famílias com recálculo idêntico, preço próprio mudando o custo, tempo.
+- E2E com 9 verificações novas: marcar critério, listar, limite de 8 e "Mostrar todas", sem rolagem horizontal a 390 px, "Usar esta" gerando a mesma receita, botão desativado com um critério.
+- Node 53/53.
+
+**Limite conhecido:** no "sem açúcar" o gerador chega ao corpo com até ~16% de inulina. É tecnicamente possível, mas é muita fibra por porção. Reduzir isso pede alulose ou polidextrose entre as variáveis, o que muda a doçura e o PAC; ficou para uma rodada própria.
+
 ## 6. Para publicar (requer sua autorização)
 1. Conferir a execução do workflow *Testes* na branch (inclui WebKit e o job *banco*).
 1b. Aplicar a migração 001 seguindo `supabase/README.md` (ensaio num projeto de teste primeiro). A ordem entre banco e app é indiferente.
@@ -214,7 +257,7 @@ O núcleo medido no endurecimento era registrado e **nunca usado**. Agora ele ca
 3. **Backup automático** periódico (o manual já está completo e a restauração é segura) antes de migrar `localStorage` → IndexedDB.
 4. ~~Rótulos de natureza do resultado~~ — feito para 6 grandezas; estender a textura/quenelle, derretimento e incerteza.
 5. **Medições de baixo custo** que mais reduzem incerteza: temperatura do centro do pote no endurecimento e na espera (calibra h), overrun por copo, temperatura de extração da Maestro.
-6. Só então: novas famílias, design inverso, DoE.
+6. ~~Novas famílias, design inverso, DoE~~ — feitos (§5-E, §5-G, §5-H).
 
 ## 8. Limitações desta auditoria
 - RLS e funções do banco não auditadas (esquema ausente do repositório).

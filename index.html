@@ -886,7 +886,7 @@ Object.assign(PROF,{
  soft:{n:'Soft serve',fam:'internacional',like:'crema',proc:'soft',serveT:-6.5,serveCtx:'máquina',
   sol:[32,37],fat:[3,10],msnf:[10,13],swt:[12,16],pod:[13,18],prot:[3.5,5],stab:[.15,.4],fz:[35,55],ov:[30,45],draw:[-8,-5],frt:null,
   conf:'fonte',src:[SRC_GOFF+': soft serve 10% gordura, 12–12,5% MSNF, 36% sólidos','SDSU Extension, "Soft serve frozen desserts and frozen yogurts": gordura 4–5%, ~33% de sólidos, overrun 30–35%','Temperatura de extração e fração congelada: prática, a confirmar medindo']},
- froyo:{n:'Frozen yogurt',fam:'internacional',like:'crema',proc:'soft',serveT:-6.5,serveCtx:'máquina',
+ froyo:{n:'Frozen yogurt',fam:'internacional',like:'crema',proc:'soft',serveT:-6.5,serveCtx:'máquina',yogMin:15,
   sol:[27,35],fat:[0,4],msnf:[11,15],swt:[13,18],pod:[13,19],prot:[4,6],stab:[.2,.5],fz:[35,55],ov:[30,45],draw:[-8,-5],frt:null,
   conf:'fonte',src:[SRC_GOFF+': frozen yogurt 2% gordura, 14% MSNF, 15% açúcar, 0,35% estabilizante','SDSU Extension: gordura típica 0,5–3%; sem padrão legal de teor de iogurte (de cultura sem incubação a 15–20% de iogurte)']},
  kulfi:{n:'Kulfi',fam:'tradicional',like:'crema',proc:'molded',serveT:-12,serveCtx:'palito',
@@ -2213,12 +2213,22 @@ function nnls(A,b){const n=A[0].length;const x=new Array(n).fill(0);const P=new 
    Resolve as gramas dos ingredientes de base por mínimos quadrados ponderados com gramas ≥ 0:
    massa e congelamento (PAC exigido pela vitrine) são praticamente rígidos; doçura, gordura, MSNF e sólidos
    são metas ponderadas. Nunca "desiste": devolve a receita viável mais próxima e diz quais metas cedeu e quanto. */
-const GEN_VARS={crema:['leite','creme35','lpd','sacarose','dextrose'],frutta:['leite','creme35','lpd','sacarose','dextrose'],gastro:['leite','creme35','lpd','dextrose'],semacucar:['leite','creme35','lpd','eritritol','inulina'],sorbetto:['agua','sacarose','dextrose','malto'],vegan:['agua','cococreme','sacarose','dextrose','malto']};
+const GEN_VARS={crema:['leite','creme35','lpd','sacarose','dextrose'],frutta:['leite','creme35','lpd','sacarose','dextrose'],gastro:['leite','creme35','lpd','dextrose'],semacucar:['leite','creme35','lpd','eritritol','inulina','sucralose'],sorbetto:['agua','sacarose','dextrose','malto'],vegan:['agua','cococreme','sacarose','dextrose','malto']};
 const GEN_TOL={fat:.6,msnf:.6,pod:1,sol:1.2};
+/* v18.4 · famílias: ingredientes-base próprios onde a base muda (água, iogurte, leite de cabra, creme e gema);
+   as demais usam os do comportamento-base (tbase). Metas padrão = meio das faixas da família. */
+Object.assign(GEN_VARS,{granita:['agua','sacarose','dextrose'],paleta_fruta:['agua','sacarose','dextrose','malto'],froyo:['iogurte','leite','lpd','sacarose','dextrose'],
+ dondurma:['cabra','creme35','lpd','sacarose','dextrose'],semifreddo:['creme35','leite','lpd','sacarose','dextrose'],kulfi:['leite','creme35','lpd','sacarose','dextrose']});
+const genVars=t=>GEN_VARS[t]||GEN_VARS[tbase(t)]||GEN_VARS.crema;
+const genDef=t=>{if(GEN_DEF[t])return GEN_DEF[t];const P=PROF[t]||PROF.crema,mid=r=>Math.round((r[0]+r[1])/2*2)/2;return{fat:mid(P.fat),msnf:mid(P.msnf),pod:mid(P.pod),sol:mid(P.sol)};};
 function generate(o){
- const P=PROF[o.tipo]||PROF.crema,B=+o.batch||1000,VARS=(GEN_VARS[o.tipo]||GEN_VARS.crema).map(id=>id==='dextrose'&&DEX_FORM()!=='anid'?'dextrosem':id),proc=o.proc||{};
+ const P=PROF[o.tipo]||PROF.crema,B=+o.batch||1000,VARS=genVars(o.tipo).map(id=>id==='dextrose'&&DEX_FORM()!=='anid'?'dextrosem':id),proc=o.proc||{};
  const fixed=[];(o.fixed||[]).forEach(f=>{if(!f.id||!ING_BY[f.id]||!(+f.g>0))return;const e=fixed.find(x=>x.id===f.id);if(e)e.g+=+f.g;else fixed.push({id:f.id,g:+f.g});});
  if(o.stabId&&ING_BY[o.stabId]&&+o.stabGkg>0)fixed.push({id:o.stabId,g:B*o.stabGkg/1000});
+ /* custard: a gema mínima da definição (sólidos ≈ 47,5% da gema fresca) entra fixa, com 5% de folga */
+ if(P.yolkSolMin&&!fixed.some(f=>ING_BY[f.id]&&ING_BY[f.id].yolk))fixed.push({id:'gema',g:Math.round(B*P.yolkSolMin/.475/100*1.05)});
+ /* frozen yogurt: iogurte mínimo da família (SDSU: de cultura sem incubação até 15–20% de iogurte na mistura) */
+ if(P.yogMin&&!fixed.some(f=>/iogurt|grego|kefir/.test(f.id)))fixed.push({id:'iogurte',g:Math.round(B*P.yogMin/100)});
  const F0={w:0,fat:0,msnf:0,pac:0,pod:0,sol:0,hf:0,mass:0};fixed.forEach(f=>{const c=contrib(f.id);F0.mass+=f.g;for(const k in c)F0[k]+=c[k]*f.g;});
  if(F0.mass>=B*.98)return{ok:false,msg:'Os ingredientes fixos já somam o lote inteiro; aumente o lote ou reduza o sabor.'};
  const C=VARS.map(id=>contrib(id));const fzT=(P.fz[0]+P.fz[1])/2;const dairy=VARS.includes('lpd');
@@ -2234,15 +2244,58 @@ function generate(o){
    x=nnls(rows,rhs);
    m=analyze({tipo:o.tipo,vit:o.vit,recipe:fixed.concat(VARS.map((id,i)=>({id,g:x[i]})).filter(r=>r.g>.05)),proc,brix:{}});
    if(Math.abs(m.S-S)<2e-3)break;S=m.S;}
-  const rec=fixed.concat(VARS.map((id,i)=>({id,g:x[i]}))).filter(r=>r.g>=.3).map(r=>({id:r.id,g:Math.round(r.g*10)/10}));
+  /* edulcorante de alta intensidade (POD > 300× a sacarose) entra em centésimos de grama: o corte de 0,3 g o apagaria */
+  const hi=id=>C[VARS.indexOf(id)]&&C[VARS.indexOf(id)].pod>3;
+  const rec=fixed.concat(VARS.map((id,i)=>({id,g:x[i]}))).filter(r=>r.g>=.3||(hi(r.id)&&r.g>=.01)).map(r=>({id:r.id,g:hi(r.id)?Math.round(r.g*100)/100:Math.round(r.g*10)/10}));
   return{rec,m:analyze({tipo:o.tipo,vit:o.vit,recipe:rec,proc,brix:{}})};};
  const W={mass:1e4,pac:3e3,pod:tbase(o.tipo)==='gastro'?.6:4,fat:3,msnf:2.5,sol:dairy?0:1.2};
  let r=solve(W,tgt.sol);
  if(dairy){const rg=r.m.P.sol;if(r.m.sol>rg[1]+.5||r.m.sol<rg[0]-.5)r=solve({...W,sol:.8},r.m.sol>rg[1]?rg[1]:rg[0]);}
  const recR=r.rec,m=r.m;
  if(Math.abs(m.fzVit-m.fzMid)>3.2)return{ok:false,msg:'Com esses ingredientes fixos não é possível chegar ao congelamento certo a '+f1(+o.vit)+' °C (fica '+f0(m.fzVit)+'% de água congelada, alvo '+fRg(P.fz)+'%). Reduza o sabor que mais pesa no PAC (álcool, sal, açúcares do sabor) ou mude a vitrine.'};
- const dropped=[],miss={};['pod','fat','msnf','sol'].forEach(k=>{if(!isFinite(tgt[k]))return;if(k==='msnf'&&!dairy)return;if(k==='sol'&&dairy)return;const got=m[k];if(Math.abs(got-tgt[k])>GEN_TOL[k]){dropped.push(k);miss[k]=got;}});
+ const dropped=[],miss={};['pod','fat','msnf','sol'].forEach(k=>{if(!isFinite(tgt[k]))return;if(k==='msnf'&&!dairy)return;
+  /* base láctea: sólidos não são meta, mas sair da faixa da família também é aviso (ex.: muita pasta de fruto seco) */
+  if(k==='sol'&&dairy){const rg=P.sol;if(m.sol>rg[1]+GEN_TOL.sol||m.sol<rg[0]-GEN_TOL.sol){dropped.push(k);miss[k]=m.sol;}return;}
+  const got=m[k];if(Math.abs(got-tgt[k])>GEN_TOL[k]){dropped.push(k);miss[k]=got;}});
  return{ok:true,recipe:recR,dropped,miss,m};}
+/* ===================== DESIGN INVERSO · ALTERNATIVAS E COMPROMISSOS (v18.4) =====================
+   O gerador devolve uma receita para um conjunto de metas. Aqui as metas variam dentro da faixa da família
+   (grade de POD × gordura × MSNF, ou × sólidos nas bases sem leite), cada ponto vira uma receita pelo mesmo
+   generate(), e só ficam as receitas que nenhuma outra supera em todos os critérios escolhidos (fronteira de Pareto).
+   Todas as opções respeitam o congelamento da família na vitrine e as faixas do perfil; nenhuma é "a melhor":
+   cada uma troca um critério por outro. Critérios D = contas de composição; H = modelos heurísticos (ver natTag). */
+const FRONT_CRIT={
+ cost:{n:'Menor custo',u:'R$/kg',dir:-1,eps:.05,d:2,nat:'D',v:m=>m.costKg,maestro:1},
+ sug:{n:'Menos açúcar',u:'g/100 g',dir:-1,eps:.15,d:1,nat:'D',v:m=>m.nut.sug},
+ kcal:{n:'Menos calorias',u:'kcal/100 g',dir:-1,eps:1,d:0,nat:'D',v:m=>m.nut.kcal},
+ sol:{n:'Mais corpo (sólidos)',u:'%',dir:1,eps:.15,d:1,nat:'D',v:m=>m.sol},
+ fat:{n:'Mais gordura (cremosidade)',u:'%',dir:1,eps:.15,d:1,nat:'D',v:m=>m.fat},
+ melt:{n:'Derrete mais devagar',u:'% em 10 min',dir:-1,eps:1,d:0,nat:'H',v:m=>m.melt10},
+ ci:{n:'Cristais mais finos',u:'/100',dir:1,eps:1,d:0,nat:'H',v:m=>m.ci}};
+const frontLv=(r,n)=>n<2?[(r[0]+r[1])/2]:Array.from({length:n},(_,i)=>Math.round((r[0]+(r[1]-r[0])*i/(n-1))*10)/10);
+/* a domina b: não é pior em nenhum critério (tolerância eps) e é melhor em pelo menos um */
+function paretoFront(opts,crits){const better=(a,b,k)=>{const c=FRONT_CRIT[k];return(a.v[k]-b.v[k])*c.dir>c.eps;};
+ const worse=(a,b,k)=>better(b,a,k);
+ const nd=opts.filter(a=>!opts.some(b=>b!==a&&crits.every(k=>!worse(b,a,k))&&crits.some(k=>better(b,a,k))));
+ /* opções iguais dentro da tolerância em todos os critérios: fica a primeira */
+ return nd.filter((a,i)=>!nd.slice(0,i).some(b=>crits.every(k=>Math.abs(a.v[k]-b.v[k])<=FRONT_CRIT[k].eps)));}
+function genFrontier(o,crits){
+ crits=(crits||[]).filter(k=>FRONT_CRIT[k]);if(crits.length<2)return{ok:false,msg:'Escolha pelo menos dois critérios.'};
+ const P=PROF[o.tipo]||PROF.crema,ids=genVars(o.tipo),dairy=ids.includes('lpd'),hasFat=ids.some(id=>ING_BY[id]&&contrib(id).fat>.05);
+ const pods=frontLv(P.pod,5),fats=hasFat?frontLv(P.fat,4):[o.fat],msnfs=dairy?frontLv(P.msnf,3):[o.msnf],sols=dairy?[o.sol]:frontLv(P.sol,3);
+ const inR=(v,r,t)=>v>=r[0]-t&&v<=r[1]+t,seen=new Set(),opts=[];let tried=0;
+ for(const pod of pods)for(const fat of fats)for(const msnf of msnfs)for(const sol of sols){tried++;
+  const r=generate({...o,pod,fat,msnf,sol});if(!r.ok)continue;
+  const m=o.costs?analyze({tipo:o.tipo,vit:o.vit,recipe:r.recipe,proc:o.proc||{},brix:{},costs:o.costs}):r.m;
+  if(!inR(m.pod,P.pod,.5)||!inR(m.sol,P.sol,.8)||(hasFat&&!inR(m.fat,P.fat,.5))||(dairy&&!inR(m.msnf,P.msnf,.5)))continue;
+  const key=r.recipe.map(x=>x.id+Math.round(x.g/5)).sort().join('|');if(seen.has(key))continue;seen.add(key);
+  const v={};for(const k in FRONT_CRIT)v[k]=FRONT_CRIT[k].v(m);opts.push({recipe:r.recipe,m,v,tgt:{pod,fat,msnf,sol}});}
+ if(!opts.length){const g0=generate(o);return{ok:false,msg:'Nenhuma combinação de metas dentro da faixa de '+P.n+' ficou viável com esses ingredientes fixos a '+f1(+o.vit)+' °C.'+(g0.ok?'':' '+g0.msg),tried};}
+ const front=paretoFront(opts,crits),k0=crits[0];
+ front.sort((a,b)=>(a.v[k0]-b.v[k0])*-FRONT_CRIT[k0].dir);
+ const best={};crits.forEach(k=>{best[k]=front.reduce((a,b)=>(b.v[k]-a.v[k])*FRONT_CRIT[k].dir>0?b:a);});
+ front.forEach(f=>{f.best=crits.filter(k=>best[k]===f);});
+ return{ok:true,front,feasible:opts.length,tried,crits};}
 /* ===================== SENSIBILIDADE (LAB) ===================== */
 function sweep(st,id,lo,hi,n){const r=(st.recipe||[]).find(x=>x.id===id);if(!r)return[];const base=+r.g;const out=[];
  for(let i=0;i<n;i++){const k=lo+(hi-lo)*i/(n-1);const g=Math.max(0,Math.round(base*(1+k/100)*10)/10);const s2=stReal({...st,recipe:st.recipe.map(x=>x.id===id?{...x,g}:x)});const m=analyze(s2);const F=diagnose(s2,m);out.push({k,g,fz:m.fzVit,pod:m.pod,sol:m.sol,sc:score(s2,m,F).total,serve:m.serveT,fat:m.fat});}
@@ -2472,7 +2525,7 @@ function runTests(opt){opt=opt||{};const t0=(typeof performance!=='undefined'?pe
   return{ok:!bad.length,detail:bad.slice(0,3).join('; ')||n+' ajustes verificados'};});
  T('Soluções','Cada ajuste térmico sugerido leva à faixa de congelamento',()=>{let n=0;const bad=[];recs.forEach(r=>TEST_VITS.forEach(v=>{const st=stTest(r,v);const m=analyze(st);diagnose(st,m).filter(f=>f.acts).forEach(f=>f.acts.forEach(a=>{n++;const m2=analyze({...st,recipe:applyOps(st.recipe,a.ops)});const dz=m2.fzVit-m2.fzMid;if(Math.abs(dz)>3.2)bad.push(r.name+' '+v+' °C · '+a.t+' → '+f1(m2.fzVit)+'%');if(a.ops.some(([id,d])=>{const x=st.recipe.find(y=>y.id===id);return d<0&&(!x||+x.g+d<-1e-6);}))bad.push(r.name+': retira mais do que existe');}));}));return{ok:!bad.length,detail:bad.slice(0,3).join('; ')||n+' ajustes verificados'};});
  T('Soluções','Balanceador de açúcares não piora o congelamento',()=>{let n=0;const bad=[];recs.forEach(r=>TEST_VITS.forEach(v=>{const st=stTest(r,v);const b=balance(st);if(!b.ok)return;n++;const m0=analyze(st),m1=analyze({...st,recipe:b.newRecipe});const d0=Math.abs(m0.fzVit-m0.fzMid),d1=Math.abs(m1.fzVit-m1.fzMid);if(d1>Math.max(3,d0)+.3)bad.push(r.name+' '+v+': '+f1(d0)+' → '+f1(d1));if(b.newRecipe.some(x=>!(x.g>=0)))bad.push(r.name+': grama negativa');}));return{ok:!bad.length,detail:bad.slice(0,3).join('; ')||n+' balanceamentos'};});
- T('Soluções','Gerador por alvo: congelamento e sólidos na faixa em todos os tipos',()=>{const fx={sorbetto:[{id:'manga',g:450}],frutta:[{id:'morango',g:350}],gastro:[{id:'gorgonzola',g:80}]};const bad=[];Object.keys(GEN_DEF).forEach(t=>{[-11,-14.5].forEach(v=>{const g=generate({tipo:t,batch:1000,fixed:fx[t]||[{id:'pistache',g:100}],...GEN_DEF[t],stabId:'nx_fredolin',stabGkg:t==='sorbetto'?4:25,vit:v});if(!g.ok){bad.push(t+' '+v+': '+g.msg);return;}const dz=g.m.fzVit-g.m.fzMid;if(Math.abs(dz)>3.2)bad.push(t+' '+v+': '+f1(g.m.fzVit)+'%');const rs=g.m.P.sol;if(g.m.sol<rs[0]-1.5||g.m.sol>rs[1]+1.5)bad.push(t+' '+v+': sólidos '+f1(g.m.sol)+'%');});});return{ok:!bad.length,detail:bad.join('; ')};});
+ T('Soluções','Gerador por alvo: congelamento e sólidos na faixa em todos os tipos e famílias',()=>{const fx={sorbetto:[{id:'manga',g:450}],frutta:[{id:'morango',g:350}],gastro:[{id:'gorgonzola',g:80}],granita:[{id:'limao',g:200}],semifreddo:[{id:'morango',g:150}],paleta_fruta:[{id:'morango',g:400}],froyo:[{id:'morango',g:150}],semacucar:[{id:'cacau',g:40}]};const bad=[];Object.keys(PROF).forEach(t=>{const P=PROF[t],sb=P.like==='sorbetto';(P.proc&&P.proc!=='batch'?[P.serveT]:[-11,-14.5]).forEach(v=>{const g=generate({tipo:t,batch:1000,fixed:fx[t]||[{id:'pistache',g:100}],...genDef(t),stabId:sb?'neutro':'nx_fredolin',stabGkg:sb?4:25,vit:v});if(!g.ok){bad.push(t+' '+v+': '+g.msg);return;}const dz=g.m.fzVit-g.m.fzMid;if(Math.abs(dz)>3.2)bad.push(t+' '+v+': '+f1(g.m.fzVit)+'%');const rs=g.m.P.sol;if(g.m.sol<rs[0]-1.5||g.m.sol>rs[1]+1.5)bad.push(t+' '+v+': sólidos '+f1(g.m.sol)+'%');});});return{ok:!bad.length,detail:bad.join('; ')};});
  /* ---- 5. regressão contra a referência ---- */
  if(typeof GOLDEN!=='undefined')T('Regressão','Métricas das receitas iguais à referência',()=>{const bad=[];let n=0;recs.forEach(r=>{const g=GOLDEN[r.key];if(!g)return;const st=stTest(r);const m=analyze(st);const sc=score(st,m,diagnose(st,m)).total;GOLD_KEYS.forEach((k,i)=>{n++;const a=g[i],b=m[k];if(Math.abs(a-b)>1e-4*Math.max(1,Math.abs(a)))bad.push(r.name+' '+k+' '+a+' → '+(+b).toFixed(4));});n++;if(g[GOLD_KEYS.length]!==sc)bad.push(r.name+' índice '+g[GOLD_KEYS.length]+' → '+sc);});return{ok:!bad.length,detail:bad.slice(0,3).join('; ')||n+' valores conferidos'};});
  /* ---- 6. memória de cálculo e neutros ---- */
@@ -2584,7 +2637,8 @@ function normalizeState(){
  /* ingrediente repetido na receita vira uma linha só (somando as gramas) */
  if(new Set(S.recipe.map(r=>r.id)).size!==S.recipe.length){const by=new Map();S.recipe.forEach(r=>{const e=by.get(r.id);if(e)e.g=Math.round((+e.g+ +r.g)*10)/10;else by.set(r.id,{id:r.id,g:+r.g});});S.recipe=[...by.values()];}
  S.lab=S.lab||{};S.lab.variants=S.lab.variants||[];
- S.lab.gen=S.lab.gen||{tipo:S.tipo,batch:1000,fixed:[{id:'pistache',g:100}],...(GEN_DEF[S.tipo]||GEN_DEF.crema),stabId:'nx_fredolin',stabGkg:25};
+ S.lab.gen=S.lab.gen||{tipo:S.tipo,batch:1000,fixed:[{id:'pistache',g:100}],...genDef(S.tipo),stabId:'nx_fredolin',stabGkg:25};
+ if(!Array.isArray(S.lab.gen.crit))S.lab.gen.crit=['sug','sol','melt'];
  S.lab.sens=S.lab.sens||{id:'',lo:-50,hi:50};
  S.nxEdit=S.nxEdit||{id:null,name:'Neutro Il Fredolin',dose:25,dairy:true,parts:{...NEUTRO_PRESETS.find(n=>n.id==='nx_fredolin').parts},from:'nx_fredolin'};
  S.libTab=S.libTab||'mestres';S.libAuthor=S.libAuthor||'Todos';
@@ -2703,7 +2757,7 @@ const isMac=()=>{try{return /Mac|iPhone|iPad/.test(navigator.platform||navigator
 const kbd=k=>`<kbd>${isMac()?'⌘':'Ctrl '}${k}</kbd>`;
 
 /* ---------- marca ---------- */
-const VERSION='v18.3';
+const VERSION='v18.4';
 const brandHTML=()=>`<div class="brand"><div class="hex"></div><div><b>Il <span>Fredolin</span></b><small>Gelato Lab ${VERSION}${APP_MODE==='app'&&ME.email?' · '+ROLE_N[ROLE]:''}</small></div></div>`;
 
 /* ---------- termômetro da receita: vitrine, serviço ideal (com faixa de incerteza) e freezer numa régua só ---------- */
@@ -3303,11 +3357,31 @@ function labGerar(){
  </div><p class="note">Congelamento é sempre meta obrigatória (${fT(P.fz[0])}–${fT(P.fz[1])}% a ${f1(S.vit)} °C). ${tbase(g.tipo)==='sorbetto'||tbase(g.tipo)==='vegan'?'Os sólidos entram como meta.':'Sólidos resultam das demais metas.'} Se alguma meta for impossível com os ingredientes fixos, o motor a libera e avisa.</p>
  <div class="row"><button class="btn pri" data-a="genRun">Gerar receita</button><button class="btn sm" data-a="genDefaults">Metas padrão do tipo</button></div></div>
  ${r?(r.ok?`<div class="card"><div class="row"><h2 style="margin:0">Receita gerada</h2><span class="sp"></span>${(()=>{const st=stReal(stOf(r.recipe,g.tipo)),gs=score(st,r.m,diagnose(st,r.m)).total;return`<span class="chip ${scoreCls(gs)}">Índice ${gs}</span>`;})()}</div>
-  ${r.dropped.length?`<p class="c-warn" style="margin:8px 0">Com esses ingredientes fixos nem todas as metas cabem juntas; o motor priorizou congelamento, doçura e gordura e chegou o mais perto possível: ${r.dropped.map(k=>({pod:'doçura',fat:'gordura',msnf:'MSNF',sol:'sólidos'})[k]+' '+f1(r.miss[k])+'% (meta '+f1(g[k])+'%)').join(' · ')}.</p>`:''}
+  ${r.dropped.length?`<p class="c-warn" style="margin:8px 0">Com esses ingredientes fixos nem todas as metas cabem juntas; o motor priorizou congelamento, doçura e gordura e chegou o mais perto possível: ${r.dropped.map(k=>({pod:'doçura',fat:'gordura',msnf:'MSNF',sol:'sólidos'})[k]+' '+f1(r.miss[k])+'% ('+(k==='sol'&&genVars(g.tipo).includes('lpd')?'faixa '+fRg(P.sol):'meta '+f1(g[k]))+'%)').join(' · ')}.</p>`:''}
   <div class="tw"><table class="tbl"><thead><tr><th>Ingrediente</th><th class="r">Gramas</th><th class="r">%</th></tr></thead><tbody>${r.recipe.map(x=>`<tr><td>${esc(ING_BY[x.id].n)}</td><td class="r mono">${x.g<10?f1(x.g):f0(x.g)} g</td><td class="r mono t2">${f1(x.g/r.m.tot*100)}%</td></tr>`).join('')}</tbody></table></div>
   <div class="row note" style="gap:16px;margin:10px 0">${[['Congelada',f0(r.m.fzVit)+'%'],['POD',f1(r.m.pod)+'%'],['Gordura',f1(r.m.fat)+'%'],['MSNF',f1(r.m.msnf)+'%'],['Sólidos',f1(r.m.sol)+'%'],['Lactose/água',f1(r.m.lacW)+'%'],['Serviço',f1(r.m.serveT)+' °C']].map(([a,b])=>`<span>${a} <b class="mono" style="color:var(--t1)">${b}</b></span>`).join('')}</div>
   <div class="row"><button class="btn okb" data-a="genToBench">Levar para a bancada</button><button class="btn sm" data-a="genToVar">Adicionar às variações</button></div></div>`
-  :`<div class="card"><p class="c-warn" style="margin:0">${esc(r.msg)}</p></div>`):''}`;}
+  :`<div class="card"><p class="c-warn" style="margin:0">${esc(r.msg)}</p></div>`):''}
+ ${labFront(g)}`;}
+/* etapa 3 · design inverso: alternativas que trocam um critério por outro (fronteira de Pareto) */
+/* no celular, até 8 opções: as melhores de cada critério e as demais espaçadas ao longo do 1º critério */
+const frontShown=F=>{const n=F.front.length,all=[...Array(n).keys()];if(U.genFrAll||n<=8)return all;
+ const pick=new Set(all.filter(i=>F.front[i].best.length));for(let j=0;pick.size<8&&j<8;j++)pick.add(Math.round(j*(n-1)/7));
+ return[...pick].sort((a,b)=>a-b).slice(0,Math.max(8,pick.size));};
+const frontCrits=g=>(g.crit||[]).filter(k=>FRONT_CRIT[k]&&(!FRONT_CRIT[k].maestro||can.cost()));
+function labFront(g){const F=U.genFr,cr=frontCrits(g),fmt=(k,v)=>{const c=FRONT_CRIT[k];return(c.d===2?f2(v):c.d===1?f1(v):f0(v));};
+ const res=F&&F.busy?`<p class="muted" style="margin:10px 0 0">Calculando as alternativas…</p>`:F&&!F.ok?`<p class="c-warn" style="margin:10px 0 0">${esc(F.msg)}</p>`:F&&F.ok?`
+  <p class="note" style="margin:10px 0">${F.tried} combinações de metas testadas dentro da faixa de ${esc(PROF[g.tipo].n)}; ${F.feasible} viraram receitas válidas (congelamento e faixas da família); ${F.front.length===1?'uma só não é superada':F.front.length+' não são superadas'} em todos os critérios escolhidos.${F.front.length===1?' Com estes ingredientes e critérios não há troca a fazer: as metas não têm folga ou uma receita ganha em tudo.':' Nenhuma é a melhor: cada uma ganha num critério e perde em outro. ★ marca a melhor em cada critério.'}</p>
+  <div id="front-tbl" style="display:flex;flex-direction:column;gap:8px">${frontShown(F).map(i=>{const o=F.front[i];return`<div class="front-opt" style="border:1px solid var(--line,rgba(255,255,255,.12));border-radius:10px;padding:10px 12px">
+   <div class="row" style="gap:6px;align-items:baseline"><b>Opção ${i+1}</b>${o.best.length?`<span class="c-gold">★ ${o.best.map(k=>FRONT_CRIT[k].n.toLowerCase()).join(' · ')}</span>`:''}<span class="sp"></span><button class="btn sm" data-a="frPick" data-v="${i}">Usar esta</button></div>
+   <div class="row note" style="gap:14px;margin:6px 0 0">${F.crits.map(k=>`<span>${FRONT_CRIT[k].n.replace(/^(Menor|Menos|Mais|Derrete mais) /,'').replace(/^devagar$/,'derretido')} <b class="mono" style="color:var(--t1)">${fmt(k,o.v[k])}</b> <span class="muted">${FRONT_CRIT[k].u}</span></span>`).join('')}</div>
+   <div class="muted" style="font-size:.85em;margin-top:4px">POD ${f1(o.m.pod)}% · gordura ${f1(o.m.fat)}% · MSNF ${f1(o.m.msnf)}% · sólidos ${f1(o.m.sol)}%</div></div>`;}).join('')}</div>
+  ${F.front.length>frontShown(F).length||U.genFrAll?`<div class="row" style="margin-top:8px"><button class="btn sm" data-a="frAll">${U.genFrAll?'Mostrar só as mais diferentes':'Mostrar todas as '+F.front.length}</button></div>`:''}
+  ${F.crits.some(k=>FRONT_CRIT[k].nat==='H')?`<p class="note" style="margin:8px 0 0">Derretimento e tamanho de cristal são estimativas heurísticas (corrigidas pelos lotes medidos); custo, açúcar, calorias, sólidos e gordura são contas de composição.</p>`:''}`:'';
+ return`<div class="card" id="front-card"><h2>3 · Alternativas e compromissos</h2>
+  <p class="note" style="margin:0 0 10px">Em vez de uma receita só, o motor varia as metas dentro da faixa do tipo, mantém o congelamento e os ingredientes fixos, e mostra só as receitas que nenhuma outra supera em todos os critérios marcados.</p>
+  <div class="chips" role="group" aria-label="Critérios">${Object.entries(FRONT_CRIT).filter(([k,c])=>!c.maestro||can.cost()).map(([k,c])=>`<button data-a="frCrit" data-v="${k}" aria-pressed="${cr.includes(k)}">${c.n}</button>`).join('')}</div>
+  <div class="row" style="margin-top:10px"><button class="btn pri" data-a="frRun"${cr.length<2?' disabled':''}>Mostrar alternativas</button><span class="muted">${cr.length<2?'Escolha pelo menos dois critérios':cr.length+' critérios'}</span></div>${res}</div>`;}
 function labComparar(m){
  const V=S.lab.variants;const all=[{name:'Bancada · '+(S.name||'atual'),recipe:S.recipe,bench:1},...V];
  const ids=[...new Set(all.flatMap(v=>v.recipe.map(r=>r.id)))];
@@ -5718,13 +5792,18 @@ const ACT={
   const g2=Math.round(+r.g*ING_BY[fr].c.glu/ING_BY[to].c.glu*10)/10;const o=S.recipe.find(x=>x.id===to);if(o){o.g=Math.round((+o.g+g2)*10)/10;S.recipe=S.recipe.filter(x=>x!==r);}else{r.id=to;r.g=g2;}
   S.dexForm=to==='dextrose'?'anid':'mono';U.bal=null;render();},
  applyAct:v=>{String(v).split(';').forEach(op=>{const[id,d]=op.split(':');if(!ING_BY[id])return;const r=S.recipe.find(x=>x.id===id);if(r)r.g=Math.max(0,Math.round((+r.g+ +d)*10)/10);else if(+d>0)S.recipe.push({id,g:Math.round(+d*10)/10});});S.recipe=S.recipe.filter(r=>+r.g>0);U.bal=null;render();toast('Ajuste aplicado');},
- genAddFx:()=>{S.lab.gen.fixed.push({id:'morango',g:100});U.gen=null;render();},
- genRmFx:v=>{S.lab.gen.fixed.splice(+v,1);U.gen=null;render();},
- genDefaults:()=>{Object.assign(S.lab.gen,GEN_DEF[S.lab.gen.tipo]);U.gen=null;render();},
+ genAddFx:()=>{S.lab.gen.fixed.push({id:'morango',g:100});U.gen=U.genFr=null;render();},
+ genRmFx:v=>{S.lab.gen.fixed.splice(+v,1);U.gen=U.genFr=null;render();},
+ genDefaults:()=>{Object.assign(S.lab.gen,genDef(S.lab.gen.tipo));U.gen=U.genFr=null;render();},
  genRun:()=>{const g=S.lab.gen;let r=generate({...g,vit:S.vit,proc:S.proc});
   /* modo pote: a receita gerada muda a curva do pote; refaz com a temperatura real da colher */
   if(r.ok&&S.proc.serveFrom==='pote')for(let i=0;i<3;i++){const v=poteServeTemp({tipo:g.tipo,vit:S.vit,recipe:r.recipe,proc:S.proc,brix:S.brix,costs:S.costs});const r2=generate({...g,vit:v,proc:S.proc});if(!r2.ok)break;r=r2;if(Math.abs(poteServeTemp({tipo:g.tipo,vit:v,recipe:r.recipe,proc:S.proc,brix:S.brix,costs:S.costs})-v)<.05)break;}
   U.gen=r;render();},
+ frCrit:k=>{const g=S.lab.gen,c=g.crit;const i=c.indexOf(k);if(i>=0)c.splice(i,1);else c.push(k);U.genFr=null;render();},
+ frAll:()=>{U.genFrAll=!U.genFrAll;render();},
+ frRun:()=>{const g=S.lab.gen,cr=frontCrits(g);if(cr.length<2)return;U.genFr={busy:true};U.genFrAll=false;render();
+  setTimeout(()=>{U.genFr=genFrontier({...g,vit:S.vit,proc:S.proc,costs:can.cost()?S.costs:undefined},cr);render();},30);},
+ frPick:v=>{const o=U.genFr&&U.genFr.front&&U.genFr.front[+v];if(!o)return;const t=o.tgt;Object.assign(S.lab.gen,{pod:t.pod,fat:t.fat,msnf:t.msnf,sol:t.sol});ACT.genRun();toast('Alternativa '+(+v+1)+' gerada: metas atualizadas');},
  genToBench:()=>{if(!U.gen||!U.gen.ok)return;const fx=S.lab.gen.fixed.map(f=>ING_BY[f.id]?ING_BY[f.id].n:'').filter(Boolean);loadRecipe('Lab · '+(fx[0]||PROF[S.lab.gen.tipo].n),S.lab.gen.tipo,S.vit,U.gen.recipe);render();toast('Receita levada para a bancada');},
  varAdd:()=>{addVariant('Variação '+(S.lab.variants.length+1),S.recipe);render();},
  varRm:v=>{S.lab.variants.splice(+v,1);render();},
@@ -5808,8 +5887,8 @@ const INP={
  brix:(v,t)=>{if(v===''||!isFinite(+v))delete S.brix[t.dataset.id];else S.brix[t.dataset.id]=String(clamp(+v,1,85));render();},
  cost:(v,t)=>{if(v===''||!isFinite(+v))delete S.costs[t.dataset.id];else S.costs[t.dataset.id]=String(Math.max(0,+v));render();},
  proc:(v,t)=>{if(v===''||!isFinite(+v))return;const k=t.dataset.k,lim=PROC_LIM[k];S.proc[k]=lim?clamp(+v,lim[0],lim[1]):+v;if(k==='storeT'&&S.proc.serveFrom==='freezer')S.vit=S.proc.storeT;U.bal=null;render();},
- gen:(v,t)=>{if(v===''||!isFinite(+v))return;const k=t.dataset.k,lim=GEN_LIM[k];S.lab.gen[k]=lim?clamp(+v,lim[0],lim[1]):+v;U.gen=null;render();},
- genfg:(v,t)=>{S.lab.gen.fixed[+t.dataset.k].g=num(v,0,+S.lab.gen.batch||1000,0);U.gen=null;render();},
+ gen:(v,t)=>{if(v===''||!isFinite(+v))return;const k=t.dataset.k,lim=GEN_LIM[k];S.lab.gen[k]=lim?clamp(+v,lim[0],lim[1]):+v;U.gen=U.genFr=null;render();},
+ genfg:(v,t)=>{S.lab.gen.fixed[+t.dataset.k].g=num(v,0,+S.lab.gen.batch||1000,0);U.gen=U.genFr=null;render();},
  varName:(v,t)=>{S.lab.variants[+t.dataset.k].name=v;render();},
  varG:(v,t)=>{const V=S.lab.variants[+t.dataset.k];const id=t.dataset.id;const g=num(v,0,1e5,0);const r=V.recipe.find(x=>x.id===id);if(r)r.g=g;else V.recipe.push({id,g});V.recipe=V.recipe.filter(x=>x.g>0||x.id===id);render();},
  sens:(v,t)=>{if(v===''||!isFinite(+v))return;const s=S.lab.sens,k=t.dataset.k;s[k]=k==='lo'?clamp(+v,-95,-1):clamp(+v,1,300);U.sens=null;render();},
@@ -5844,8 +5923,8 @@ const CHG={
  defChk:t=>{U.defChk=U.defChk||{};U.defChk[t.dataset.v]=t.checked;},
  tipo:t=>{S.tipo=t.value;U.bal=null;const P=PROF[t.value];if(P&&P.serveT!=null){S.vit=P.serveT;if(P.proc==='soft'||P.serveCtx==='palito'||P.serveCtx==='fatia')S.proc.serveFrom='vitrine';}},
  proc:t=>{const k=t.dataset.k;S.proc[k]=t.value;if(k==='pastHoldU'&&t.value==='min'&&S.proc.pastHold>60)S.proc.pastHold=30;},
- gen:t=>{const k=t.dataset.k;S.lab.gen[k]=t.value;if(k==='tipo')Object.assign(S.lab.gen,GEN_DEF[t.value]);U.gen=null;},
- genfx:t=>{S.lab.gen.fixed[+t.dataset.k].id=t.value;U.gen=null;},
+ gen:t=>{const k=t.dataset.k;S.lab.gen[k]=t.value;if(k==='tipo')Object.assign(S.lab.gen,genDef(t.value));U.gen=U.genFr=null;},
+ genfx:t=>{S.lab.gen.fixed[+t.dataset.k].id=t.value;U.gen=U.genFr=null;},
  varNew:t=>{if(!t.value)return false;S.lab.variants.forEach(V=>{if(!V.recipe.some(r=>r.id===t.value))V.recipe.push({id:t.value,g:0});});},
  sens:t=>{S.lab.sens.id=t.value;U.sens=null;},
  nxDairy:t=>{S.nxEdit.dairy=t.value==='1';},
