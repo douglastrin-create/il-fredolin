@@ -8,7 +8,7 @@
 | Migração | Situação |
 |---|---|
 | 001 · segurança e versão | **Aplicada em 17/10/2026 22:05** (SQL Editor). Conferida: `ver` ativa, convites exigem e-mail confirmado, 0 markup fora de `fin` (2 valores movidos), gatilho ligado |
-| 002 · permissões de funções | Pronta e testada; aguardando autorização |
+| 002 · permissões de funções | **Aplicada em 17/10/2026 22:10** (SQL Editor). Conferida: anônimo sem EXECUTE nas 6 funções SECURITY DEFINER, logado mantém; search_path fixo nas 2 de gatilho. Security Advisor: restam só o aviso intencional (logado executa SECURITY DEFINER) e a proteção contra senhas vazadas (painel) |
 
 ## Migração 001 (v18): o que muda
 
