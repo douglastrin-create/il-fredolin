@@ -26,10 +26,14 @@ const srv = http.createServer((q, r) => {
 await new Promise(ok => srv.listen(0, ok));
 const base = `http://127.0.0.1:${srv.address().port}/`;
 const fails = []; const check = (ok, msg) => { console.log(`${ok ? '✓' : '✗'} ${msg}`); if (!ok) { fails.push(msg); if (process.env.CI) console.log(`::error title=PWA ${process.argv[2] || 'chromium'}::${msg.replace(/\n/g, ' ')}`); } };
+let annotated = false;
+const ann = (lvl, t, m) => { if (lvl === 'error') annotated = true; if (process.env.CI) console.log(`::${lvl} title=PWA ${process.argv[2] || 'chromium'} ${t}::${String(m).replace(/\n/g, ' | ').slice(0, 900)}`); };
+process.on('exit', c => { if (c && !annotated) ann('error', 'saída', 'código ' + c + ' sem verificação falha (exceção no topo do script?)'); });
+process.on('uncaughtException', e => { ann('error', 'exceção', e && e.stack || e); console.error(e); process.exit(1); });
 process.on('unhandledRejection', e => { if (process.env.CI) console.log(`::error title=PWA ${process.argv[2] || 'chromium'} exceção::${String(e && e.stack || e).replace(/\n/g, ' | ').slice(0, 900)}`); console.error(e); process.exit(1); });
 
 const engName = process.argv[2] || 'chromium'; const eng = { chromium, webkit }[engName];
-let b; try { b = await eng.launch(); } catch (e) { if (process.env.CI) { console.log(`✗ ${engName}: não abriu no CI`); process.exit(1); } console.log(`- ${engName}: não instalado, pulado`); srv.close(); process.exit(0); }
+let b; try { b = await eng.launch(); } catch (e) { if (process.env.CI) { console.log(`✗ ${engName}: não abriu no CI`); ann('error', 'abrir', e && e.message || e); process.exit(1); } console.log(`- ${engName}: não instalado, pulado`); srv.close(); process.exit(0); }
 console.log('motor: ' + engName);
 const ctx = await b.newContext();
 await ctx.route('**/*supabase.co/**', r => r.abort()); await ctx.route('**/fonts.g*/**', r => r.abort());
@@ -102,5 +106,5 @@ const card = await p2.locator('#off-card').innerText();
 check(/Pronto para usar sem internet/.test(card) && /8 de 8/.test(card) && /confere \(SHA-256\)\s*sim/i.test(card.replace(/\n/g, ' ')), 'cartão "Funcionamento offline": pronto, 8 de 8 arquivos, página confere');
 check(/Último backup exportado/.test(card), 'cartão mostra o último backup exportado');
 await b.close(); srv.close();
-console.log(fails.length ? `${fails.length} falha(s)` : 'PWA: tudo certo');
+console.log(fails.length ? `${fails.length} falha(s)` : 'PWA: tudo certo'); ann('notice', 'resumo', fails.length ? fails.length + ' falha(s)' : 'tudo certo');
 process.exit(fails.length ? 1 : 0);
