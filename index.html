@@ -978,6 +978,122 @@ const NEUTRO_STUDIES=[
  {n:'Salep de diferentes orquídeas',where:'Ankara University (Turquia), Turkmen et al., 2021',res:'O teor de glucomanano explica dureza, separação de fases e derretimento; algumas espécies servem melhor ao dondurma, outras não devem ser colhidas.',best:'Gelatos elásticos de leite.'}
 ];
 
+/* ---------- LABORATÓRIO DE ESTABILIZAÇÃO (v18.5): FICHA TÉCNICA DOS COMPONENTES ----------
+   Só entra aqui o que uma fonte consultada afirma. Campo sem fonte fica null e a tela mostra "sem dado registrado".
+   "Inferência do app" marca conclusões tiradas pelo app a partir da fonte (não afirmadas por ela).
+   As notas de 0–5 de NCOMP.f e as doses de NCOMP.dose são PRÁTICA do app (sem medição) e aparecem assim na tela.
+   Fabricante = ficha técnica comercial (útil, mas não revisada por pares). */
+const NREF={
+ guelph:{c:'Goff, H.D. — Ice Cream Technology e-book, Univ. de Guelph, cap. "Stabilizers"',u:'https://books.lib.uoguelph.ca/icecreamtechnologyebook/chapter/stabilizers/',t:'academia'},
+ guelphE:{c:'Goff, H.D. — Ice Cream Technology e-book, Univ. de Guelph, cap. "Emulsifiers"',u:'https://books.lib.uoguelph.ca/icecreamtechnologyebook/chapter/emulsifiers/',t:'academia'},
+ bahram13:{c:'Bahram Parvar, Razavi, Mazaheri Tehrani & Alipour (2013) J. Agr. Sci. Tech. 15:757–769',u:'https://jast.modares.ac.ir/article_15242_3721e4fa10597f0aa6ab442e95508de1.pdf',t:'artigo'},
+ patel:{c:'Patel, D. — Stabilizers, thickeners and gelling agents for the food industry (INFLIBNET, CC BY-NC)',u:'https://ebooks.inflibnet.ac.in/ftp03/chapter/stabilizers-thickeners-and-gelling-agents-for-the-food-industry/',t:'didático'},
+ goyc95:{c:'Goycoolea, Richardson, Morris & Gidley (1995) — xantana com jataí ou konjac: ligação heterotípica',u:'https://digitum.um.es/digitum/bitstream/10201/139110/4/Free%20stoichiometry-and-conformation-of-xanthan-in-synergistic-gelation-with-locust-bean-gum-or-konjac.pdf',t:'artigo'},
+ colony:{c:'Colony Gums — ficha técnica da goma tara',u:'https://www.colonygums.com/uploads/COGU-103_E_DATASHEET_TARA_SHORT.pdf',t:'fabricante'},
+ sosa:{c:'Sosa Ingredients — O que são as pectinas',u:'https://www.sosa.cat/en/que-son-las-pectinas/',t:'fabricante'},
+ jrs:{c:'JRS — Vitacel citrus fiber',u:'https://www.jrs.eu/en/food-ingredients/products/vitacel-citrus-fiber.php',t:'fabricante'},
+ bonnema10:{c:'Bonnema, Kolberg, Thomas & Slavin (2010) J. Am. Diet. Assoc. 110(6):865–868',u:'https://experts.umn.edu/en/publications/gastrointestinal-tolerance-of-chicory-inulin-products/',t:'artigo'},
+ supply:{c:'SupplySide — Getting to the root of tapioca starch',u:'https://www.supplysidesj.com/market-trends-analysis/getting-to-the-root-of-tapioca-starch',t:'revista técnica'},
+ srijun06:{c:'Srijunthongsiri & Pongsawatmanit (2006) Kasetsart J. (Nat. Sci.) 40:203–208',u:'https://www.thaiscience.info/journals/Article/TKJN/10471357.pdf',t:'artigo'},
+ neville17:{c:'Neville, Foster & Harding (2017), Univ. de Nottingham — fibras vegetais em sorvete',u:null,t:'artigo'},
+ turkmen21:{c:'Turkmen et al. (2021), Ankara University — salep e glucomanano',u:null,t:'artigo'}
+};
+/* f(t,src) = fato com fonte; ori = origem; hyd = hidratação; gel = gelificação; leite/acido/calcio = compatibilidade;
+   lim = limitações de processo; ef = efeitos estruturais; nat = natural | fermentação | modificado | processado | animal */
+const nkf=(t,...src)=>({t,src});
+const NKB={
+ lbg:{ori:'Endosperma da semente da alfarrobeira (jataí)',nat:'natural',
+  hyd:nkf('Parcialmente solúvel a frio; só hidrata por completo acima de 85 °C.','patel'),
+  gel:nkf('Não gelifica sozinha. Com xantana forma gel elástico quando aquecida acima de ~60 °C e resfriada; misturar só a frio atrapalha a rede.','goyc95'),
+  leite:nkf('Galactomananas tendem a separar soro com as proteínas do leite; a carragena (0,01–0,02% da mistura) é usada para prevenir.','guelph','bahram13'),
+  acido:nkf('Estável de pH 3 a 11.','patel'),calcio:null,
+  lim:nkf('Abaixo de 85 °C parte da goma fica sem função (o app calcula a fração hidratada pela pasteurização).','patel'),
+  ef:nkf('Aumenta a viscosidade da fase não congelada; com isso retarda o crescimento dos cristais e protege no choque térmico.','guelph'),
+  extra:nkf('Proporção manose:galactose ≈ 4:1 (≈ 3,5 em outra medição): menos galactose, mais sinergia.','patel','goyc95')},
+ guar:{ori:'Endosperma da semente de guar (leguminosa)',nat:'natural',
+  hyd:nkf('Mais solúvel a frio que a jataí; serve a pasteurização rápida. Melhor hidratação em pH 7,5–9.','guelph','patel'),
+  gel:nkf('Não gelifica. Usada com xantana em sobremesas congeladas pela viscosidade; gel com xantana não relatado.','patel','goyc95'),
+  leite:nkf('Como as demais gomas primárias, tende a separar soro em base láctea sem carragena.','guelph'),acido:null,calcio:null,lim:null,
+  ef:nkf('Viscosidade alta a frio; mesmo papel geral de retardar cristais pela viscosidade.','guelph'),
+  extra:nkf('Manose:galactose ≈ 2:1 (≈ 1,55 em outra medição): muito substituída, pouca sinergia.','patel','goyc95')},
+ tara:{ori:'Semente de Caesalpinia spinosa (Peru)',nat:'natural',
+  hyd:nkf('Só funcionalidade parcial a frio; a função completa exige calor no processo.','colony'),
+  gel:nkf('Gel elástico com xantana ou carragena; viscosidade somada com guar e CMC.','colony'),
+  leite:null,acido:nkf('Solução quase neutra (pH 5–7).','colony'),calcio:null,
+  lim:nkf('Em geral usa-se menos tara que jataí para o mesmo efeito; a dose precisa ser testada.','colony'),
+  ef:null,extra:nkf('Manose:galactose ≈ 3:1, entre guar e jataí.','colony')},
+ xan:{ori:'Exopolissacarídeo de fermentação por Xanthomonas campestris',nat:'fermentação',
+  hyd:null,
+  gel:nkf('Não gelifica sozinha; gel com jataí ou konjac após aquecer acima de ~60 °C e resfriar.','goyc95'),
+  leite:null,acido:nkf('Estável de pH 2 a 12; a função depende da força iônica.','patel'),calcio:null,
+  lim:nkf('Pseudoplástica: a viscosidade cai com o cisalhamento.','patel'),
+  ef:nkf('Com amido de mandioca reduziu a retrogradação e a água separada em ciclos de congela-descongela.','srijun06'),extra:null},
+ carr:{ori:'Algas vermelhas',nat:'natural',
+  hyd:nkf('Todas as carragenas dissolvem em água quente; a iota é mais solúvel que a kappa.','patel'),
+  gel:nkf('Kappa e iota gelificam ao esfriar; a textura depende do cátion (K⁺, Ca²⁺). O gel é termorreversível e funde 5–20 °C acima da temperatura de gelificação.','patel'),
+  leite:nkf('Coloide secundário: não é usada sozinha; previne a separação de soro que as outras gomas provocam com as proteínas do leite. Estudo com 0,01–0,02% da mistura: menos firmeza e mais lisura, sem efeito significativo em overrun e viscosidade.','guelph','bahram13'),
+  acido:null,calcio:nkf('Gel depende do cátion presente (Ca²⁺ para iota, K⁺ para kappa).','patel'),lim:null,ef:null,extra:null},
+ cmc:{ori:'Celulose de polpa vegetal modificada quimicamente',nat:'modificado',
+  hyd:nkf('Solúvel em água fria ou quente.','patel'),gel:nkf('Não gelifica no aquecimento.','patel'),
+  leite:null,acido:null,calcio:null,lim:nkf('Dispersões afinam com o cisalhamento e com o aumento de temperatura.','patel'),ef:null,extra:null},
+ pect:{ori:'Casca de citros, polpa de maçã ou de beterraba',nat:'natural',
+  hyd:nkf('A função gelificante ativa a partir de 80–85 °C; dispersar com açúcar (1:5) para não empelotar. Cálcio alto dificulta a dissolução.','sosa'),
+  gel:nkf('Alta metoxila (HM) só gelifica com sólidos solúveis ≥ 60 °Bx e pH 2–3,5. Baixa metoxila (LM) gelifica com íons cálcio, em Brix baixo e ampla faixa de pH.','sosa'),
+  leite:null,acido:nkf('HM exige pH 2–3,5 para gelificar.','sosa'),calcio:nkf('LM depende de cálcio; excesso de cálcio desfaz o gel.','sosa'),
+  lim:nkf('Inferência do app: uma calda de sorbetto (≈ 28–35 °Bx) fica longe dos 60 °Bx, então a pectina HM só engrossa, não forma gel. O app não distingue HM de LM.','sosa'),
+  ef:null,extra:null},
+ citf:{ori:'Fibra da casca de citros',nat:'natural',
+  hyd:nkf('A ativação por cisalhamento alto aumenta a absorção de água (mixer potente ou homogeneizador).','jrs'),
+  gel:null,leite:null,acido:null,calcio:null,
+  lim:nkf('Fibras pouco refinadas deixam sensação pulverulenta.','neville17'),
+  ef:nkf('Controla a recristalização na medida da água que retém e atrasa a primeira gota no derretimento.','neville17'),extra:null},
+ gel:{ori:'Colágeno animal (pele ou ossos)',nat:'animal',
+  hyd:nkf('Hidrata em água morna ou quente; forma solução pouco viscosa.','patel'),
+  gel:nkf('Gelifica ao esfriar em gel elástico, sem sinérese.','patel'),leite:null,acido:null,calcio:null,
+  lim:nkf('Pode não impedir os efeitos do choque térmico; foi substituída na indústria por polissacarídeos vegetais, mais eficazes e baratos.','patel','guelph'),
+  ef:null,extra:null},
+ acacia:{ori:'Exsudado da acácia (África)',nat:'natural',
+  hyd:nkf('Dissolve até 50% em água.','patel'),gel:null,leite:null,acido:null,calcio:null,lim:null,
+  ef:nkf('Viscosidade baixa em comparação com outras gomas.','patel'),extra:null},
+ inu:{ori:'Raiz de chicória (ou agave)',nat:'natural',hyd:null,gel:null,leite:null,acido:null,calcio:null,
+  lim:nkf('Adultos saudáveis toleraram bem até 10 g/dia de inulina nativa e até 5 g/dia de oligofrutose; 10 g/dia de oligofrutose aumentou os sintomas (gases, inchaço).','bonnema10'),
+  ef:null,extra:null},
+ starch:{ori:'Milho (o app trata todo amido como amido de milho)',nat:'natural',
+  hyd:nkf('Amido de milho gelatiniza 10–15 °C acima do de mandioca (≈ 59 °C).','supply'),
+  gel:nkf('Amido nativo dá pasta fraca e borrachuda no calor e gel indesejável ao esfriar; o pré-gelatinizado engrossa a frio.','patel'),
+  leite:null,acido:null,calcio:null,
+  lim:nkf('Amido de mandioca forma pasta (não gel firme), tem ≈ 17% de amilose contra ≈ 25% do milho e é translúcido e neutro. A pasta de mandioca separa água no congela-descongela; a xantana reduz essa separação.','supply','srijun06'),
+  ef:null,extra:null},
+ konj:{ori:'Tubérculo de konjac (substituto do salep)',nat:'natural',hyd:null,
+  gel:nkf('Gel sinérgico com xantana após aquecer e resfriar.','goyc95'),leite:null,acido:null,calcio:null,lim:null,
+  ef:nkf('O teor de glucomanano do salep explica dureza, separação de fases e derretimento do dondurma.','turkmen21'),extra:null},
+ lec:{ori:'Soja ou girassol',nat:'natural',hyd:null,gel:null,leite:null,acido:null,calcio:null,lim:null,ef:null,extra:null},
+ mono:{ori:'Hidrólise parcial de gorduras ou óleos (E471)',nat:'processado',hyd:null,gel:null,leite:null,acido:null,calcio:null,
+  lim:nkf('Estabilizantes e emulsificantes somados ficam abaixo de 0,5% do sorvete. Estudo de 2013 usou 0,15% de E471.','guelphE','bahram13'),
+  ef:nkf('Desloca proteína da superfície da gordura e enfraquece a membrana do glóbulo: textura lisa e seca, bom derretimento.','guelphE'),extra:null}
+};
+/* sinergias e interações documentadas: só qualitativas, cada uma com fonte. Não há coeficiente numérico no app. */
+const NSYN=[
+ {a:'lbg',b:'xan',t:'Gel elástico: aquecer acima de ~60 °C e resfriar; misturar só a frio atrapalha a rede.',src:['goyc95']},
+ {a:'konj',b:'xan',t:'Gel elástico, mesma condição de aquecimento.',src:['goyc95']},
+ {a:'tara',b:'xan',t:'Gel elástico.',src:['colony']},
+ {a:'tara',b:'carr',t:'Gel elástico.',src:['colony']},
+ {a:'tara',b:'guar',t:'Viscosidade somada.',src:['colony']},
+ {a:'tara',b:'cmc',t:'Viscosidade somada.',src:['colony']},
+ {a:'guar',b:'xan',t:'Usadas juntas em sobremesas congeladas pela viscosidade; gel não relatado.',src:['patel']},
+ {a:'xan',b:'starch',t:'Reduz retrogradação e separação de água do amido (estudo com mandioca).',src:['srijun06']},
+ {a:'carr',b:'leite',t:'Previne a separação de soro causada pelas outras gomas com as proteínas do leite.',src:['guelph','bahram13']}
+];
+const NSHORT={lbg:'jataí',guar:'guar',tara:'tara',xan:'xantana',konj:'konjac',carr:'carragena',cmc:'CMC',starch:'amido'};
+const NNAT={natural:'natural',fermentação:'natural (fermentação)',modificado:'modificado quimicamente',processado:'processado (E471)',animal:'animal'};
+/* temas de §23 sem componente próprio no app: o que se sabe e o que falta */
+const NKB_TOPICS=[
+ {n:'Proteínas funcionais',t:'Entram pela receita (leite em pó, WPC, gema), não pelo neutro: o motor conta no MSNF e na proteína, mas não tem modelo funcional próprio para espuma ou emulsão de proteína.',src:[]},
+ {n:'Gema como emulsificante',t:'Foi o emulsificante original do sorvete.',src:['guelphE']},
+ {n:'Polissorbato 80',t:'Éster de sorbitano com ácido oleico; emulsificante sintético. Não está no banco do app (o laboratório não exige sintéticos).',src:['guelphE']},
+ {n:'Fibras solúveis além da inulina (polidextrose, dextrina resistente)',t:'Sem dado de composição conferido no app: não entram em blends até haver ficha com fonte.',src:[]},
+ {n:'Maturação',t:'O app modela a hidratação das gomas na maturação (curva por temperatura e tempo). No estudo de 2013 as misturas maturaram uma noite a 4 °C. Tempo mínimo com fonte: sem dado registrado.',src:['bahram13']}
+];
 /* ---------- GORDURA SÓLIDA (SFC) ----------
    % da gordura que está sólida em cada temperatura, por tipo de gordura. Valores típicos de literatura (curvas
    de RMN de gordura láctea anidra, manteiga de cacau, óleo de coco, estearina tipo karité, óleos de oleaginosas,
@@ -1585,6 +1701,10 @@ function diagnoseCore(st,m){
   if(v>r[1]*1.2)add('warn','Estabilização',STAB_N[k]+' acima da dose ('+f2(v)+'%)','Dose usual '+fRg(r)+'% da mistura.'+(k==='xan'?' Xantana em excesso dá textura elástica, "puxa-puxa".':k==='starch'?' Amido em excesso deixa textura de pudim e sabor farinhento.':k==='mono'?' Mono e diglicerídeos em excesso desestabilizam demais a gordura: textura seca e amanteigada.':''),'Reduza para '+f0(r[1]/100*T)+' g.');}
  if(kp.guar>.03&&!kp.carr&&m.A.dairyG>0)add('info','Estabilização','Guar em base láctea sem carragena','Guar (e jataí) com proteínas do leite podem separar soro na mistura maturada.','Adicione 0,01–0,02% de carragena ('+f1(.015/100*T)+' g) para estabilizar as proteínas.');
  if((kp.lbg>.02||kp.carr>.005)&&pr.pastT<80)add('warn','Estabilização','Goma jataí/carragena sem hidratar','Esses hidrocoloides só se hidratam por completo acima de 80–85 °C. Pasteurizando a '+fT(pr.pastT)+' °C eles trabalham pela metade.','Pasteurize a 85 °C ou troque por guar/xantana (hidratam a frio).');
+ /* fibra fermentável por porção (Bonnema et al., 2010: bem tolerados até 10 g/dia de inulina nativa e 5 g/dia de oligofrutose) */
+ {const por=+pr.portion||90,gi=(m.A.inu||0)/T*por,gf=(m.A.fos||0)/T*por;
+  if(gi>10||gf>5)add('warn','Nutrição','Muita fibra fermentável por porção ('+(gi>10?f1(gi)+' g de inulina':f1(gf)+' g de oligofrutose')+' em '+f0(por)+' g)','Em adultos saudáveis, até 10 g/dia de inulina nativa e 5 g/dia de oligofrutose foram bem tolerados; acima disso aumentam gases e inchaço (Bonnema et al., 2010). Uma porção já passa do limite de um dia.','Reduza a inulina/FOS e complete o corpo com sólidos lácteos, alulose ou polióis.');
+  else if(gi>5||gf>2.5)add('info','Nutrição','Fibra fermentável: '+(gi>5?f1(gi)+' g de inulina':f1(gf)+' g de oligofrutose')+' por porção de '+f0(por)+' g','É metade ou mais do que adultos saudáveis toleraram bem por dia (10 g de inulina nativa, 5 g de oligofrutose; Bonnema et al., 2010).','');}
  if(kp.starch>.3&&pr.pastT<85)add('warn','Estabilização','Amido sem gelatinizar','O amido de milho precisa de 85–90 °C para engrossar completamente.','Leve a 85–90 °C por 1–2 minutos (técnica siciliana).');
  if(m.fat>8&&!m.hasEmul&&tbase(st.tipo)!=='sorbetto')add('info','Estabilização','Sem emulsificante com '+f1(m.fat)+'% de gordura','Emulsificantes controlam a desestabilização parcial da gordura: textura mais seca e cremosa, derretimento mais lento.','Use 2–4% de gema ou 0,2–0,3% de lecitina ('+f1(.25/100*T)+' g).');
  /* ---- 7. Ingredientes específicos ---- */
@@ -2165,15 +2285,16 @@ function analyzeBlend(nx,dairy){
  const P={};NFUN.forEach(([k])=>P[k]=Math.round(prof[k]>0?100*(1-Math.exp(-prof[k]/8)):0));
  const has=k=>(eff[k]||0)>0;const pr=k=>NCOMP[k]&&NCOMP[k].dose;
  for(const k in eff){const r=pr(k);if(!r)continue;const e=eff[k];
-  if(e>r[1]*1.15)notes.push({sev:'warn',t:NCOMP[k].n+' acima da dose ('+f2(e)+'% da mistura; faixa '+fRg(r)+'%)',fix:k==='xan'?'Xantana em excesso dá textura elástica e gomosa.':k==='inu'?'Inulina acima de 4% causa desconforto intestinal.':'Reduza a proporção no blend ou a dose.'});
+  if(e>r[1]*1.15)notes.push({sev:'warn',t:NCOMP[k].n+' acima da dose ('+f2(e)+'% da mistura; faixa '+fRg(r)+'%)',fix:k==='xan'?'Xantana em excesso dá textura elástica e gomosa.':k==='inu'?'Na porção de 90 g isso dá '+f1(e*.9)+' g de inulina. Estudo com adultos saudáveis: até 10 g/dia de inulina nativa foram bem tolerados (Bonnema et al., 2010); conte a inulina de todo o dia.':'Reduza a proporção no blend ou a dose.'});
   else if(e<r[0]*.5&&k!=='acacia'&&k!=='inu')notes.push({sev:'info',t:NCOMP[k].n+' em dose quase simbólica ('+f2(e)+'%)',fix:'Abaixo de '+fT(r[0])+'% o efeito isolado é pequeno; faz sentido apenas como sinergia.'});}
  if(hydro<.15)notes.push({sev:'warn',t:'Hidrocoloides totais baixos ('+f2(hydro)+'% da mistura)',fix:'Gelato artesanal costuma usar 0,2–0,5%. Aumente a dose ou a proporção de gomas.'});
  else if(hydro>.7)notes.push({sev:'warn',t:'Hidrocoloides totais altos ('+f2(hydro)+'%)',fix:'Acima de ~0,6% a textura fica pesada e gomosa e o sabor abafado.'});
  else notes.push({sev:'ok',t:'Hidrocoloides totais na faixa ('+f2(hydro)+'% da mistura)',fix:''});
  if(dairy&&(has('lbg')||has('guar')||has('tara'))&&!has('carr'))notes.push({sev:has('citf')||has('cmc')?'info':'warn',t:'Galactomananas sem carragena em base láctea',fix:'Jataí, guar e tara competem com as caseínas e podem separar soro na mistura maturada. Adicione carragena a 0,01–0,02% da mistura (≈'+f1(dose>0?.015/dose*100:0)+'% do blend).'+(has('citf')||has('cmc')?' A fibra de citros/CMC já reduz esse risco.':'')});
- if(has('lbg')&&has('xan'))notes.push({sev:'info',t:'Sinergia jataí + xantana',fix:'Juntas formam gel elástico: ótimo para segurar o derretimento, mas mantenha a xantana baixa para não ficar "puxa-puxa".'});
- if(has('lbg')&&has('guar'))notes.push({sev:'ok',t:'Jataí + guar: dupla clássica',fix:'O guar dá viscosidade a frio e a jataí controla os cristais após 85 °C.'});
- if(has('tara')&&has('lbg'))notes.push({sev:'ok',t:'Tara complementa a jataí',fix:'Tara tem comportamento intermediário entre guar e jataí e hidrata parcialmente a frio.'});
+ /* sinergias documentadas (NSYN, com fonte); as duas seguintes são prática de formulação, sem fonte registrada */
+ blendSyn(Object.keys(eff),dairy).filter(x=>x.b!=='leite').forEach(x=>notes.push({sev:'info',t:'Sinergia documentada: '+NCOMP[x.a].n+' + '+NCOMP[x.b].n,fix:x.t+' Fonte: '+x.src.map(r=>NREF[r].c).join('; ')+'.'+(x.a==='lbg'&&x.b==='xan'?' Mantenha a xantana baixa para não ficar "puxa-puxa".':'')}));
+ if(has('lbg')&&has('guar'))notes.push({sev:'ok',t:'Jataí + guar: dupla clássica',fix:'O guar dá viscosidade a frio e a jataí controla os cristais após 85 °C. (Prática de formulação; sem fonte registrada para a combinação.)'});
+ if(has('tara')&&has('lbg'))notes.push({sev:'ok',t:'Tara complementa a jataí',fix:'Tara tem comportamento intermediário entre guar e jataí e hidrata parcialmente a frio (Colony Gums, ficha técnica).'});
  if(has('starch'))notes.push({sev:'info',t:'Estabilização por amido (técnica siciliana)',fix:'Cozinhe a 85–90 °C por 1–2 min para gelatinizar; acima de ~3% da mistura a textura vira pudim. Não use em frutas cruas.'});
  if(has('konj')&&(eff.konj||0)>.3)notes.push({sev:'info',t:'Glucomanano alto: textura elástica',fix:'Acima de ~0,3% o gelato estica e quase não derrete (estilo dondurma). Para vitrine italiana, fique em 0,1–0,2% e combine com jataí.'});
  if(has('gel'))notes.push({sev:'info',t:'Contém gelatina animal',fix:'Não serve para receitas veganas; hidrate acima de 60 °C.'});
@@ -2184,6 +2305,19 @@ function analyzeBlend(nx,dairy){
  if(!has('lec')&&!has('mono')&&!has('acacia')&&dairy)notes.push({sev:'info',t:'Sem emulsificante no blend',fix:'Em bases com 8%+ de gordura, emulsificantes deixam a textura mais seca e o derretimento mais lento (ou use gema na receita).'});
  return{sh,eff,P,hyd,hydro,dose,notes,costKg:cost,costPerKgMix:cost*nx.dose/1000};
 }
+/* sinergias e interações documentadas presentes num conjunto de componentes (qualitativas; sem coeficiente) */
+function blendSyn(keys,dairy){const K=new Set(keys);return NSYN.filter(x=>K.has(x.a)&&(x.b==='leite'?!!dairy:K.has(x.b)));}
+/* componentes que não são de origem natural (o laboratório não exige sintéticos) */
+const blendNonNat=parts=>Object.keys(parts||{}).filter(k=>+parts[k]>0&&NKB[k]&&!['natural','fermentação'].includes(NKB[k].nat));
+/* resultados observados nos lotes que usaram o blend (comparação observacional: os lotes diferem em outras coisas) */
+function blendObserved(id,lots){const mean=a=>a.length?a.reduce((x,y)=>x+y,0)/a.length:null;const num=v=>v!=null&&v!==''&&isFinite(+v)?+v:null;
+ const L=(lots||[]).filter(l=>l&&!l.deleted&&Array.isArray(l.recipe)&&l.recipe.some(r=>r.id===id&&+r.g>0));
+ const melt=[],dMelt=[],ov=[],icy=[],sens={gelo:[],corpo:[],cremoso:[],derr:[]};
+ L.forEach(l=>{const me=l.meas||{};const m=num(me.melt10);if(m!=null){melt.push(m);const p=l.pred&&num(l.pred.melt10);if(p!=null)dMelt.push(m-p);}
+  const o=measuredOverrun(me);if(o!=null&&isFinite(o))ov.push(o);
+  const d=num(me.icyDay);if(d!=null)icy.push(d);const se=l.sens||{};for(const k in sens){const v=num(se[k]);if(v!=null)sens[k].push(v);}});
+ const S={};for(const k in sens)S[k]={n:sens[k].length,v:mean(sens[k])};
+ return{n:L.length,melt:{n:melt.length,v:mean(melt),bias:mean(dMelt),nb:dMelt.length},ov:{n:ov.length,v:mean(ov)},icy:{n:icy.length,v:mean(icy)},sens:S,ids:L.map(l=>l.id)};}
 /* troca o estabilizante da receita pelo blend na dose indicada */
 function withBlend(st,ingId,doseGkg){const isStab=r=>{const i=ING_BY[r.id];return i&&(i.cat==='Estabilizantes'||i.cat==='Meus neutros')&&i.key!=='starch';};
  const base=(st.recipe||[]).filter(r=>!isStab(r));const tot=base.reduce((a,r)=>a+(+r.g||0),0);const g=Math.round(tot*doseGkg/(1000-doseGkg)*10)/10;
@@ -2592,7 +2726,8 @@ const MODEL_NAT={ph:['heurístico','Estimado pela fonte ácida dominante e pelo 
  quenelle:['heurístico','A fração de gelo vem da curva de congelamento; a coesão e a janela racha/desaba são regras práticas ajustadas pelos testes registrados.'],
  'ice-volume':['semiempírico','Volume de gelo calculado pela curva de congelamento e pelo ar previsto; a relação com a dureza segue a literatura (Muse & Hartel).'],
  melt:['heurístico','Regra prática a partir de sólidos, gordura e estabilizantes; os lotes com derretimento medido corrigem o valor.'],
- 'sensory-temperature':['heurístico','Queda de ~2,5% da doçura percebida por °C abaixo de −12 °C: coeficiente sem painel sensorial próprio.']};
+ 'sensory-temperature':['heurístico','Queda de ~2,5% da doçura percebida por °C abaixo de −12 °C: coeficiente sem painel sensorial próprio.'],
+ 'stabilizer-function':['heurístico','Notas de 0 a 5 por componente (prática de formulação, sem medição) somadas pela dose; sinergias não entram na conta, só como descrição com fonte. Os lotes medidos mostram o resultado real.']};
 const natTag=id=>{const n=MODEL_NAT[id];if(!n)return'';const cal=id==='overrun'&&typeof CAL!=='undefined'&&CAL.on&&CAL.counts&&CAL.counts.ov?' · calibrado por '+CAL.counts.ov+' lote(s)':'';
  return` <span class="chip nat" title="${esc(n[1])}" aria-label="${esc(n[0]+cal+'. '+n[1])}">${esc(n[0]+cal)}</span>`;};
 const norm=s=>String(s).normalize('NFD').replace(/[̀-ͯ]/g,'').toLowerCase();
@@ -2757,7 +2892,7 @@ const isMac=()=>{try{return /Mac|iPhone|iPad/.test(navigator.platform||navigator
 const kbd=k=>`<kbd>${isMac()?'⌘':'Ctrl '}${k}</kbd>`;
 
 /* ---------- marca ---------- */
-const VERSION='v18.4';
+const VERSION='v18.5';
 const brandHTML=()=>`<div class="brand"><div class="hex"></div><div><b>Il <span>Fredolin</span></b><small>Gelato Lab ${VERSION}${APP_MODE==='app'&&ME.email?' · '+ROLE_N[ROLE]:''}</small></div></div>`;
 
 /* ---------- termômetro da receita: vitrine, serviço ideal (com faixa de incerteza) e freezer numa régua só ---------- */
@@ -3983,16 +4118,66 @@ function crNeutros(m){
     <div class="simbar"><span class="muted" style="font-size:12px">${Object.keys(b.eff).filter(k=>NSTYLE[k]).map(k=>`<span style="color:${NSTYLE[k].col}">■</span> ${esc(NCOMP[k].n)}`).join(' · ')}${E.dairy?' · <span style="color:#f0ece4">●</span> caseínas':''} · <span class="c-ice">▪</span> água</span></div></div>
    <div class="card">${seal(p.perfect,'Rede equilibrada · neutro de padrão profissional','Hidratação completa, água imobilizada na faixa ideal e caseínas estáveis.')}
     ${pills(p.pills)}
-    <div style="margin-top:12px">${NFUN.map(([k,n])=>`<div style="margin-bottom:8px"><div class="row" style="justify-content:space-between"><span class="t2" style="font-size:12.5px">${n}</span><span class="mono" style="font-size:11px">${b.P[k]}</span></div>${rbar(b.P[k],[55,85],0,100)}</div>`).join('')}</div></div>
+    <p class="note" style="margin:10px 0 0">Perfil de funções${natTag('stabilizer-function')}</p>
+    <div style="margin-top:8px">${NFUN.map(([k,n])=>`<div style="margin-bottom:8px"><div class="row" style="justify-content:space-between"><span class="t2" style="font-size:12.5px">${n}</span><span class="mono" style="font-size:11px">${b.P[k]}</span></div>${rbar(b.P[k],[55,85],0,100)}</div>`).join('')}</div></div>
   </div></div>
  ${hydCard(E,{...S.proc,pastT})}
  ${nxDesignCard(E)}
  <div class="card"><h2>Avaliação do blend</h2>${b.notes.map(n=>findHTML({sev:n.sev,area:'Neutro',title:n.t,why:'',fix:n.fix})).join('')}</div>
+ ${nkbCard(E)}
+ ${nxCompareCard(E)}
  <div class="card"><div class="row"><h2 style="margin:0">Teste na receita da bancada</h2><span class="sp"></span><button class="btn pri" data-a="nxTest"${m.empty?' disabled':''}>Simular troca</button></div>
   ${T?`<div class="tw" style="margin-top:10px"><table class="tbl"><thead><tr><th>Parâmetro</th><th class="r">Atual</th><th class="r">Com o blend</th></tr></thead><tbody>
    ${[['Índice',x=>x.sc,0],['Estabilizantes (%)',x=>x.m.hydro,2],['Congelada na vitrine (%)',x=>x.m.fzVit,0],['Cristalização',x=>x.m.ci,0],['Derretimento',x=>x.m.melt,0],['Overrun (%)',x=>x.m.ov,0],...(can.cost()?[['Custo (R$/kg)',x=>x.m.costKg,2]]:[])].map(([n,fn,d])=>`<tr><td>${n}</td><td class="r mono">${d===2?f2(fn(T.a)):f0(fn(T.a))}</td><td class="r mono c-ice">${d===2?f2(fn(T.b)):f0(fn(T.b))}</td></tr>`).join('')}</tbody></table></div>`:'<p class="note">Troca os estabilizantes da receita da bancada por este blend na dose indicada e compara.</p>'}</div>
  <div class="card flat"><p class="note" style="margin:0"><b style="color:var(--t2)">Como ler a simulação.</b> Cada goma aparece como cadeia com a forma real da molécula: jataí e guar longas e flexíveis (guar ramificada), xantana rígida, carragena em dupla hélice ligando caseínas, gelatina em tripla hélice, fibra de citros em feixes, inulina e acácia como glóbulos, lecitina e mono-diglicerídeos como tensoativos em gotas de gordura. A quantidade de cadeias segue a dose real na calda; o quanto cada uma se estende segue a cinética de hidratação (temperatura × tempo) do seu processo: abaixo da temperatura de hidratação elas ficam enoveladas. Os pontos azuis fortes são a água imobilizada pela rede; os fracos, água livre que vira gelo. Os cristais nos cantos crescem até o tamanho previsto.</p></div>`;}
 
+/* ---------- LABORATÓRIO DE ESTABILIZAÇÃO (v18.5): ficha técnica com fonte e comparação de blends ---------- */
+function nkbSrc(list,refs){return(list||[]).map(r=>{let i=refs.indexOf(r);if(i<0){refs.push(r);i=refs.length-1;}return`<sup class="mono c-ice">[${i+1}]</sup>`;}).join('');}
+function nkbRefs(refs){return refs.length?`<ol class="note" style="margin:10px 0 0;padding-left:20px">${refs.map(r=>{const R=NREF[r];return`<li>${esc(R.c)}${R.t==='fabricante'?' <span class="muted">(fabricante)</span>':''}${R.u?` · <a href="${esc(R.u)}" target="_blank" rel="noopener">abrir</a>`:''}</li>`;}).join('')}</ol>`:'';}
+function nkbCard(E){const inBlend=Object.keys(E.parts).filter(k=>NKB[k]&&+E.parts[k]>0);const all=Object.keys(NKB);
+ const sel=NKB[U.nkbSel]?U.nkbSel:(inBlend[0]||'lbg'),K=NKB[sel],nc=NCOMP[sel],refs=[];
+ const row=(lbl,v)=>`<div class="kv" style="display:block;padding:7px 0"><span class="t2" style="font-size:12px">${lbl}</span><div>${v&&v.t?esc(v.t)+nkbSrc(v.src,refs):'<span class="t3" style="font-family:var(--fb);font-style:italic">sem dado registrado</span>'}</div></div>`;
+ const syn=NSYN.filter(x=>x.a===sel||x.b===sel);
+ return`<div class="card" id="nkb-card"><h2>Ficha técnica dos componentes</h2>
+  <p class="note" style="margin:0 0 10px">Só aparece o que uma fonte consultada afirma; o resto fica como "sem dado registrado". Sinergias são descritas, sem coeficiente numérico.</p>
+  <div class="chips" role="group" aria-label="Componente">${all.map(k=>`<button data-a="nkbSel" data-v="${k}" aria-pressed="${k===sel}">${inBlend.includes(k)?'● ':''}${esc(NCOMP[k].n)}</button>`).join('')}</div>
+  <div style="margin-top:12px"><div class="row" style="gap:8px;align-items:baseline"><h3 style="margin:0">${esc(nc.n)}</h3><span class="chip ${K.nat==='natural'||K.nat==='fermentação'?'ok':'warn'}">${esc(NNAT[K.nat]||K.nat)}</span></div>
+   <p class="muted" style="font-size:12px;margin:4px 0 6px">${esc(K.ori)}</p>
+   ${row('Hidratação e ativação',K.hyd)}${row('Gelificação',K.gel)}${row('Com leite (caseínas)',K.leite)}${row('Acidez',K.acido)}${row('Cálcio',K.calcio)}${row('Limites de processo',K.lim)}${row('Efeito estrutural',K.ef)}${row('Estrutura química',K.extra)}
+   <div class="kv" style="display:block;padding:7px 0"><span class="t2" style="font-size:12px">Sinergias e interações documentadas</span><div>${syn.length?syn.map(x=>`<div>${esc(x.a===sel?(x.b==='leite'?'proteínas do leite':NCOMP[x.b].n):NCOMP[x.a].n)}: ${esc(x.t)}${nkbSrc(x.src,refs)}</div>`).join(''):'<span class="t3" style="font-family:var(--fb);font-style:italic">sem dado registrado</span>'}</div></div>
+   <div class="kv" style="display:block;padding:7px 0"><span class="t2" style="font-size:12px">No modelo do app</span><div>${nc.dose?'Dose usual '+fRg(nc.dose)+'% da mistura · ':''}hidratação ${nc.hyd>20?'a '+nc.hyd+' °C':'a frio'} · funções ${NFUN.filter(([k])=>nc.f&&nc.f[k]).map(([k,n])=>n.toLowerCase()+' '+nc.f[k]).join(', ')||'—'}. <span class="muted">Prática do app, sem medição própria.</span></div></div>
+   ${nkbRefs(refs)}</div>
+  <details style="margin-top:10px"><summary class="t2" style="cursor:pointer;font-size:13px">Outros temas: proteínas, emulsificantes, fibras, maturação (${NKB_TOPICS.length})</summary>${(()=>{const r2=[];const h=NKB_TOPICS.map(x=>`<div class="kv" style="display:block;padding:8px 0"><b style="color:var(--t1)">${esc(x.n)}</b><div class="note" style="margin:2px 0 0">${esc(x.t)}${nkbSrc(x.src,r2)}</div></div>`).join('');return h+nkbRefs(r2);})()}</details></div>`;}
+/* blends disponíveis para comparar: o que está no editor, os seus e os de referência */
+const nxPool=E=>[{...E,id:'cur',name:(E.name||'Em edição')+' (no editor)',lotId:E.id}].concat(NXLIB.map(n=>({...n,lotId:n.id})),NEUTRO_PRESETS.map(n=>({...n,lotId:n.id})));
+function nxCompareRows(list,dairy,pr){return list.map(nx=>{const b=analyzeBlend(nx,dairy);const keys={};for(const k in b.sh)if(NCOMP[k]&&NCOMP[k].dose)keys[k]=b.sh[k];
+  const has=k=>(b.eff[k]||0)>0,galacto=has('lbg')||has('guar')||has('tara');
+  const floc=dairy&&galacto&&!has('carr')&&!(has('citf')&&b.eff.citf>.1)&&!has('cmc');
+  const tMin=Object.keys(keys).length?hydMinT(keys,pr):null;
+  return{nx,b,tMin,floc,nonNat:blendNonNat(nx.parts),syn:blendSyn(Object.keys(b.eff),dairy),obs:nx.lotId?blendObserved(nx.lotId,LOTS):null};});}
+function nxCompareCard(E){const pool=nxPool(E);let ids=(U.nxCmp||['cur',E.from&&E.from!==E.id?E.from:'nx_goff']).filter(id=>pool.some(n=>n.id===id));U.nxCmp=ids;
+ const dairy=U.nxCmpDairy!=null?U.nxCmpDairy:!!E.dairy,pr={...S.proc};const R=nxCompareRows(ids.map(id=>pool.find(n=>n.id===id)),dairy,pr);
+ const ob=(r,fn)=>!r.obs||!r.obs.n?'<span class="muted">—</span>':fn(r.obs);
+ const rows=[
+  ['Dose',r=>f1(r.nx.dose)+' g/kg'],
+  ['Hidrocoloides na mistura',r=>f2(r.b.hydro)+'%'],
+  ['Pasteurização para hidratar 95%',r=>r.tMin==null?(Object.keys(r.b.sh).some(k=>NCOMP[k]&&NCOMP[k].dose)?'<span class="c-warn">não chega até 95 °C</span>':'—'):(r.tMin<=40?'a frio':'≥ '+r.tMin+' °C')+` <span class="muted">(${fT(pr.pastHold)} ${pr.pastHoldU||'s'})</span>`],
+  ...(dairy?[['Separação de soro com leite',r=>r.floc?'<span class="c-warn">risco</span>':'<span class="c-ok">protegido</span>']]:[]),
+  ['Origem',r=>r.nonNat.length?'<span class="c-warn">'+esc(r.nonNat.map(k=>NCOMP[k].n).join(', '))+'</span>':'<span class="c-ok">natural</span>'],
+  ['Sinergias documentadas',r=>r.syn.length?esc(r.syn.map(x=>x.b==='leite'?'carragena + leite':(NSHORT[x.a]||x.a)+' + '+(NSHORT[x.b]||x.b)).join(', ')):'<span class="muted">nenhuma</span>'],
+  ['Anti-recristalização (estimativa)',r=>`<span class="mono">${r.b.P.anti}</span>`],['Corpo (estimativa)',r=>`<span class="mono">${r.b.P.corpo}</span>`],['Resistência ao derretimento (estimativa)',r=>`<span class="mono">${r.b.P.derr}</span>`],
+  ...(can.cost()?[['Custo por kg de calda',r=>'R$ '+f2(r.b.costPerKgMix)]]:[]),
+  ['Lotes feitos com o blend',r=>r.obs?String(r.obs.n):'<span class="muted">salve o blend</span>'],
+  ['Derretido em 10 min (medido)',r=>ob(r,o=>o.melt.n?f0(o.melt.v)+'% <span class="muted">('+o.melt.n+')</span>'+(o.melt.nb?' · '+(o.melt.bias>=0?'+':'')+f0(o.melt.bias)+' vs previsto':''):'<span class="muted">sem medição</span>')],
+  ['Overrun medido',r=>ob(r,o=>o.ov.n?f0(o.ov.v)+'% <span class="muted">('+o.ov.n+')</span>':'<span class="muted">sem medição</span>')],
+  ['Sensorial "sem gelo" (1–5)',r=>ob(r,o=>o.sens.gelo.n?f1(o.sens.gelo.v)+' <span class="muted">('+o.sens.gelo.n+')</span>':'<span class="muted">sem ficha</span>')],
+  ['Gelo percebido no dia',r=>ob(r,o=>o.icy.n?f0(o.icy.v)+' <span class="muted">('+o.icy.n+')</span>':'<span class="muted">não registrado</span>')]];
+ return`<div class="card" id="nxcmp-card"><h2>Comparar blends</h2>
+  <p class="note" style="margin:0 0 10px">Até 4 blends lado a lado: o que o modelo calcula e o que os seus lotes mediram.</p>
+  <div class="chips" role="group" aria-label="Uso">${[[1,'Base láctea'],[0,'Sorbetto / vegano']].map(([v,n])=>`<button data-a="nxCmpUse" data-v="${v}" aria-pressed="${!!v===dairy}">${n}</button>`).join('')}</div>
+  <div class="chips" role="group" aria-label="Blends" style="margin-top:8px">${pool.map(n=>`<button data-a="nxCmpT" data-v="${esc(n.id)}" aria-pressed="${ids.includes(n.id)}"${!ids.includes(n.id)&&ids.length>=4?' disabled':''}>${esc(n.name)}</button>`).join('')}</div>
+  ${R.length?`<div class="tw" style="margin-top:12px"><table class="tbl" id="nxcmp-tbl"><thead><tr><th></th>${R.map(r=>`<th class="r">${esc(r.nx.name)}</th>`).join('')}</tr></thead><tbody>${rows.map(([n,fn])=>`<tr><td class="t2">${n}</td>${R.map(r=>`<td class="r">${fn(r)}</td>`).join('')}</tr>`).join('')}</tbody></table></div>`:'<p class="muted">Escolha os blends.</p>'}
+  <p class="note" style="margin:10px 0 0">Funções de 0 a 100: ${natTag('stabilizer-function')||'estimativa prática'}. Os resultados dos lotes são observação, não experimento: os lotes diferem também em receita e processo. Para isolar o efeito do blend, use Lotes → Experimentos com a dose do neutro como fator.</p></div>`;}
 /* ==== 56-atelie.js ==== */
 /* ===================== CREATOR · LABORATÓRIO (v17) =====================
    1. Processo: história térmica da calda até a boca, etapa por etapa, com a microestrutura calculada
@@ -5810,6 +5995,9 @@ const ACT={
  varToBench:v=>{const x=S.lab.variants[+v];if(!x)return;S.recipe=JSON.parse(JSON.stringify(x.recipe));S.name=x.name;S.page='bancada';render();toast(x.name+' na bancada');},
  sensRun:()=>{const s=S.lab.sens;U.sens=sweep(S,s.id,+s.lo,+s.hi,11);render();},
  sensApply:v=>{const r=S.recipe.find(x=>x.id===S.lab.sens.id);if(r){r.g=+v;U.sens=null;render();toast('Aplicado na bancada');}},
+ nkbSel:v=>{U.nkbSel=v;render();},
+ nxCmpT:v=>{const c=U.nxCmp||[];const i=c.indexOf(v);if(i>=0)c.splice(i,1);else if(c.length<4)c.push(v);U.nxCmp=c;render();},
+ nxCmpUse:v=>{U.nxCmpDairy=v==='1';render();},
  nxLoad:v=>{const n=NEUTRO_PRESETS.find(x=>x.id===v)||NXLIB.find(x=>x.id===v);if(!n)return;const own=NXLIB.some(x=>x.id===v);S.nxEdit={id:own?n.id:null,name:own?n.name:n.name+' (cópia)',dose:n.dose,dairy:n.dairy!=null?n.dairy:S.nxEdit.dairy,parts:{...n.parts},from:own?null:v};U.nxTest=null;render();},
  nxNew:()=>{S.nxEdit={id:null,name:'Meu neutro',dose:5,dairy:true,parts:{lbg:40,guar:30,carr:5,dex:425}};U.nxTest=null;render();},
  nxRm:v=>{delete S.nxEdit.parts[v];U.nxTest=null;render();},

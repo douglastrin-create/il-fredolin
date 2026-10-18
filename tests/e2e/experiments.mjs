@@ -84,5 +84,28 @@ if (nT2 > 8) { await pg.click('#front-card button[data-a="frAll"]'); await pg.wa
   check(await pg.locator('#front-tbl .front-opt').count() === nT2, '"Mostrar todas" lista todas as opções'); }
 await pg.evaluate(() => { S.lab.gen.crit = ['sug']; U.genFr = null; renderNow(); });
 check(await pg.locator('#front-card button[data-a="frRun"]').isDisabled(), 'com um critério só, o botão fica desativado');
+// Laboratório de estabilização (v18.5): ficha técnica com fonte e comparação de blends com lotes medidos
+await pg.evaluate(() => { S.page = 'creator'; S.creatorTab = 'neutros'; S.nxEdit = { id: null, name: 'Teste', dose: 4, dairy: true, parts: { lbg: 50, xan: 20, guar: 30 }, from: 'nx_goff' }; U.nkbSel = null; U.nxCmp = null; U.nxCmpDairy = null; renderNow(); });
+const nkb = await pg.locator('#nkb-card').innerText();
+check(/Goma jataí/.test(nkb) && /85 °C/.test(nkb) && /\[1\]/.test(nkb) && /abrir/.test(nkb), 'ficha da jataí com hidratação a 85 °C e fonte numerada');
+await pg.click('#nkb-card button[data-a="nkbSel"][data-v="lec"]'); await pg.waitForTimeout(100);
+const lec = await pg.locator('#nkb-card').innerText();
+check((lec.match(/sem dado registrado/g) || []).length >= 6, 'lecitina: campos sem fonte aparecem como "sem dado registrado"');
+await pg.click('#nkb-card button[data-a="nkbSel"][data-v="pect"]'); await pg.waitForTimeout(100);
+check(/60 °Bx/.test(await pg.locator('#nkb-card').innerText()) && /Inferência do app/.test(await pg.locator('#nkb-card').innerText()), 'pectina: condição de gel com fonte e inferência marcada');
+const aval = await pg.locator('#main').innerText();
+check(/Sinergia documentada/.test(aval) && /Goycoolea/.test(aval), 'avaliação do blend cita a fonte da sinergia jataí + xantana');
+// lote medido com o Goff e comparação
+await pg.evaluate(() => { const L = { id: 'e2e-nx', code: 'NX1', date: '2026-10-18', tipo: 'crema', vit: -12, recipe: [{ id: 'leite', g: 600 }, { id: 'nx_goff', g: 2.5 }], proc: {}, meas: { melt10: 42, ov: 33, icyDay: 5 }, pred: { melt10: 50 }, sens: { gelo: 4 } }; LOTS.push(L); renderNow(); });
+const cmp = await pg.locator('#nxcmp-tbl').innerText();
+check(/Clássico acadêmico/.test(cmp) && /no editor/.test(cmp), 'comparação mostra o blend em edição e o de referência');
+check(/42%/.test(cmp) && /−8|-8/.test(cmp) && /33%/.test(cmp), 'comparação traz o derretimento e overrun medidos do lote e o desvio do previsto');
+check(/Separação de soro/.test(cmp) && /risco/.test(cmp) && /protegido/.test(cmp), 'risco de soro: blend sem carragena × clássico com carragena');
+await pg.click('#nxcmp-card button[data-a="nxCmpT"][data-v="nx_migoya"]'); await pg.waitForTimeout(150);
+check(/Mono e diglicerídeos/.test(await pg.locator('#nxcmp-tbl').innerText()), 'Migoya aparece com componente não natural marcado');
+await pg.click('#nxcmp-card button[data-a="nxCmpUse"][data-v="0"]'); await pg.waitForTimeout(150);
+check(!/Separação de soro/.test(await pg.locator('#nxcmp-tbl').innerText()), 'em sorbetto a linha de soro some');
+check(await pg.evaluate(() => document.documentElement.scrollWidth <= 390), 'laboratório sem rolagem horizontal a 390 px');
+await pg.evaluate(() => { LOTS = LOTS.filter(L => L.id !== 'e2e-nx'); });
 check(!errs.length, 'sem erros de página ' + errs.join(' | '));
 await b.close(); srv.close(); process.exit(fails.length ? 1 : 0);

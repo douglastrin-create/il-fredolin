@@ -244,6 +244,32 @@ A tela diz quantas combinações foram testadas, quantas ficaram viáveis e quan
 
 **Limite conhecido:** no "sem açúcar" o gerador chega ao corpo com até ~16% de inulina. É tecnicamente possível, mas é muita fibra por porção. Reduzir isso pede alulose ou polidextrose entre as variáveis, o que muda a doçura e o PAC; ficou para uma rodada própria.
 
+## 5-I. v18.5 — laboratório de estabilização (especificação §22–23)
+
+**Auditoria do laboratório de neutros existente:** já tinha 16 componentes, 9 blends de mestres/tradições/academia com fonte, 4 estudos promissores, cinética de hidratação por temperatura e tempo, simulação de partículas, desenho de blend por objetivo e teste na receita. Problemas:
+
+| Problema | Por que importa |
+|---|---|
+| Notas de função 0–5 e doses usuais sem fonte nem etiqueta | Pareciam medição; são prática de formulação |
+| Hidratação, compatibilidade e limites só implícitos | A tela não dizia de onde vinha o dado nem o que faltava |
+| Duas "sinergias" sem fonte (jataí + guar, tara + jataí) | Viravam afirmação científica |
+| "Inulina acima de 4% causa desconforto" | Número sem fonte |
+| Nenhuma ligação entre blend e lotes medidos | Não dava para comparar blends autorais pelo resultado real |
+
+**Ficha técnica por componente (`NKB`):** origem e natureza (natural, fermentação, modificado, processado, animal), hidratação/ativação, gelificação, comportamento com leite, acidez e cálcio, limites de processo, efeito estrutural, estrutura química. Cada fato cita a fonte (número e link); campo sem fonte fica **"sem dado registrado"** (ex.: hidratação da xantana, tudo da lecitina, tempo mínimo de maturação). Conclusões do app ficam marcadas como **"Inferência do app"** (ex.: calda de sorbetto, ≈ 28–35 °Bx, não chega aos 60 °Bx que a pectina HM exige para gelificar: ali ela só engrossa). Fichas de fabricante aparecem como "(fabricante)".
+
+**Sinergias (`NSYN`):** 9 interações, todas descritivas e com fonte. **Não existe coeficiente numérico de sinergia**; o perfil de funções continua aditivo, declarado no registro de modelos (`stabilizer-function`, heurístico, com etiqueta na tela). As duas combinações sem fonte agora dizem que são prática de formulação.
+
+**Temas sem componente próprio** (com o que se sabe e o que falta): proteínas funcionais, gema, polissorbato 80 (fora do banco: o laboratório não exige sintéticos), fibras solúveis além da inulina, maturação. O amido de mandioca entrou como conhecimento (gelatiniza ≈ 59 °C, 10–15 °C abaixo do milho; forma pasta, não gel; xantana reduz a separação de água no congela-descongela), não como componente: mexeria em ~15 pontos do motor que tratam amido de forma especial, sem medição que justifique.
+
+**Comparar blends (até 4):** o blend em edição, os seus e os de referência. Modelo: dose, hidrocoloides na mistura, pasteurização mínima para hidratar 95% no seu patamar, risco de soro em base láctea, origem (com os não naturais destacados), sinergias documentadas presentes, perfil de funções (estimativa), custo (só Maestro). **Lotes feitos com o blend:** derretimento em 10 min medido e desvio contra o previsto, overrun, ficha sensorial "sem gelo", dia em que o gelo apareceu. A tela avisa que é observação, não experimento, e indica Experimentos (DoE) para isolar o efeito.
+
+**Inulina:** o texto cita Bonnema et al. (2010): adultos saudáveis toleraram bem até 10 g/dia de inulina nativa e 5 g/dia de oligofrutose. Regra nova no laudo, "fibra fermentável por porção": aviso quando uma porção passa do tolerado num dia, informação a partir da metade. Isso torna visível o limite do "sem açúcar" registrado na v18.4 (≈ 15 g de inulina por porção de 90 g na receita gerada).
+
+**Fontes consultadas nesta rodada:** Goff (Guelph), caps. Stabilizers e Emulsifiers; Bahram Parvar et al. (2013, J. Agr. Sci. Tech.); Patel (INFLIBNET); Goycoolea et al. (1995); Bonnema et al. (2010); Srijunthongsiri & Pongsawatmanit (2006); SupplySide (amido de mandioca); fichas de fabricante Colony Gums (tara), Sosa (pectinas), JRS (fibra de citros). Os estudos de Nottingham (2017) e Ankara (2021), que já estavam no app, passaram a ser citados nas fichas.
+
+**Testes:** `stabilization.test.mjs` (7: toda ficha cita fonte registrada; campos sem fonte continuam vazios; sinergias só entre pares presentes e sem coeficiente; notas citam a fonte; origem natural × não natural; resultados observados com médias, desvio e lotes de outro blend ignorados; regra da inulina). E2E com 12 verificações novas, incluindo lote medido na comparação e 390 px sem rolagem horizontal. Node 60/60.
+
 ## 6. Para publicar (requer sua autorização)
 1. Conferir a execução do workflow *Testes* na branch (inclui WebKit e o job *banco*).
 1b. Aplicar a migração 001 seguindo `supabase/README.md` (ensaio num projeto de teste primeiro). A ordem entre banco e app é indiferente.

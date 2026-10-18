@@ -259,6 +259,32 @@
     "Muse & Hartel (2004): dureza acompanha o volume de gelo"
    ],
    "limits": "Densidades de fase fixas; ar previsto (heurístico) entra no volume"
+  },
+  {
+   "id": "stabilizer-function",
+   "fn": [
+    "analyzeBlend",
+    "neutroModel"
+   ],
+   "class": [
+    "H"
+   ],
+   "method": "notas de 0–5 por componente (NCOMP.f) ponderadas pela carga em relação ao meio da dose usual; perfil = 100·(1 − e^(−soma/8))",
+   "limits": "Notas e doses usuais são prática de formulação, sem medição; soma aditiva, sem coeficientes de sinergia. Sinergias aparecem só como texto com fonte (NSYN). A ficha técnica (NKB) mostra apenas fatos com fonte e marca o que falta como 'sem dado registrado'.",
+   "evidence": "blendObserved: lotes medidos que usaram o blend (observacional)"
+  },
+  {
+   "id": "hydration-kinetics",
+   "fn": [
+    "hydRun",
+    "hydMax",
+    "hydMinT"
+   ],
+   "class": [
+    "H"
+   ],
+   "method": "fração hidratada por temperatura (logística em torno da temperatura de hidratação do componente) e tempo (Q10 ≈ 2)",
+   "limits": "Temperaturas de hidratação de NCOMP.hyd: jataí (85 °C) e carragena/pectina (dissolução a quente) têm fonte na ficha; demais são prática. Fração solúvel a frio (HYD_C0) sem fonte."
   }
  ]
 }
