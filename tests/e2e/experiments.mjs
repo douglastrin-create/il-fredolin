@@ -10,7 +10,9 @@ const b = await chromium.launch(); const pg = await b.newPage({ viewport: { widt
 pg.on('pageerror', e => errs.push(String(e)));
 await pg.route('**/*supabase.co/**', r => r.abort()); await pg.route('**/fonts.g*/**', r => r.abort());
 await pg.goto(`http://localhost:${srv.address().port}/index.html`); await pg.waitForTimeout(1200);
-const fails = []; const check = (ok, msg) => { console.log(`${ok ? '✓' : '✗'} ${msg}`); if (!ok) fails.push(msg); };
+const fails = []; const check = (ok, msg) => { console.log(`${ok ? '✓' : '✗'} ${msg}`); if (!ok) { fails.push(msg); if (process.env.CI) console.log(`::error title=E2E experimentos::${String(msg).replace(/\n/g, ' ').slice(0, 900)}`); } };
+process.on('uncaughtException', e => { if (process.env.CI) console.log(`::error title=E2E experimentos exceção::${String(e && e.stack || e).replace(/\n/g, ' | ').slice(0, 900)}`); console.error(e); process.exit(1); });
+process.on('unhandledRejection', e => { if (process.env.CI) console.log(`::error title=E2E experimentos exceção::${String(e && e.stack || e).replace(/\n/g, ' | ').slice(0, 900)}`); console.error(e); process.exit(1); });
 // entra como Maestro (sem servidor) e carrega a base de morango na bancada
 await pg.evaluate(() => { AUTH.state = 'ready'; ME.ws = null; S = fromPreset(PRESETS.find(p => /fragola/i.test(p.name))); S.page = 'laudo'; U.sub = { laudo: 'medir' }; renderNow(); });
 const medir = await pg.locator('#main').innerText();
