@@ -2470,7 +2470,7 @@ const isMac=()=>{try{return /Mac|iPhone|iPad/.test(navigator.platform||navigator
 const kbd=k=>`<kbd>${isMac()?'⌘':'Ctrl '}${k}</kbd>`;
 
 /* ---------- marca ---------- */
-const VERSION='v18.0';
+const VERSION='v18.0.1';
 const brandHTML=()=>`<div class="brand"><div class="hex"></div><div><b>Il <span>Fredolin</span></b><small>Gelato Lab ${VERSION}${APP_MODE==='app'&&ME.email?' · '+ROLE_N[ROLE]:''}</small></div></div>`;
 
 /* ---------- termômetro da receita: vitrine, serviço ideal (com faixa de incerteza) e freezer numa régua só ---------- */
@@ -5213,7 +5213,8 @@ const AUTH={state:'boot',mode:'login',f:{email:'',pw:'',pw2:'',name:'Il Fredolin
 };
 
 /* ---------- Equipe (Maestro) ---------- */
-async function loadTeam(){U.teamBusy=true;try{U.team=await SB.get('members?select=email,name,role,user_id,created_at&workspace_id=eq.'+ME.ws+'&order=created_at.asc');U.teamErr='';}catch(e){U.teamErr=e.message;}U.teamBusy=false;render();}
+async function loadTeam(){if(!ME.ws)return;  /* v18.0.1: espaço ainda não conhecido (início da sessão) → não consulta workspace_id=null */
+ U.teamBusy=true;try{U.team=await SB.get('members?select=email,name,role,user_id,created_at&workspace_id=eq.'+ME.ws+'&order=created_at.asc');U.teamErr='';}catch(e){U.teamErr=e.message;}U.teamBusy=false;render();}
 function pgEquipe(){if(APP_MODE!=='app')return'';if(!U.team&&!U.teamBusy&&!U.teamErr)loadTeam();
  const I=U.invite||{email:'',role:'sous',name:''};const T=U.team||[];
  const roleSel=(id,val,attrs)=>`<select id="${id}" ${attrs}>${['maestro','chef','sous'].map(r=>`<option value="${r}"${r===val?' selected':''}>${ROLE_N[r]}</option>`).join('')}</select>`;
