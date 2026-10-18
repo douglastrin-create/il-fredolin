@@ -35,7 +35,7 @@ function renderNow(){
  const gh=document.getElementById('gsimHost'),nh=document.getElementById('nsimHost');
  if(gh){if(!GSIM)GSIM=new GelSim();GSIM.mount(gh);GSIM.set(U.gp);}
  if(nh&&U.np){if(!NSIM)NSIM=new NeuSim();NSIM.mount(nh);NSIM.set(U.np);}
- setsAfterRender();const js=JSON.stringify(S);if(js!==renderNow.saved){renderNow.saved=js;try{localStorage.setItem(KEY,js);}catch(e){}}
+ setsAfterRender();const js=JSON.stringify(S);if(js!==renderNow.saved){renderNow.saved=js;LS.setRaw(KEY,js);}
 }
 let _rq=false;
 function render(){if(typeof requestAnimationFrame!=='function'){renderNow();return;}if(_rq)return;_rq=true;requestAnimationFrame(()=>{_rq=false;renderNow();});}
@@ -169,6 +169,8 @@ const ACT={
  offDiag:()=>{offlineDiag();},
  sciOpen:v=>{if(!can.page('ciencia'))return;U.sciOpen=v;S.page='ciencia';render();setTimeout(()=>{const e=document.getElementById('sci-'+v);if(e)e.scrollIntoView({block:'start'});},60);},
  offRepair:()=>{offlineRepair();},
+ snapNow:async()=>{const r=await kvSnapTake({v:VERSION,date:today()});toast(r.ok?'Cópia automática de hoje guardada ('+r.n+' itens).':'Cópia não guardada: '+r.msg);offlineDiag();},
+ snapRestore:async v=>{const s=await kvSnapGet(v);if(!s){toast('Cópia não encontrada.');return;}importBackupText('cópia automática de '+new Date(s.at).toLocaleString('pt-BR'),s.json);setTimeout(()=>{const e=document.getElementById('impFile');if(e)e.scrollIntoView({block:'center'});},80);},
  expCsv:async()=>{const h=['lote','data','receita','overrun_prev','overrun_med','brix_prev','brix_med','derretimento_prev','derretimento_med','textura','pasteurizacao','resfriamento_min','maturacao_h'];const rows=LOTS.map(L=>{const me=L.meas||{};return[L.code,L.date,L.name,lotPred(L,'ov',f1),measuredOverrun(me)!=null?f1(measuredOverrun(me)):'',lotPred(L,'brix',f1),me.brix||'',lotPred(L,'melt10',f0),me.melt10||'',me.tex!=null?me.tex:'',me.pastT||'',me.coolMin||'',me.matH||''].map(x=>'"'+String(x).replace(/"/g,'""')+'"').join(';');});await saveFile('il_fredolin_lotes_'+today()+'.csv','﻿'+[h.join(';'),...rows].join('\n'));},
  frz:v=>{S.proc.storeT=clamp(Math.round((+S.proc.storeT+ +v)*2)/2,-35,-8);if(S.proc.serveFrom==='freezer')S.vit=S.proc.storeT;U.bal=null;render();},
  vit:v=>{S.vit=clamp(Math.round((+S.vit+ +v)*2)/2,-35,-6);if(S.proc.serveFrom==='freezer')S.proc.storeT=S.vit;U.bal=null;render();},
@@ -258,8 +260,10 @@ const CHG={
  ...MAT_CHG
 };
 /* importar = ler, planejar e mostrar o plano; nada é gravado antes de "Restaurar" */
-function importBackup(file){const fr=new FileReader();fr.onload=()=>{try{const d=JSON.parse(fr.result);const cols={};BACKUP_COLS.forEach(c=>cols[c]=COLS[c].get());
-  U.imp={name:file.name,plan:planImport(d,cols,STORE.tomb),withDel:false};render();}catch(err){U.imp=null;toast('Arquivo inválido: não é um backup do Il Fredolin.');}};fr.readAsText(file);}
+function importBackup(file){const fr=new FileReader();fr.onload=()=>importBackupText(file.name,fr.result);fr.readAsText(file);}
+/* v18.9 · mesma entrada para arquivo e para cópia automática do aparelho */
+function importBackupText(name,text){try{const d=JSON.parse(text);const cols={};BACKUP_COLS.forEach(c=>cols[c]=COLS[c].get());
+  U.imp={name,plan:planImport(d,cols,STORE.tomb),withDel:false};render();}catch(err){U.imp=null;toast('Arquivo inválido: não é um backup do Il Fredolin.');}}
 function applyImport(){const I=U.imp;if(!I)return;let n=0;
  BACKUP_COLS.forEach(c=>{const P=I.plan.cols[c];[...P.add,...P.upd,...(I.withDel?P.del:[])].forEach(r=>{const x=Object.assign({},r);delete x.base;STORE.put(c,x);n++;});});
  const v=VITS.find(x=>x.id==='main');if(v){S.vitrine={temp:v.temp,items:v.items||[]};LS.set(K10.vit,S.vitrine);}
@@ -275,7 +279,7 @@ function importCard(){const I=U.imp;if(!I)return'';const P=I.plan,t=P.total;
 /* toda ação passa pela checagem do perfil (o servidor também recusa o que o perfil não pode) */
 const denied=()=>toast('Seu perfil não tem acesso a esta função.');
 /* ações que não mexem na receita não entram no desfazer */
-const NO_UNDO=new Set(['sciOpen','offDiag','offRepair','doeGen','doeCancel','doeLots','impNo','impDel','rejDrop','rejDropNo','rejExport','appReload','go','sub','defMode','defSym','defClr','defOpen','defCat','fam','palOpen','palClose','palRun','undo','copy','chk','unchk','libTab','libAuthor','libMore','libTipo','libVitF','simOpen','simClose','cmpToggle','cmpClear','histOpen','lotOpen','crTab','crSub','atGoal','setSw','navTog','toTop','flowOpen','flowView','flowNotify','flowNext','flowBack','flowDisc','flowColor','flowStart','flowLot','procGo','procPlay','atSel','atPick','atCard','atExplore','nxGoal','sazM','del','delNo','meltTimer','panelSet','panelStart','panelNext','panelCancel','panelReveal','panelReset','testRun','syncNow','age','pick']);
+const NO_UNDO=new Set(['snapNow','snapRestore','sciOpen','offDiag','offRepair','doeGen','doeCancel','doeLots','impNo','impDel','rejDrop','rejDropNo','rejExport','appReload','go','sub','defMode','defSym','defClr','defOpen','defCat','fam','palOpen','palClose','palRun','undo','copy','chk','unchk','libTab','libAuthor','libMore','libTipo','libVitF','simOpen','simClose','cmpToggle','cmpClear','histOpen','lotOpen','crTab','crSub','atGoal','setSw','navTog','toTop','flowOpen','flowView','flowNotify','flowNext','flowBack','flowDisc','flowColor','flowStart','flowLot','procGo','procPlay','atSel','atPick','atCard','atExplore','nxGoal','sazM','del','delNo','meltTimer','panelSet','panelStart','panelNext','panelCancel','panelReveal','panelReset','testRun','syncNow','age','pick']);
 function runAct(k,v,t){if(NO_UNDO.has(k))return ACT[k](v,t);const before=undoSnap();undoMark();const r=ACT[k](v,t);
  if(r&&typeof r.then==='function')return r;if(undoSnap()===before)undoSettle();else if(UNDO_TOAST.has(k))toastUndo();return r;}
 document.addEventListener('toggle',e=>{const d=e.target;if(d&&d.tagName==='DETAILS'&&d.id){U.dopen=U.dopen||{};U.dopen[d.id]=d.open;}},true);

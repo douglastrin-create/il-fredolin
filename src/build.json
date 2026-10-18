@@ -55,13 +55,16 @@
   "ui/pages/linha.js",
   "data/local/store.js",
   "data/local/backup.js",
+  "data/local/copias.js",
   "ui/sets.js",
   "data/sync/supabase.js",
   "data/sync/equipe.js",
   "ui/pages/equipe.js",
   "ui/pwa.js",
   "ui/app.js",
-  "shell/tail.html"
+  "shell/tail.html",
+  "data/local/kv-boot.js",
+  "shell/fim.html"
  ],
  "sw": {
   "src": "sw/sw.js",

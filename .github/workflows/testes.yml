@@ -33,6 +33,8 @@ jobs:
         run: node tests/e2e/experiments.mjs
       - name: PWA — instalação conferida, erro do servidor, atualização, migração do service worker publicado, offline
         run: node tests/e2e/pwa.mjs chromium && node tests/e2e/pwa.mjs webkit
+      - name: Armazenamento local — IndexedDB principal, espelho, migração, cota cheia, sem IndexedDB, cópias automáticas
+        run: node tests/e2e/storage.mjs chromium && node tests/e2e/storage.mjs webkit
   banco:
     runs-on: ubuntu-latest
     services:

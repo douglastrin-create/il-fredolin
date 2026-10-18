@@ -17,6 +17,10 @@ A especificação (§50) pede reestruturação progressiva, não reescrita. Por 
 
 O `sw.js` da raiz também é **gerado**: `src/sw/sw.js` é o modelo, e o build preenche o SHA-256 do `index.html` montado e a `VERSION`. Cada publicação muda o `sw.js`; o navegador instala a versão nova só se a página baixada tiver exatamente esse hash, guarda tudo (8 arquivos) e só então apaga o cache anterior. Ver §5-K do relatório de auditoria.
 
+## Armazenamento local (v18.9)
+
+O script do app fica guardado como texto (`<script type="text/x-fredolin-app">`). Um carregador pequeno (`data/local/kv-boot.js`) abre o IndexedDB, concilia cada chave com o localStorage (vale a cópia mais nova) e só então executa o app, que continua lendo de forma síncrona. Sem IndexedDB, ou se ele não responder em 2,5 s, o app abre só com o localStorage, como antes.
+
 ## Como editar
 
 1. Edite o módulo em `src/`. Não edite o `index.html`.
@@ -132,13 +136,14 @@ Principais campos de `PROC0`:
 
 | Formato | Versão | Onde |
 |---|---|---|
-| App | `VERSION = 'v18.8'` | `ui/shell.js` (mostrado no rodapé) |
+| App | `VERSION = 'v18.9'` | `ui/shell.js` (mostrado no rodapé) |
 | Backup (JSON) | `{app: 'Il Fredolin', schema: 2, …coleções, tomb}` | `data/local/backup.js` |
 | Registro na nuvem | linha `records {workspace_id, col, id, data, deleted, updated_at, ver, base_ver, force}` | `supabase/migrations/*`, `data/sync/supabase.js` |
 | Registro de modelos | `il-fredolin/model-registry@2` (campos do §46; embutido no app pelo build) | `docs/model-registry.json` |
 | Montagem | `il-fredolin/build@1` | `src/build.json` |
 | Cache offline | `il-fredolin-<12 primeiros do SHA-256 do index.html>` | `sw.js` (gerado de `src/sw/sw.js`) |
 | Dívidas de camada | `il-fredolin/layers-known@1` | `tools/layers-known.json` |
+| Banco local (v18.9) | IndexedDB `fredolin` v1: loja `kv` `{k, s (JSON), at}` e loja `snap` `{id: AAAA-MM-DD, at, n, size, v, json (backup schema 2)}`; carimbos do espelho em `fredolin_kvat` | `data/local/kv-boot.js`, `data/local/copias.js` |
 | Chaves locais | `fredolin_v9_*`, `fredolin_v10_*`, `fredolin_v11_*`, mantidas desde a v9 para não perder dados | `data/local/colecoes.js` |
 
 ## Próximos passos da modularização (progressivos)

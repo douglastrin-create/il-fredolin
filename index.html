@@ -492,7 +492,7 @@ body.auth .app{grid-template-columns:minmax(0,1fr);grid-template-areas:"hdr" "ma
 <div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
 <div id="pal"></div>
 <script src="config.js"></script>
-<script>
+<script type="text/x-fredolin-app" id="fredolin-app">
 /* ==== 01-util.js ==== */
 /* ===================== IL FREDOLIN · UTILITÁRIOS ===================== */
 const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
@@ -2726,9 +2726,9 @@ const PAGE_ROLES={ciencia:'mc',bancada:'mc',creator:'mc',laudo:'mc',congelamento
 const SOUS_ACT=new Set(['go','sub','defMode','defSym','defClr','defOpen','defOpenB','defCat','navTog','toTop','flowStart','flowNext','flowBack','flowDisc','flowOpen','flowColor','flowView','flowLot','flowNotify','chk','unchk','copy','lotNew','lotOpen','lotSave','lotConsume','defect','execRun','logout','logoutYes','logoutNo','syncNow','testRun','delNo','authMode','authGo',
  'meltTimer','fam','palOpen','palClose','palRun','panelStart','panelSet','panelNext','panelCancel','panelReveal','panelReset']);
 const SOUS_INP=new Set(['flowLabel','flowMeas','prodG','lot','lotTxt','auth','panelTaster','panelNote','palQ']),SOUS_CHG=new Set(['defChk','lot','panelLot']);
-const CHEF_DENY_ACT=new Set(['expJson','expCsv','impGo','impDel','memInvite','memDel','memDelYes','teamReload']),CHEF_DENY_INP=new Set(['cost','costCap']),CHEF_DENY_CHG=new Set(['memRole']);
+const CHEF_DENY_ACT=new Set(['snapRestore','expJson','expCsv','impGo','impDel','memInvite','memDel','memDelYes','teamReload']),CHEF_DENY_INP=new Set(['cost','costCap']),CHEF_DENY_CHG=new Set(['memRole']);
 /* telas de entrada e saída funcionam para qualquer perfil (inclusive antes de saber o perfil) */
-const ALWAYS_ACT=new Set(['sciOpen','offDiag','offRepair','appReload','authGo','authMode','authRetry','logout','logoutYes','logoutNo','syncNow','rejRetry','rejExport','rejDrop','rejDropYes','rejDropNo']);
+const ALWAYS_ACT=new Set(['snapNow','sciOpen','offDiag','offRepair','appReload','authGo','authMode','authRetry','logout','logoutYes','logoutNo','syncNow','rejRetry','rejExport','rejDrop','rejDropYes','rejDropNo']);
 const can={
  page:k=>(PAGE_ROLES[k]||'m').includes(ROLE[0]),
  cost:()=>ROLE==='maestro',
@@ -2764,9 +2764,15 @@ const natTag=id=>{const n=MODEL_NAT[id];if(!n)return'';const cal=id==='overrun'&
 const norm=s=>String(s).normalize('NFD').replace(/[̀-ͯ]/g,'').toLowerCase();
 /* v18 (auditoria): gravar pode falhar (cota cheia do Safari, modo privado). Antes o erro era engolido e a alteração
    simplesmente não ficava no aparelho. Agora set() devolve true/false, guarda quais chaves falharam (LS.bad) e avisa. */
-const LS={bad:{},get(k){try{const v=localStorage.getItem(k);return v?JSON.parse(v):null;}catch(e){return null;}},
- set(k,v){try{localStorage.setItem(k,JSON.stringify(v));if(this.bad[k])delete this.bad[k];return true;}
-  catch(e){this.bad[k]=(e&&e.name)||'erro';const now=Date.now();
+/* v18.9 · com o IndexedDB ativo (kv-boot.js), cada gravação vai para os dois; a leitura usa a cópia vencedora da
+   abertura (KV.boot) e, depois, a última gravada. Se só o localStorage falhar (cota do Safari), o dado está no IndexedDB:
+   não há perda nem aviso de memória cheia. Sem IndexedDB, o comportamento é o da v18. */
+const LS={bad:{},
+ get(k){try{const b=typeof KV!=='undefined'?KV.boot[k]:undefined;const v=b!==undefined?b:localStorage.getItem(k);return v?JSON.parse(v):null;}catch(e){return null;}},
+ set(k,v){return this.setRaw(k,JSON.stringify(v));},
+ setRaw(k,s){const kv=typeof KV!=='undefined'&&KV.ok&&KV.mirrored(k);if(kv){KV.boot[k]=s;KV.put(k,s);}
+  try{localStorage.setItem(k,s);if(kv){const m=KV.meta();m[k]=Date.now();KV.metaSet(m);}if(this.bad[k])delete this.bad[k];return true;}
+  catch(e){this.bad[k]=(e&&e.name)||'erro';if(kv)return true;const now=Date.now();
    if(typeof toast==='function'&&(!this._w||now-this._w>30000)){this._w=now;setTimeout(()=>toast('Memória do aparelho cheia: a última alteração NÃO foi gravada neste aparelho. Exporte um backup.'),0);}
    return false;}}};
 /* chaves de armazenamento (mantidas desde a v9 para não perder dados salvos) */
@@ -2923,7 +2929,7 @@ const isMac=()=>{try{return /Mac|iPhone|iPad/.test(navigator.platform||navigator
 const kbd=k=>`<kbd>${isMac()?'⌘':'Ctrl '}${k}</kbd>`;
 
 /* ---------- marca ---------- */
-const VERSION='v18.8';
+const VERSION='v18.9';
 const brandHTML=()=>`<div class="brand"><div class="hex"></div><div><b>Il <span>Fredolin</span></b><small>Gelato Lab ${VERSION}${APP_MODE==='app'&&ME.email?' · '+ROLE_N[ROLE]:''}</small></div></div>`;
 
 /* ---------- termômetro da receita: vitrine, serviço ideal (com faixa de incerteza) e freezer numa régua só ---------- */
@@ -5595,6 +5601,27 @@ function planImport(d,cols,tomb){if(!d||typeof d!=='object')throw new Error('arq
    else if(tb[id]!=null&&tb[id]>=ts)P.del.push(r);else P.add.push(r);});
   plan.cols[c]=P;plan.total.add+=P.add.length;plan.total.upd+=P.upd.length;plan.total.keep+=P.keep;plan.total.del+=P.del.length;});
  return plan;}
+/* ===================== v18.9 · CÓPIAS AUTOMÁTICAS NO APARELHO (§42, §45) =====================
+   Uma cópia por dia, no formato do backup exportado (schema 2), guardada no IndexedDB (loja "snap"); ficam as 7 mais
+   recentes. Restaurar usa a mesma importação planejada do backup: mostra o que muda e nunca troca registro igual ou
+   mais novo deste aparelho. Não substitui o backup exportado (que sai do aparelho). */
+const SNAP_KEEP=7;
+const snapOn=()=>typeof KV!=='undefined'&&KV.ok&&!!KV.db;
+function snapTx(mode,fn){return new Promise((ok,ko)=>{const tx=KV.db.transaction('snap',mode);const r=fn(tx.objectStore('snap'));tx.oncomplete=()=>ok(r&&r.result);tx.onerror=tx.onabort=()=>ko(tx.error);});}
+async function kvSnapList(){if(!snapOn())return[];const all=await snapTx('readonly',st=>st.getAll());
+ return(all||[]).map(s=>({id:s.id,at:s.at,n:s.n,size:s.size,v:s.v})).sort((a,b)=>b.id<a.id?-1:1);}
+async function kvSnapGet(id){if(!snapOn())return null;const r=await snapTx('readonly',st=>st.get(id));return r||null;}
+/* meta: {v: versão do app, date: AAAA-MM-DD}. Uma por dia (a do dia é atualizada). */
+async function kvSnapTake(meta){if(!snapOn())return{ok:false,msg:'armazenamento principal indisponível'};
+ await KV.flush();const cols={};BACKUP_COLS.forEach(c=>cols[c]=COLS[c].get());
+ const n=BACKUP_COLS.reduce((a,c)=>a+(Array.isArray(cols[c])?cols[c].filter(r=>r&&!r.deleted).length:0),0);
+ if(!n)return{ok:false,msg:'nada para guardar ainda'};
+ const id=(meta&&meta.date)||new Date().toISOString().slice(0,10);
+ const json=JSON.stringify(backupPayload(cols,STORE.tomb,Object.assign({auto:true},meta||{})));
+ try{await snapTx('readwrite',st=>st.put({id,at:Date.now(),n,size:json.length,v:meta&&meta.v,json}));
+  const L=await kvSnapList();const old=L.slice(SNAP_KEEP);if(old.length)await snapTx('readwrite',st=>{old.forEach(s=>st.delete(s.id));});
+  return{ok:true,id,n,size:json.length};}
+ catch(e){KV.fail(e);return{ok:false,msg:(e&&e.name)||'erro'};}}
 /* ==== 61-sets.js ==== */
 /* ===================== SETS: ARTIGIANALE × PROFESSIONALE =====================
    O set é o conjunto de equipamentos onde a receita vai ser feita. A chave no cabeçalho troca o set inteiro:
@@ -5951,13 +5978,15 @@ const TEAM_CHG={inviteRole:t=>{U.invite=U.invite||{email:'',role:'sous',name:''}
 /* ==== 68-pwa.js ==== */
 /* ===================== IL FREDOLIN · APLICATIVO INSTALÁVEL =====================
    Service worker: guarda o app para funcionar sem internet e busca a versão nova quando há conexão. */
+/* v18.9 · o app agora roda depois de o IndexedDB abrir: o evento load da página pode já ter passado */
+const onLoaded=fn=>{if(document.readyState==='complete')fn();else window.addEventListener('load',fn);};
 if(APP_MODE==='app'&&'serviceWorker' in navigator&&(location.protocol==='https:'||location.hostname==='localhost'||location.hostname==='127.0.0.1')){
  /* v17.7.1 · atualização: o app procura versão nova ao abrir, ao voltar para a tela e a cada 20 min; quando ela chega, avisa e recarrega com um toque */
  const hadCtl=!!navigator.serviceWorker.controller;let shown=false;
  const offerReload=()=>{if(shown)return;shown=true;try{const e=document.getElementById('toast');if(!e){location.reload();return;}
   e.innerHTML='<span>Nova versão do Il Fredolin disponível</span><button data-a="appReload">Atualizar agora</button>';e.hidden=false;clearTimeout(tt);}catch(x){location.reload();}};
  navigator.serviceWorker.addEventListener('controllerchange',()=>{if(hadCtl)offerReload();});
- window.addEventListener('load',()=>{navigator.serviceWorker.register('sw.js',{updateViaCache:'none'}).then(reg=>{
+ onLoaded(()=>{navigator.serviceWorker.register('sw.js',{updateViaCache:'none'}).then(reg=>{
   const up=()=>{try{reg.update();}catch(e){}};document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')up();});setInterval(up,20*60*1000);
   if(reg.waiting&&hadCtl)offerReload();}).catch(()=>{});});}
 
@@ -5969,6 +5998,7 @@ const LASTBK_KEY='fredolin_v18_lastbackup';
 function swAsk(type,ms){return new Promise(res=>{try{const c=navigator.serviceWorker&&navigator.serviceWorker.controller;if(!c){res({none:true});return;}
  const ch=new MessageChannel();const t=setTimeout(()=>res({timeout:true}),ms||8000);ch.port1.onmessage=e=>{clearTimeout(t);res(e.data||{});};c.postMessage({type},[ch.port2]);}catch(e){res({err:String(e)});}});}
 async function offlineDiag(){U.off={busy:true};render();const o={};
+ try{o.snaps=await kvSnapList();}catch(e){o.snaps=[];}
  o.sw='serviceWorker' in navigator;o.d=o.sw?await swAsk('diag'):{none:true};
  try{if(navigator.storage&&navigator.storage.persisted)o.persisted=await navigator.storage.persisted();}catch(e){}
  try{if(navigator.storage&&navigator.storage.estimate){const e=await navigator.storage.estimate();o.usage=e.usage;o.quota=e.quota;}}catch(e){}
@@ -5977,7 +6007,7 @@ async function offlineRepair(){U.off=Object.assign({},U.off||{},{busy:true,repai
  await offlineDiag();U.off.repair=r;render();}
 /* pede armazenamento persistente uma vez por aparelho, depois de o app abrir (o navegador pode recusar em silêncio) */
 if(APP_MODE==='app'&&typeof navigator!=='undefined'&&navigator.storage&&navigator.storage.persist){
- window.addEventListener('load',()=>{setTimeout(()=>{try{navigator.storage.persisted().then(p=>{if(!p&&!LS.get('fredolin_v18_persistAsked')){LS.set('fredolin_v18_persistAsked',1);navigator.storage.persist().catch(()=>{});}}).catch(()=>{});}catch(e){}},3000);});}
+ onLoaded(()=>{setTimeout(()=>{try{navigator.storage.persisted().then(p=>{if(!p&&!LS.get('fredolin_v18_persistAsked')){LS.set('fredolin_v18_persistAsked',1);navigator.storage.persist().catch(()=>{});}}).catch(()=>{});}catch(e){}},3000);});}
 function offlineCard(){if(APP_MODE!=='app')return'';const o=U.off,lb=LS.get(LASTBK_KEY);const mb=x=>x>=1e9?f1(x/1e9)+' GB':f0(x/1e6)+' MB';
  const st=!o?null:o.busy?'busy':!o.sw||o.d.none?'none':o.d.timeout||o.d.err?'erro':o.d.miss&&o.d.miss.length||!o.d.indexOk?'falta':'ok';
  const rows=o&&!o.busy?[
@@ -5989,12 +6019,21 @@ function offlineCard(){if(APP_MODE!=='app')return'';const o=U.off,lb=LS.get(LAST
   ['Armazenamento persistente',o.persisted===true?'<span class="c-ok">sim</span>':o.persisted===false?'<span class="c-warn">não</span> <span class="muted">(o sistema pode apagar dados se faltar espaço; faça backup)</span>':'<span class="muted">não informado pelo navegador</span>'],
   ...(o.quota?[['Espaço usado',mb(o.usage||0)+' de '+mb(o.quota)]]:[]),
  ]:[];
+ /* v18.9 · onde os dados ficam neste aparelho */
+ const kvOk=typeof KV!=='undefined'&&KV.ok,lsBad=Object.keys(LS.bad||{}).length;
+ rows.push(['Armazenamento principal (IndexedDB)',kvOk?(KV.bad?'<span class="c-crit">gravação recusada ('+esc(KV.bad)+')</span>':'<span class="c-ok">ativo</span> · '+KV.keys+' chave(s)'+(KV.migrated?' · '+KV.migrated+' migrada(s) nesta abertura':'')):'<span class="c-warn">'+esc(typeof KV!=='undefined'&&KV.reason?KV.reason:'indisponível')+'</span> · usando só o localStorage']);
+ rows.push(['Cópia espelho (localStorage)',lsBad?(kvOk?'<span class="c-warn">recusou '+lsBad+' gravação(ões)</span> <span class="muted">(dados seguros no IndexedDB)</span>':'<span class="c-crit">recusou '+lsBad+' gravação(ões): exporte um backup</span>'):'<span class="c-ok">em dia</span>']);
+ if(kvOk&&KV.restored.length)rows.push(['Recuperado na abertura',KV.restored.length+' chave(s) estavam mais novas no IndexedDB que no espelho']);
  return`<div class="card" id="off-card"><div class="row"><h2 style="margin:0">Funcionamento offline</h2><span class="sp"></span>${st?`<span class="chip ${st==='ok'?'ok':st==='busy'?'info':st==='falta'||st==='none'?'warn':'crit'}">${st==='ok'?'Pronto para usar sem internet':st==='busy'?'Verificando…':st==='falta'?'Incompleto':st==='none'?'Sem service worker':'Erro'}</span>`:''}</div>
   <p class="note" style="margin:6px 0 10px">Confere se este aparelho tem tudo para abrir o app sem internet. Os seus dados ficam no aparelho e na nuvem da equipe; o backup é a terceira cópia.</p>
   ${rows.length?rows.map(([a,b])=>`<div class="kv"><span>${a}</span><span>${b}</span></div>`).join(''):''}
+  ${o&&!o.busy&&o.snaps?`<div class="kv" style="display:block;padding:8px 0"><span>Cópias automáticas no aparelho <span class="muted">(1 por dia, ficam 7)</span></span><div style="margin-top:4px">${o.snaps.length?o.snaps.map(s=>`<div class="row" style="gap:8px;margin:2px 0"><span class="mono">${new Date(s.at).toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'})}</span><span class="muted">${s.n} itens · ${f0(s.size/1024)} KB${s.v?' · '+esc(s.v):''}</span><span class="sp"></span>${can.act('snapRestore')?`<button class="btn sm" data-a="snapRestore" data-v="${esc(s.id)}">Ver e restaurar</button>`:''}</div>`).join(''):'<span class="muted">nenhuma ainda</span>'}</div></div>`:''}
   <div class="kv"><span>Último backup exportado neste aparelho</span><span>${lb?new Date(lb).toLocaleDateString('pt-BR'):'<span class="c-warn">nunca</span>'}</span></div>
   ${o&&o.repair?`<p class="${o.repair.ok?'c-ok':'c-warn'}" style="margin:8px 0 0">${o.repair.ok?'Arquivos baixados e conferidos de novo.':'Não deu para reparar agora: '+esc(o.repair.msg||'sem resposta')+'. Com internet, tente de novo.'}</p>`:''}
-  <div class="row" style="margin-top:10px"><button class="btn sm" data-a="offDiag"${o&&o.busy?' disabled':''}>${o?'Verificar de novo':'Verificar agora'}</button>${st&&st!=='ok'&&st!=='busy'&&o.d&&!o.d.none?`<button class="btn sm" data-a="offRepair">Baixar de novo e conferir</button>`:''}</div></div>`;}
+  <div class="row" style="margin-top:10px">${typeof KV!=='undefined'&&KV.ok?'<button class="btn sm" data-a="snapNow">Guardar cópia agora</button>':''}<button class="btn sm" data-a="offDiag"${o&&o.busy?' disabled':''}>${o?'Verificar de novo':'Verificar agora'}</button>${st&&st!=='ok'&&st!=='busy'&&o.d&&!o.d.none?`<button class="btn sm" data-a="offRepair">Baixar de novo e conferir</button>`:''}</div></div>`;}
+/* cópia automática: 15 s depois de abrir e ao ir para segundo plano, no máximo uma por dia */
+if(APP_MODE==='app'&&typeof KV!=='undefined'){const auto=async()=>{try{if(!KV.ok)return;const L=await kvSnapList();if(L.length&&L[0].id===today())return;await kvSnapTake({v:VERSION,date:today()});}catch(e){}};
+ setTimeout(auto,15000);document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='hidden')auto();});}
 /* ==== 70-app.js ==== */
 /* ===================== IL FREDOLIN · APLICAÇÃO (render, ações, eventos) ===================== */
 const VIEW={execucao:pgExecucao,equipe:pgEquipe,bancada:pgBancada,creator:pgCreator,laudo:pgLaudo,congelamento:pgCongel,quimica:pgQuimica,vitrine:pgVitrine,
@@ -6032,7 +6071,7 @@ function renderNow(){
  const gh=document.getElementById('gsimHost'),nh=document.getElementById('nsimHost');
  if(gh){if(!GSIM)GSIM=new GelSim();GSIM.mount(gh);GSIM.set(U.gp);}
  if(nh&&U.np){if(!NSIM)NSIM=new NeuSim();NSIM.mount(nh);NSIM.set(U.np);}
- setsAfterRender();const js=JSON.stringify(S);if(js!==renderNow.saved){renderNow.saved=js;try{localStorage.setItem(KEY,js);}catch(e){}}
+ setsAfterRender();const js=JSON.stringify(S);if(js!==renderNow.saved){renderNow.saved=js;LS.setRaw(KEY,js);}
 }
 let _rq=false;
 function render(){if(typeof requestAnimationFrame!=='function'){renderNow();return;}if(_rq)return;_rq=true;requestAnimationFrame(()=>{_rq=false;renderNow();});}
@@ -6166,6 +6205,8 @@ const ACT={
  offDiag:()=>{offlineDiag();},
  sciOpen:v=>{if(!can.page('ciencia'))return;U.sciOpen=v;S.page='ciencia';render();setTimeout(()=>{const e=document.getElementById('sci-'+v);if(e)e.scrollIntoView({block:'start'});},60);},
  offRepair:()=>{offlineRepair();},
+ snapNow:async()=>{const r=await kvSnapTake({v:VERSION,date:today()});toast(r.ok?'Cópia automática de hoje guardada ('+r.n+' itens).':'Cópia não guardada: '+r.msg);offlineDiag();},
+ snapRestore:async v=>{const s=await kvSnapGet(v);if(!s){toast('Cópia não encontrada.');return;}importBackupText('cópia automática de '+new Date(s.at).toLocaleString('pt-BR'),s.json);setTimeout(()=>{const e=document.getElementById('impFile');if(e)e.scrollIntoView({block:'center'});},80);},
  expCsv:async()=>{const h=['lote','data','receita','overrun_prev','overrun_med','brix_prev','brix_med','derretimento_prev','derretimento_med','textura','pasteurizacao','resfriamento_min','maturacao_h'];const rows=LOTS.map(L=>{const me=L.meas||{};return[L.code,L.date,L.name,lotPred(L,'ov',f1),measuredOverrun(me)!=null?f1(measuredOverrun(me)):'',lotPred(L,'brix',f1),me.brix||'',lotPred(L,'melt10',f0),me.melt10||'',me.tex!=null?me.tex:'',me.pastT||'',me.coolMin||'',me.matH||''].map(x=>'"'+String(x).replace(/"/g,'""')+'"').join(';');});await saveFile('il_fredolin_lotes_'+today()+'.csv','﻿'+[h.join(';'),...rows].join('\n'));},
  frz:v=>{S.proc.storeT=clamp(Math.round((+S.proc.storeT+ +v)*2)/2,-35,-8);if(S.proc.serveFrom==='freezer')S.vit=S.proc.storeT;U.bal=null;render();},
  vit:v=>{S.vit=clamp(Math.round((+S.vit+ +v)*2)/2,-35,-6);if(S.proc.serveFrom==='freezer')S.proc.storeT=S.vit;U.bal=null;render();},
@@ -6255,8 +6296,10 @@ const CHG={
  ...MAT_CHG
 };
 /* importar = ler, planejar e mostrar o plano; nada é gravado antes de "Restaurar" */
-function importBackup(file){const fr=new FileReader();fr.onload=()=>{try{const d=JSON.parse(fr.result);const cols={};BACKUP_COLS.forEach(c=>cols[c]=COLS[c].get());
-  U.imp={name:file.name,plan:planImport(d,cols,STORE.tomb),withDel:false};render();}catch(err){U.imp=null;toast('Arquivo inválido: não é um backup do Il Fredolin.');}};fr.readAsText(file);}
+function importBackup(file){const fr=new FileReader();fr.onload=()=>importBackupText(file.name,fr.result);fr.readAsText(file);}
+/* v18.9 · mesma entrada para arquivo e para cópia automática do aparelho */
+function importBackupText(name,text){try{const d=JSON.parse(text);const cols={};BACKUP_COLS.forEach(c=>cols[c]=COLS[c].get());
+  U.imp={name,plan:planImport(d,cols,STORE.tomb),withDel:false};render();}catch(err){U.imp=null;toast('Arquivo inválido: não é um backup do Il Fredolin.');}}
 function applyImport(){const I=U.imp;if(!I)return;let n=0;
  BACKUP_COLS.forEach(c=>{const P=I.plan.cols[c];[...P.add,...P.upd,...(I.withDel?P.del:[])].forEach(r=>{const x=Object.assign({},r);delete x.base;STORE.put(c,x);n++;});});
  const v=VITS.find(x=>x.id==='main');if(v){S.vitrine={temp:v.temp,items:v.items||[]};LS.set(K10.vit,S.vitrine);}
@@ -6272,7 +6315,7 @@ function importCard(){const I=U.imp;if(!I)return'';const P=I.plan,t=P.total;
 /* toda ação passa pela checagem do perfil (o servidor também recusa o que o perfil não pode) */
 const denied=()=>toast('Seu perfil não tem acesso a esta função.');
 /* ações que não mexem na receita não entram no desfazer */
-const NO_UNDO=new Set(['sciOpen','offDiag','offRepair','doeGen','doeCancel','doeLots','impNo','impDel','rejDrop','rejDropNo','rejExport','appReload','go','sub','defMode','defSym','defClr','defOpen','defCat','fam','palOpen','palClose','palRun','undo','copy','chk','unchk','libTab','libAuthor','libMore','libTipo','libVitF','simOpen','simClose','cmpToggle','cmpClear','histOpen','lotOpen','crTab','crSub','atGoal','setSw','navTog','toTop','flowOpen','flowView','flowNotify','flowNext','flowBack','flowDisc','flowColor','flowStart','flowLot','procGo','procPlay','atSel','atPick','atCard','atExplore','nxGoal','sazM','del','delNo','meltTimer','panelSet','panelStart','panelNext','panelCancel','panelReveal','panelReset','testRun','syncNow','age','pick']);
+const NO_UNDO=new Set(['snapNow','snapRestore','sciOpen','offDiag','offRepair','doeGen','doeCancel','doeLots','impNo','impDel','rejDrop','rejDropNo','rejExport','appReload','go','sub','defMode','defSym','defClr','defOpen','defCat','fam','palOpen','palClose','palRun','undo','copy','chk','unchk','libTab','libAuthor','libMore','libTipo','libVitF','simOpen','simClose','cmpToggle','cmpClear','histOpen','lotOpen','crTab','crSub','atGoal','setSw','navTog','toTop','flowOpen','flowView','flowNotify','flowNext','flowBack','flowDisc','flowColor','flowStart','flowLot','procGo','procPlay','atSel','atPick','atCard','atExplore','nxGoal','sazM','del','delNo','meltTimer','panelSet','panelStart','panelNext','panelCancel','panelReveal','panelReset','testRun','syncNow','age','pick']);
 function runAct(k,v,t){if(NO_UNDO.has(k))return ACT[k](v,t);const before=undoSnap();undoMark();const r=ACT[k](v,t);
  if(r&&typeof r.then==='function')return r;if(undoSnap()===before)undoSettle();else if(UNDO_TOAST.has(k))toastUndo();return r;}
 document.addEventListener('toggle',e=>{const d=e.target;if(d&&d.tagName==='DETAILS'&&d.id){U.dopen=U.dopen||{};U.dopen[d.id]=d.open;}},true);
@@ -6301,6 +6344,59 @@ document.addEventListener('keydown',e=>{
 /* ---------- BOOT ---------- */
 if(APP_MODE==='app')AUTH.boot();else{renderNow();STORE.init();}
 
+</script>
+<script>
+/* ===================== v18.9 · ARMAZENAMENTO LOCAL: IndexedDB principal, localStorage espelho (§42) =====================
+   Este trecho roda ANTES do app. Ele abre o IndexedDB, concilia com o localStorage e só então executa o app
+   (que continua lendo de forma síncrona, como sempre). Por quê:
+   · localStorage no Safari tem cota de ~5 MB, grava sem transação e pode ser apagado/corrompido sem cópia;
+   · IndexedDB tem cota maior, transações e sobrevive quando o espelho falha.
+   Regras:
+   · cada gravação vai para os dois (LS.set); na abertura, por chave, vale a cópia mais nova (carimbo de tempo);
+   · migração não destrutiva: na primeira abertura todas as chaves fredolin_* são copiadas; nada é apagado do localStorage;
+   · sem IndexedDB (navegador antigo, modo privado) ou se ele demorar mais de 2,5 s: o app abre só com o localStorage,
+     exatamente como antes;
+   · caches que se baixam de novo (biblioteca dos mestres, ajuste térmico, menu) ficam só no localStorage. */
+const KV_DB='fredolin',KV_META='fredolin_kvat',KV_SKIP=new Set(['fredolin_app_ref','fredolin_nav','fredolin_hfit_v1','fredolin_kvat']);
+const KV={ok:false,reason:'',boot:Object.create(null),db:null,pend:new Map(),timer:null,bad:null,restored:[],migrated:0,keys:0,ms:0,
+ meta(){try{return JSON.parse(localStorage.getItem(KV_META))||{};}catch(e){return{};}},
+ metaSet(m){try{localStorage.setItem(KV_META,JSON.stringify(m));return true;}catch(e){return false;}},
+ mirrored:k=>typeof k==='string'&&k.startsWith('fredolin_')&&!KV_SKIP.has(k),
+ /* grava no IndexedDB em lote (uma transação por lote: tudo ou nada) */
+ put(k,s){if(!this.ok||!this.mirrored(k))return;this.pend.set(k,{k,s,at:Date.now()});if(!this.timer)this.timer=setTimeout(()=>this.flush(),250);},
+ flush(){clearTimeout(this.timer);this.timer=null;if(!this.ok||!this.pend.size)return Promise.resolve(true);const batch=[...this.pend.values()];
+  return new Promise(res=>{let tx;try{tx=this.db.transaction('kv','readwrite');}catch(e){this.fail(e);res(false);return;}
+   const st=tx.objectStore('kv');batch.forEach(r=>st.put(r));
+   tx.oncomplete=()=>{batch.forEach(r=>{const p=this.pend.get(r.k);if(p&&p.at===r.at)this.pend.delete(r.k);});this.bad=null;res(true);};
+   tx.onerror=tx.onabort=()=>{this.fail(tx.error);res(false);};});},
+ fail(e){this.bad=(e&&e.name)||'erro';const now=Date.now();
+  if(typeof toast==='function'&&(!this._w||now-this._w>30000)){this._w=now;setTimeout(()=>toast('O armazenamento principal do aparelho recusou a gravação ('+this.bad+'). Exporte um backup.'),0);}}};
+function kvReq(r){return new Promise((ok,ko)=>{r.onsuccess=()=>ok(r.result);r.onerror=()=>ko(r.error);});}
+async function kvOpen(){const r=indexedDB.open(KV_DB,1);
+ r.onupgradeneeded=()=>{const db=r.result;if(!db.objectStoreNames.contains('kv'))db.createObjectStore('kv',{keyPath:'k'});if(!db.objectStoreNames.contains('snap'))db.createObjectStore('snap',{keyPath:'id'});};
+ return kvReq(r);}
+/* concilia por chave: a cópia mais nova vale; espelho e principal são reparados; o app recebe a vencedora em KV.boot */
+async function kvReconcile(){const t0=performance.now();const db=await kvOpen();KV.db=db;
+ const recs=await kvReq(db.transaction('kv').objectStore('kv').getAll());const idb=new Map(recs.map(r=>[r.k,r]));
+ const meta=KV.meta(),now=Date.now(),lsKeys=[];for(let i=0;i<localStorage.length;i++){const k=localStorage.key(i);if(KV.mirrored(k))lsKeys.push(k);}
+ const toIdb=[];let metaDirty=false;
+ for(const k of new Set([...idb.keys(),...lsKeys])){let ls=null;try{ls=localStorage.getItem(k);}catch(e){}
+  const rec=idb.get(k),lsAt=+meta[k]||0;
+  if(!rec){if(ls!=null){toIdb.push({k,s:ls,at:lsAt||now});if(!lsAt){meta[k]=now;metaDirty=true;}if(!recs.length)KV.migrated++;}continue;}
+  if(ls==null||rec.at>lsAt){KV.boot[k]=rec.s;if(ls!==rec.s){KV.restored.push(k);try{localStorage.setItem(k,rec.s);meta[k]=rec.at;metaDirty=true;}catch(e){}}}
+  else if(lsAt>rec.at&&ls!==rec.s)toIdb.push({k,s:ls,at:lsAt});}
+ if(toIdb.length)await new Promise((ok,ko)=>{const tx=db.transaction('kv','readwrite');const st=tx.objectStore('kv');toIdb.forEach(r=>st.put(r));tx.oncomplete=ok;tx.onerror=tx.onabort=()=>ko(tx.error);});
+ if(metaDirty)KV.metaSet(meta);
+ KV.keys=new Set([...idb.keys(),...toIdb.map(r=>r.k)]).size;KV.ok=true;KV.ms=Math.round(performance.now()-t0);}
+/* executa o app (o script principal está guardado como texto) uma única vez */
+function kvStartApp(){if(kvStartApp.done)return;kvStartApp.done=true;const src=document.getElementById('fredolin-app');
+ const s=document.createElement('script');s.text=src.textContent;document.body.appendChild(s);}
+(function kvBoot(){
+ if(typeof indexedDB==='undefined'||!indexedDB){KV.reason='indisponível neste navegador';kvStartApp();return;}
+ const limit=setTimeout(()=>{if(!kvStartApp.done){KV.ok=false;KV.reason='não respondeu em 2,5 s';kvStartApp();}},2500);
+ kvReconcile().then(()=>{clearTimeout(limit);if(kvStartApp.done){KV.ok=false;return;}kvStartApp();})
+  .catch(e=>{clearTimeout(limit);KV.ok=false;KV.reason=(e&&e.name)||'erro ao abrir';kvStartApp();});
+ const out=()=>{try{KV.flush();}catch(e){}};addEventListener('pagehide',out);document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='hidden')out();});})();
 </script>
 </body>
 </html>

@@ -368,6 +368,55 @@ Na passagem v18.7 → v18.8 o defeito ainda acontece uma vez, porque é o códig
 - E2E com 8 verificações novas: etiqueta abre a ficha, 21 fichas, três níveis, contagem por grandeza, status, ficha com equação e tolerância, 390 px.
 - Node 79/79.
 
+## 5-M. v18.9 — armazenamento local: IndexedDB principal com espelho (§42)
+
+**Situação anterior:** tudo no localStorage. No Safari, isso significa:
+- cota de ~5 MB;
+- gravação sem transação;
+- nenhuma cópia se o espelho for apagado ou corrompido;
+- com a cota cheia, a alteração simplesmente não ficava no aparelho (desde a v18 havia pelo menos um aviso).
+
+**Escolha:** IndexedDB, e não SQLite-WASM/OPFS:
+- funciona no Safari do iPhone desde versões antigas, com transações e cota maior;
+- não acrescenta biblioteca;
+- funciona no GitHub Pages sem cabeçalhos especiais. O OPFS síncrono pede Worker dedicado, e o SQLite-WASM acrescentaria ~1 MB e dependência sem necessidade para o volume atual.
+
+**Migração progressiva, sem reescrever o app:**
+- O app continua lendo de forma síncrona. Um carregador abre o IndexedDB antes e entrega a cópia vencedora de cada chave.
+- Cada gravação vai para os dois.
+- Na abertura vale, chave a chave, a cópia mais nova (carimbos de tempo), e a outra é reparada.
+- Na primeira abertura, todas as chaves `fredolin_*` são copiadas e nada é apagado do localStorage.
+- Os caches que se baixam de novo ficam fora: biblioteca dos mestres, ajuste térmico e menu.
+- Sem IndexedDB, ou se ele não responder em 2,5 s, o app abre como antes.
+- O estado da bancada, que era gravado direto no localStorage, passou pela mesma camada.
+
+**Cota cheia agora:** o espelho recusa, o dado fica no IndexedDB, não há perda nem alarme falso, e o cartão mostra "espelho recusou N gravações (dados seguros no IndexedDB)". O aviso de memória cheia só aparece se os dois recusarem.
+
+**Cópias automáticas:**
+- Uma por dia, no formato do backup exportado (schema 2), 15 s depois de abrir ou ao ir para segundo plano.
+- Ficam as 7 mais recentes, no próprio aparelho.
+- "Ver e restaurar" (Maestro) usa a importação planejada: mostra o que muda antes e nunca troca registro igual ou mais novo.
+- Não substitui o backup exportado, que é a cópia fora do aparelho.
+
+**Cartão "Funcionamento offline"** ganhou:
+- armazenamento principal (ativo, número de chaves, migradas nesta abertura) ou o motivo de estar indisponível;
+- estado do espelho;
+- chaves recuperadas na abertura;
+- cópias automáticas com botão de restaurar;
+- "Guardar cópia agora".
+
+**Testes:** `tests/e2e/storage.mjs` (14 verificações, Chromium e WebKit no CI):
+- migração não destrutiva a partir de dados da v18.8;
+- gravação nos dois;
+- localStorage apagado é recuperado do IndexedDB, com o espelho reparado;
+- cota cheia no espelho: gravação aceita, sem alarme falso, e o dado volta ao reabrir;
+- espelho mais novo vence e atualiza o IndexedDB;
+- cópia automática e restauração pela importação;
+- navegador sem IndexedDB;
+- IndexedDB travado (abre em ~2,7 s).
+
+Todas as suítes anteriores passam com o novo carregamento (25 páginas, offline real, PWA, Experimentos). Node 79/79.
+
 ## 6. Para publicar (requer sua autorização)
 1. Conferir a execução do workflow *Testes* na branch (inclui WebKit e o job *banco*).
 1b. Aplicar a migração 001 seguindo `supabase/README.md` (ensaio num projeto de teste primeiro). A ordem entre banco e app é indiferente.

@@ -1,8 +1,14 @@
 /* v18 (auditoria): gravar pode falhar (cota cheia do Safari, modo privado). Antes o erro era engolido e a alteração
    simplesmente não ficava no aparelho. Agora set() devolve true/false, guarda quais chaves falharam (LS.bad) e avisa. */
-const LS={bad:{},get(k){try{const v=localStorage.getItem(k);return v?JSON.parse(v):null;}catch(e){return null;}},
- set(k,v){try{localStorage.setItem(k,JSON.stringify(v));if(this.bad[k])delete this.bad[k];return true;}
-  catch(e){this.bad[k]=(e&&e.name)||'erro';const now=Date.now();
+/* v18.9 · com o IndexedDB ativo (kv-boot.js), cada gravação vai para os dois; a leitura usa a cópia vencedora da
+   abertura (KV.boot) e, depois, a última gravada. Se só o localStorage falhar (cota do Safari), o dado está no IndexedDB:
+   não há perda nem aviso de memória cheia. Sem IndexedDB, o comportamento é o da v18. */
+const LS={bad:{},
+ get(k){try{const b=typeof KV!=='undefined'?KV.boot[k]:undefined;const v=b!==undefined?b:localStorage.getItem(k);return v?JSON.parse(v):null;}catch(e){return null;}},
+ set(k,v){return this.setRaw(k,JSON.stringify(v));},
+ setRaw(k,s){const kv=typeof KV!=='undefined'&&KV.ok&&KV.mirrored(k);if(kv){KV.boot[k]=s;KV.put(k,s);}
+  try{localStorage.setItem(k,s);if(kv){const m=KV.meta();m[k]=Date.now();KV.metaSet(m);}if(this.bad[k])delete this.bad[k];return true;}
+  catch(e){this.bad[k]=(e&&e.name)||'erro';if(kv)return true;const now=Date.now();
    if(typeof toast==='function'&&(!this._w||now-this._w>30000)){this._w=now;setTimeout(()=>toast('Memória do aparelho cheia: a última alteração NÃO foi gravada neste aparelho. Exporte um backup.'),0);}
    return false;}}};
 /* chaves de armazenamento (mantidas desde a v9 para não perder dados salvos) */
