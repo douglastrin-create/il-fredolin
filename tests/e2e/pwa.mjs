@@ -25,7 +25,8 @@ const srv = http.createServer((q, r) => {
 });
 await new Promise(ok => srv.listen(0, ok));
 const base = `http://127.0.0.1:${srv.address().port}/`;
-const fails = []; const check = (ok, msg) => { console.log(`${ok ? '✓' : '✗'} ${msg}`); if (!ok) fails.push(msg); };
+const fails = []; const check = (ok, msg) => { console.log(`${ok ? '✓' : '✗'} ${msg}`); if (!ok) { fails.push(msg); if (process.env.CI) console.log(`::error title=PWA ${process.argv[2] || 'chromium'}::${msg.replace(/\n/g, ' ')}`); } };
+process.on('unhandledRejection', e => { if (process.env.CI) console.log(`::error title=PWA ${process.argv[2] || 'chromium'} exceção::${String(e && e.stack || e).replace(/\n/g, ' | ').slice(0, 900)}`); console.error(e); process.exit(1); });
 
 const engName = process.argv[2] || 'chromium'; const eng = { chromium, webkit }[engName];
 let b; try { b = await eng.launch(); } catch (e) { if (process.env.CI) { console.log(`✗ ${engName}: não abriu no CI`); process.exit(1); } console.log(`- ${engName}: não instalado, pulado`); srv.close(); process.exit(0); }
