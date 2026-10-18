@@ -138,6 +138,14 @@ Num iPhone espera-se algo como 2–4× isso: ainda abaixo de 60 ms. **Recomenda�
 
 **Não verificado:** a emulação do `auth` não é o GoTrue do Supabase. O ensaio num projeto Supabase de teste (`supabase/README.md`, passo 2) continua necessário antes de produção.
 
+## 5-D. Implantação (17/10/2026)
+| Etapa | Hora | Evidência |
+|---|---|---|
+| Backup exportado pelo Maestro | ~21:30 | — |
+| Migração 001 no Supabase da equipe | 22:05 | `ver` ativa; convites exigem e-mail confirmado; 0 markup fora de `fin` (2 movidos); gatilho ligado |
+| Migração 002 | 22:10 | anônimo sem EXECUTE nas 6 funções; `search_path` fixo; Security Advisor: restam 2 avisos (1 intencional, 1 de painel) |
+| App v18.0 publicado (`main` = `9d128e1`, avanço direto) | 22:14 | CI verde nos 3 jobs antes do merge; GitHub Pages implantado com o mesmo commit; cache `il-fredolin-d50551d3dc` |
+
 ## 6. Para publicar (requer sua autorização)
 1. Conferir a execução do workflow *Testes* na branch (inclui WebKit e o job *banco*).
 1b. Aplicar a migração 001 seguindo `supabase/README.md` (ensaio num projeto de teste primeiro). A ordem entre banco e app é indiferente.
