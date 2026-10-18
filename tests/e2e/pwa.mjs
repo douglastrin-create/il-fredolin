@@ -35,6 +35,10 @@ process.on('unhandledRejection', e => { if (process.env.CI) console.log(`::error
 const engName = process.argv[2] || 'chromium'; const eng = { chromium, webkit }[engName];
 let b; try { b = await eng.launch(); } catch (e) { if (process.env.CI) { console.log(`✗ ${engName}: não abriu no CI`); ann('error', 'abrir', e && e.message || e); process.exit(1); } console.log(`- ${engName}: não instalado, pulado`); srv.close(); process.exit(0); }
 console.log('motor: ' + engName);
+/* WebKit do Playwright não recarrega página com service worker em modo offline simulado ("internal error"): lá as etapas
+   offline viram verificação online, e o relatório diz isso. O offline real é verificado no Chromium. */
+const OFF = engName === 'chromium';
+if (!OFF) console.log('- ' + engName + ': etapas com rede desligada não são simuláveis neste motor; verificadas online');
 const ctx = await b.newContext();
 await ctx.route('**/*supabase.co/**', r => r.abort()); await ctx.route('**/fonts.g*/**', r => r.abort());
 const diag = pg => pg.evaluate(async () => { await navigator.serviceWorker.ready; for (let i = 0; i < 40 && !navigator.serviceWorker.controller; i++) await new Promise(r => setTimeout(r, 100)); return swAsk('diag'); });
@@ -51,9 +55,9 @@ const caches_ = pg => pg.evaluate(async () => (await caches.keys()).filter(k => 
   await p0.evaluate(async () => { const r = await navigator.serviceWorker.getRegistration(); await r.update().catch(() => { }); });
   const took = await ch; await p0.reload(); await p0.waitForTimeout(3500);
   const k1 = await p0.evaluate(async () => (await caches.keys()).filter(k => k.startsWith('il-fredolin-')).join(','));
-  await c0.setOffline(true); await p0.reload(); await p0.waitForTimeout(1000);
+  if (OFF) await c0.setOffline(true); await p0.reload(); await p0.waitForTimeout(1000);
   const vOff = await p0.evaluate(() => typeof VERSION !== 'undefined' && VERSION).catch(() => null);
-  check(took && vOff === verOf(v1.html) && k1 === 'il-fredolin-' + v1.sw.match(/INDEX_SHA='([0-9a-f]{12})/)[1], `migração do sw publicado (${verOf(old.html)}, cache ${k0}) → ${vOff} offline; caches agora: ${k1}`);
+  check(took && vOff === verOf(v1.html) && k1 === 'il-fredolin-' + v1.sw.match(/INDEX_SHA='([0-9a-f]{12})/)[1], `migração do sw publicado (${verOf(old.html)}, cache ${k0}) → ${vOff}${OFF ? ' offline' : ''}; caches agora: ${k1}`);
   await c0.close(); cur = { html: v1.html, sw: v1.sw }; }
 
 /* 1. instalação conferida */
@@ -71,10 +75,11 @@ check(await pg.evaluate(() => typeof analyze === 'function' && !!document.queryS
 override = { status: 200, body: '<!doctype html><title>portal</title><h1>Faça login no Wi-Fi</h1>' };
 await pg.reload(); await pg.waitForTimeout(600);
 check(/Wi-Fi/.test(await pg.content()), 'online, a página inesperada aparece (é o que o servidor mandou)');
-override = null; await ctx.setOffline(true);
-await pg.reload(); await pg.waitForTimeout(1000);
-check(await pg.evaluate(() => typeof analyze === 'function'), 'offline depois disso: abre o app guardado, não a página inesperada');
-await ctx.setOffline(false);
+override = null;
+if (OFF) { await ctx.setOffline(true);
+  await pg.reload(); await pg.waitForTimeout(1000);
+  check(await pg.evaluate(() => typeof analyze === 'function'), 'offline depois disso: abre o app guardado, não a página inesperada');
+  await ctx.setOffline(false); } else { await pg.reload(); await pg.waitForTimeout(800); }
 d = await diag(pg); check(d.indexOk === true, 'cópia guardada continua conferindo pelo hash');
 
 /* 4. atualização com o servidor ainda entregando a página antiga: a versão nova não se instala e a antiga segue íntegra */
@@ -95,9 +100,9 @@ await pg.waitForTimeout(500);
 d = await diag(pg);
 check(d.version === verOf(v2.html) && d.indexOk && d.miss.length === 0, `versão nova guardada e conferida: ${d.version}`);
 { const cs = await caches_(pg); check(cs.length === 1, 'cache da versão anterior apagado depois que a nova ficou completa: ' + cs.join(', ')); }
-await ctx.setOffline(true); await pg.close();
+if (OFF) await ctx.setOffline(true); await pg.close();
 const p2 = await ctx.newPage(); await p2.goto(base).catch(() => { }); await p2.waitForTimeout(1200);
-check(await p2.evaluate(() => typeof VERSION !== 'undefined' && VERSION).catch(() => null) === verOf(v2.html), 'fechar e reabrir offline: abre a versão nova');
+check(await p2.evaluate(() => typeof VERSION !== 'undefined' && VERSION).catch(() => null) === verOf(v2.html), OFF ? 'fechar e reabrir offline: abre a versão nova' : 'fechar e reabrir: abre a versão nova');
 
 /* 6. diagnóstico na tela (Conta e sincronização) */
 await p2.evaluate(() => { AUTH.state = 'ready'; ME.ws = null; S.page = 'dados'; renderNow(); });
