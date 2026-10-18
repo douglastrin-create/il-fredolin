@@ -159,6 +159,18 @@ Num iPhone espera-se algo como 2–4× isso: ainda abaixo de 60 ms. **Recomenda�
 
 **Limites honestos:** a prioridade de "O que medir" é uma ordem transparente, não um cálculo formal de valor da informação. A análise de experimentos vale só para os fatores e a faixa testados. Com poucos graus de liberdade (ex.: 1), o p é frágil.
 
+## 5-F. v18.2 — calibração térmica pelo núcleo do pote
+
+O núcleo medido no endurecimento era registrado e **nunca usado**. Agora ele calibra o coeficiente de troca de calor do freezer (14 W/m²K, estimativa de literatura), que define o tempo de endurecimento.
+
+- **Lote:** novo campo "minutos no freezer". É preenchido sozinho quando o lote veio da Produção ao vivo (hora do evento de entrada no freezer).
+- **Ajuste:** para cada lote, procura o h que faz a simulação térmica (verificada na rodada 1) chegar ao núcleo medido no mesmo tempo. Bisseção em log h, entre 3 e 80 W/m²K. Os lotes se combinam com encolhimento (prior de 2 lotes), e o resultado é aplicado ao endurecimento.
+- **Informatividade:** cada medição é testada contra a precisão de um termômetro de espeto (±0,5 °C). Se esse erro muda h em mais de 60%, ela fica de fora, com o motivo mostrado no lote. Isso acontece quando o núcleo ainda está no patamar de congelamento ou já está em equilíbrio com o freezer. **Achado dos testes:** com saída a −5 °C, medições até ~60 min caem no patamar e não informam; o guia de medição diz isso ao usuário.
+- **Desempenho:** ~145 ms por medição nova (Node), uma única vez. O resultado fica num cache no aparelho (hash, ≤300 entradas), e abrir o app não recalcula.
+- **Testes:** `calib-thermal.test.mjs` recupera h = 8/14/25 com erro < 3% e descarta 4 tipos de medição sem informação. Também confere a combinação com encolhimento, a aplicação ao endurecimento e a volta ao valor de literatura sem lotes. No E2E, confere o preenchimento pela Produção ao vivo e a persistência do cache.
+
+**Limite:** os dados de teste foram gerados pelo próprio modelo. Isso prova que o ajuste é correto e identificável, não que o modelo representa o seu freezer. Essa validação só virá com medições reais.
+
 ## 6. Para publicar (requer sua autorização)
 1. Conferir a execução do workflow *Testes* na branch (inclui WebKit e o job *banco*).
 1b. Aplicar a migração 001 seguindo `supabase/README.md` (ensaio num projeto de teste primeiro). A ordem entre banco e app é indiferente.

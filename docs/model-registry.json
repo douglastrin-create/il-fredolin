@@ -88,7 +88,8 @@
     "poteReady"
    ],
    "class": [
-    "M"
+    "M",
+    "C"
    ],
    "method": "condução 1-D em esfera de mesmo raio que pote H=D; capacidade térmica aparente; passo explícito com critério 0,45·C/G",
    "parameters": {
@@ -96,7 +97,8 @@
     "h_freezer_frost_free_W_m2K": 14
    },
    "verification": "engine.test.mjs: erro de energia ≤0,7%, malha N=10 vs 40 <2%, concordância ±3% com método da entalpia",
-   "limits": "h estimado; sem parede/tampa/contato; potes com H≠D"
+   "limits": "h do freezer calibrável; h da cozinha (10) não; sem parede/tampa/contato; potes com H≠D",
+   "calibration": "h do freezer (H_FREEZER=14 W/m²K) × CAL.hMult, ajustado por lote a partir do núcleo medido e dos minutos no freezer (bisseção em log h, 3–80 W/m²K); medição descartada se ±0,5 °C de termômetro mudar h em mais de 60%; encolhimento com prior de 2 lotes"
   },
   {
    "id": "viscosity",

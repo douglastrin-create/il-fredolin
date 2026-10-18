@@ -1030,7 +1030,7 @@ function meltModel(m){return clamp(55-(m.melt-50)*.9,3,95);}
 const ING_BY={};ING.forEach(i=>ING_BY[i.id]=i);
 let ING_VER=0;
 /* estado do motor que depende do usuário: calibração (lotes) e custo médio do estoque */
-const CAL={on:true,tShift:0,qShift:0,ov:{},meltBias:0,kMult:1,n:0,ver:0,res:{},pref:{pod:0,fz:0,n:0}};
+const CAL={on:true,tShift:0,qShift:0,ov:{},meltBias:0,kMult:1,hMult:1,n:0,ver:0,res:{},pref:{pod:0,fz:0,n:0}};
 let INVCOST={},INVVER=0;
 
 /* ---------- tipo de gordura de cada ingrediente (para a curva de gordura sólida) ---------- */
@@ -1300,11 +1300,30 @@ function poteReady(m,pr){if(m.empty||!(m.wat>0))return null;const T0=Math.min(+p
    (blastT) nos primeiros turboMin minutos e depois a temperatura normal do freezer. Pronto = centro a −18 °C
    (ou 1,5 °C acima do freezer, se ele for mais quente). Pote pré-resfriado não aquece o gelato na entrada. */
 let HARD_N=10;
+/* coeficiente de troca do freezer frost free (W/m²K): estimativa de literatura; os lotes com núcleo medido o calibram (CAL.hMult) */
+const H_FREEZER=14;
+/* v18.2 · temperatura do núcleo após tMin minutos no freezer, para um h dado (mesma física do endurecimento) */
+function coreAt(m,pr,ml,h,tMin){const store=+pr.storeT,turbo=Math.min(+pr.blastT,store),tb=clamp(+pr.turboMin||0,0,150)*60;let core=null;
+ heatSim(m,{ml,N:8,T0:Math.min(+pr.drawT,m.fp-.2),Tamb:t=>t<tb?turbo:store,h,tMax:tMin*60+90,step:60,dtMax:30,watch:s=>{core=s.core;return s.t>=tMin;}});return core;}
+/* h que reproduz o núcleo medido. null quando a medição não informa: equilíbrio com o freezer, menos de 5 min,
+   ou fora do alcance físico (nem h = 3 nem h = 80 W/m²K chegam ao valor medido). Busca por bisseção em log h. */
+function fitH(m,pr,ml,tMin,coreMeas,iters){if(!(tMin>=5)||!isFinite(coreMeas))return null;const store=+pr.storeT;
+ if(Math.abs(coreMeas-store)<1.5)return null;
+ const g=lh=>coreAt(m,pr,ml,Math.exp(lh),tMin)-coreMeas;let lo=Math.log(3),hi=Math.log(80);const glo=g(lo),ghi=g(hi);
+ if(!(glo>0&&ghi<0))return null;for(let k=0;k<(iters||10);k++){const mid=(lo+hi)/2;if(g(mid)>0)lo=mid;else hi=mid;}return Math.exp((lo+hi)/2);}
+/* cache dos ajustes por lote, guardado no aparelho: cada medição é calculada uma vez, não a cada abertura do app.
+   Chave = hash (cyrb53) do que entra no cálculo; ~40 bytes por entrada, até 300 entradas. */
+const hash53=(str,seed=0)=>{let h1=0xdeadbeef^seed,h2=0x41c6ce57^seed;for(let i=0;i<str.length;i++){const ch=str.charCodeAt(i);h1=Math.imul(h1^ch,2654435761);h2=Math.imul(h2^ch,1597334677);}
+ h1=Math.imul(h1^(h1>>>16),2246822507)^Math.imul(h2^(h2>>>13),3266489909);h2=Math.imul(h2^(h2>>>16),2246822507)^Math.imul(h1^(h1>>>13),3266489909);return(4294967296*(2097151&h2)+(h1>>>0)).toString(36);};
+const HFIT_KEY='fredolin_hfit_v1';
+const _HFIT=(()=>{try{return new Map(JSON.parse((typeof localStorage!=='undefined'&&localStorage.getItem(HFIT_KEY))||'[]'));}catch(e){return new Map();}})();
+let _HFIT_dirty=false;
+function hfitSave(){if(!_HFIT_dirty)return;_HFIT_dirty=false;try{if(typeof localStorage!=='undefined')localStorage.setItem(HFIT_KEY,JSON.stringify([..._HFIT].slice(-300)));}catch(e){}}
 function hardenModel(m,prIn,ml){if(m.empty||!(m.wat>0))return null;const pr=Object.assign({},PROC0,prIn||m.pr);ml=ml||pr.poteMl;
- const key=['h',ml,pr.drawT,pr.storeT,pr.blastT,pr.turboMin].join('|');m._hard=m._hard||{};if(m._hard[key])return m._hard[key];
+ const hM=CAL.on&&CAL.hMult>0?CAL.hMult:1;const key=['h',ml,pr.drawT,pr.storeT,pr.blastT,pr.turboMin,hM].join('|');m._hard=m._hard||{};if(m._hard[key])return m._hard[key];
  const store=+pr.storeT,turbo=Math.min(+pr.blastT,store),tb=clamp(+pr.turboMin||0,0,150)*60;const target=Math.max(-18,store+1.5);
  let tDone=null,tFirm=null;const firmT=Math.max(-12,store+3);
- const sim=heatSim(m,{ml,N:HARD_N,T0:Math.min(+pr.drawT,m.fp-.2),Tamb:t=>t<tb?turbo:store,h:14,tMax:12*3600,step:60,dtMax:30,
+ const sim=heatSim(m,{ml,N:HARD_N,T0:Math.min(+pr.drawT,m.fp-.2),Tamb:t=>t<tb?turbo:store,h:H_FREEZER*hM,tMax:12*3600,step:60,dtMax:30,
   watch:s=>{if(tFirm==null&&s.scoop<=firmT)tFirm=s.t;if(tDone==null&&s.core<=target){tDone=s.t;return true;}return false;}});
  const res={ml,target,tDone,tFirm,massG:sim.massG,curve:sim.curve};m._hard[key]=res;return res;}
 /* temperatura em que a camada de servir estará após a espera: é a "vitrine" efetiva no modo pote */
@@ -1320,7 +1339,7 @@ function balancePote(st){let s2={...st,vit:poteServeTemp(st)},b=null;
 function calOv(machine){return (CAL.on&&CAL.ov[machine])?CAL.ov[machine]:0;}
 /* ajuste bayesiano simples: média dos resíduos encolhida em direção a zero (prior de 3 lotes) */
 function fitCalibration(lots){
- const prev=CAL.on;CAL.on=false;const ovR={},fzR=[],mR=[],kR=[],pS=[],pF=[],qR=[];let phN=0;const res=[];
+ const prev=CAL.on;CAL.on=false;const ovR={},fzR=[],mR=[],kR=[],pS=[],pF=[],qR=[],hR=[];let phN=0;const res=[];
  (lots||[]).forEach(L=>{if(!L.recipe||!L.recipe.length)return;const st={tipo:L.tipo,vit:L.meas&&L.meas.texTemp!=null&&L.meas.texTemp!==''?+L.meas.texTemp:L.vit,recipe:L.recipe,proc:L.proc||{},brix:L.brix||{},costs:{}};const m=analyzeRaw(st);const me=L.meas||{};const r={id:L.id,code:L.code};
   const ov=measuredOverrun(me);if(ov!=null){const mc=(L.proc&&L.proc.machine)||'horiz';(ovR[mc]=ovR[mc]||[]).push(ov-m.ovModel);r.ov=[m.ovModel,ov];}
   if(me.tex!=null&&me.tex!==''){const tt=st.vit;const pred=(frozenPct(tt,m.SE,m.S)-m.fzMid)/3.5;fzR.push(-.8*(+me.tex-pred));r.tex=[Math.round(pred*10)/10,+me.tex];}
@@ -1328,6 +1347,18 @@ function fitCalibration(lots){
   if(me.icyDay!=null&&me.icyDay!==''&&+me.icyDay>0){const K=kinetics(m,st).Kvit;const implied=(Math.pow(50,3)-Math.pow(m.crystal,3))/(+me.icyDay);if(implied>0)kR.push(Math.log(implied/K));r.icy=+me.icyDay;}
   if(me.brix!=null&&me.brix!=='')r.brix=[m.brixMix,+me.brix];
   if(me.ph!=null&&me.ph!==''&&isFinite(+me.ph)){r.ph=[Math.round(m.ph*100)/100,+me.ph];phN++;}
+  /* v18.2 · núcleo medido após N minutos no freezer → coeficiente de troca de calor */
+  if(me.coreT!=null&&me.coreT!==''&&isFinite(+me.coreT)&&me.coreMin!=null&&me.coreMin!==''&&isFinite(+me.coreMin)){
+   const pr=Object.assign({},PROC0,L.proc||{});if(me.drawT!=null&&me.drawT!==''&&isFinite(+me.drawT))pr.drawT=+me.drawT;const ml=+pr.poteMl||500;
+   const hk=hash53(JSON.stringify([L.recipe,L.tipo,pr.drawT,pr.storeT,pr.blastT,pr.turboMin,ml,+me.coreT,+me.coreMin,L.brix,H_FREEZER,ING_VER]));
+   /* precisão de um termômetro de espeto: ±0,5 °C. Se esse erro muda o h em mais de 60% (núcleo ainda no patamar de
+      congelamento, ou quase em equilíbrio), a medição não informa e fica de fora, com o motivo registrado */
+   let F=_HFIT.get(hk);if(F===undefined){const c=+me.coreT,t=+me.coreMin;F={h:fitH(m,pr,ml,t,c,10),lo:fitH(m,pr,ml,t,c+.5,7),hi:fitH(m,pr,ml,t,c-.5,7)};
+    _HFIT.set(hk,F);_HFIT_dirty=true;if(_HFIT.size>300)_HFIT.delete(_HFIT.keys().next().value);}
+   const ok=F.h!=null&&F.lo!=null&&F.hi!=null&&F.hi/F.lo<=1.6;
+   const pred=coreAt(m,pr,ml,H_FREEZER,+me.coreMin);
+   r.core=[pred!=null?Math.round(pred*10)/10:null,+me.coreT,F.h!=null?Math.round(F.h*10)/10:null,+me.coreMin,ok?'':F.h==null?'fora do alcance do modelo ou em equilíbrio':'pouco informativa: núcleo ainda no patamar de congelamento'];
+   if(ok)hR.push(Math.log(F.h/H_FREEZER));}
   /* quenelle: temperatura do teste e resultado (−1 rachou/duro · 0 lisa · +1 mole/desabou) → desloca o alvo de água congelada */
   if(me.qT!=null&&me.qT!==''&&me.qRes!=null&&me.qRes!==''&&isFinite(+me.qT)){const q=quenelleModel(m);if(q){const fz=m.fz(+me.qT),res=+me.qRes;
    const y=res===0?fz-q.fq:res<0?Math.min(0,fz-q.fBr):Math.max(0,fz-q.fSl);qR.push(y);r.q=[Math.round(q.T*10)/10,+me.qT,res];}}
@@ -1337,9 +1368,9 @@ function fitCalibration(lots){
   res.push(r);});
  const shrink=(a,k=3)=>a.length?a.reduce((x,y)=>x+y,0)/(a.length+k):0;
  CAL.ov={};for(const mc in ovR)CAL.ov[mc]=Math.round(shrink(ovR[mc])*10)/10;
- CAL.tShift=Math.round(shrink(fzR)*100)/100;CAL.qShift=Math.round(shrink(qR)*10)/10;CAL.meltBias=Math.round(shrink(mR)*10)/10;CAL.kMult=Math.exp(shrink(kR,2));
+ CAL.tShift=Math.round(shrink(fzR)*100)/100;CAL.qShift=Math.round(shrink(qR)*10)/10;CAL.meltBias=Math.round(shrink(mR)*10)/10;CAL.kMult=Math.exp(shrink(kR,2));CAL.hMult=Math.exp(shrink(hR,2));hfitSave();
  CAL.pref={pod:Math.round(shrink(pS)*2)/2,fz:Math.round(shrink(pF)),n:Math.max(pS.length,pF.length)};if(!CAL.pref.pod&&!CAL.pref.fz)CAL.pref.n=0;
- CAL.n=res.length;CAL.res=res;CAL.counts={ov:Object.values(ovR).reduce((a,b)=>a+b.length,0),tex:fzR.length,melt:mR.length,icy:kR.length,panel:Math.max(pS.length,pF.length),q:qR.length,ph:phN};CAL.on=prev;CAL.ver++;return CAL;}
+ CAL.n=res.length;CAL.res=res;CAL.counts={ov:Object.values(ovR).reduce((a,b)=>a+b.length,0),tex:fzR.length,melt:mR.length,icy:kR.length,panel:Math.max(pS.length,pF.length),q:qR.length,ph:phN,core:hR.length};CAL.on=prev;CAL.ver++;return CAL;}
 function measuredOverrun(me){if(me.ov!=null&&me.ov!=='')return +me.ov;if(+me.cupMix>0&&+me.cupGel>0)return(+me.cupMix-+me.cupGel)/(+me.cupGel)*100;return null;}
 
 /* ---------- QUÍMICA: pH, Tg′, cinética, sensorial ---------- */
@@ -2253,9 +2284,9 @@ function measurePlan(st,m,cal,unc){if(!m||m.empty||!(m.wat>0))return[];cal=cal||
   impact:'previsto '+f1(m.brixMix)+' °Bx',cls:'D',acc:'barato',val:.3,n:0,
   equip:'Refratômetro',how:'Uma gota da mistura maturada no prisma.'});
  /* 9. Núcleo no endurecimento (registrado; calibração do coeficiente térmico ainda não implementada) */
- add({id:'nucleo',what:'Temperatura do núcleo durante o endurecimento',field:'Lote → Núcleo após abatimento',
-  why:'O tempo de endurecimento vem de um modelo térmico verificado, mas o coeficiente de troca de calor do freezer é estimado. O registro já fica no lote; a calibração automática ainda não usa esse dado.',
-  impact:'',cls:'M',acc:'barato',n:0,equip:'Termômetro de espeto',how:'Anote a temperatura do centro do pote e quanto tempo depois de sair da mantecadora.'});
+ {const n=cnt.core||0;add({id:'nucleo',what:'Temperatura do núcleo durante o endurecimento',field:'Lote → Núcleo após abatimento + minutos no freezer',
+  why:'O modelo térmico é verificado, mas a troca de calor do seu freezer é uma estimativa de literatura'+(n?'; já calibrada por '+n+' lote(s).':'. Cada medição a calibra.'),
+  impact:'',cls:'SE',acc:'barato',n,equip:'Termômetro de espeto',how:'Meça o centro do pote quando já estiver bem abaixo da temperatura de saída (em geral 60–150 min no freezer). Medições cedo demais, com o núcleo parado no ponto de congelamento, não informam e são descartadas.'});}
  /* 10. Laboratório */
  add({id:'viscosidade',what:'Viscosidade da mistura',field:'(sem campo: anote no lote)',why:'Os coeficientes dos estabilizantes não foram medidos.',
   impact:'estimada '+f0(m.visc)+' mPa·s a 4 °C',cls:'H',acc:'lab',n:0,equip:'Viscosímetro rotacional (laboratório)',how:'Mistura a 4 °C, após maturar.'});
@@ -2610,7 +2641,7 @@ const isMac=()=>{try{return /Mac|iPhone|iPad/.test(navigator.platform||navigator
 const kbd=k=>`<kbd>${isMac()?'⌘':'Ctrl '}${k}</kbd>`;
 
 /* ---------- marca ---------- */
-const VERSION='v18.1';
+const VERSION='v18.2';
 const brandHTML=()=>`<div class="brand"><div class="hex"></div><div><b>Il <span>Fredolin</span></b><small>Gelato Lab ${VERSION}${APP_MODE==='app'&&ME.email?' · '+ROLE_N[ROLE]:''}</small></div></div>`;
 
 /* ---------- termômetro da receita: vitrine, serviço ideal (com faixa de incerteza) e freezer numa régua só ---------- */
@@ -3273,6 +3304,8 @@ function pgBiblioteca(){
 /* ===================== LOTES E CALIBRAÇÃO ===================== */
 function lotCode(){const d=new Date();const ymd=d.toISOString().slice(2,10).replace(/-/g,'');const n=LOTS.filter(l=>(l.code||'').includes(ymd)).length+1;return'IF-'+ymd+'-'+String(n).padStart(2,'0');}
 function newLotFromBench(){return newLotFromSt(S);}
+/* hora em que o pote entrou no freezer (evento 'hard' da Produção ao vivo), se houver */
+function flowHardAt(L){const ev=L&&L.flow&&L.flow.ev;if(!Array.isArray(ev))return null;const e=ev.filter(x=>x&&x.s==='hard').pop();return e&&e.at?+e.at:null;}
 /* v18.1 · mesmo lote a partir de qualquer estado de receita (a bancada ou uma corrida de experimento) */
 function newLotFromSt(st,idSfx){const m=analyze(st);if(m.empty)return null;const id='L'+Date.now()+(idSfx!=null?'-'+idSfx:'');const P=st.proc||{};
  return{id,code:lotCode(),date:today(),name:st.name,tipo:st.tipo,vit:st.vit,recipe:JSON.parse(JSON.stringify(st.recipe)),proc:JSON.parse(JSON.stringify(P)),brix:JSON.parse(JSON.stringify(st.brix||{})),
@@ -3305,6 +3338,7 @@ function pgLotes(m){
    <div class="card flat"><span class="lbl">Overrun por máquina</span>${Object.keys(CAL.ov).length?Object.entries(CAL.ov).map(([k,v])=>`<div class="kv"><span>${esc((MACH[k]||{}).n||k)}</span><span>${v>0?'+':''}${f1(v)} pp</span></div>`).join(''):'<p class="note">Sem medições ainda.</p>'}<p class="note">${cnt.ov} lote(s) com overrun medido</p></div>
    <div class="card flat"><span class="lbl">Dureza na vitrine</span><div class="kv"><span>Ajuste de temperatura</span><span>${CAL.tShift>0?'+':''}${f2(CAL.tShift)} °C</span></div><div class="kv"><span>Derretimento (10 min)</span><span>${CAL.meltBias>0?'+':''}${f1(CAL.meltBias)} pp</span></div><p class="note">${cnt.tex} avaliação(ões) de textura · ${cnt.melt} teste(s) de derretimento</p></div>
    <div class="card flat"><span class="lbl">Recristalização</span><div class="kv"><span>Multiplicador de K</span><span>× ${f2(CAL.kMult)}</span></div><p class="note">${cnt.icy} lote(s) com dia de gelo perceptível. Cada ajuste é encolhido em direção a zero até haver lotes suficientes (média bayesiana com prior de 3 lotes).</p></div>
+   <div class="card flat"><span class="lbl">Endurecimento no freezer</span><div class="kv"><span>Troca de calor</span><span>× ${f2(CAL.hMult||1)} (${f0(H_FREEZER*(CAL.hMult||1))} W/m²K)</span></div><p class="note">${cnt.core||0} lote(s) com núcleo medido e minutos no freezer. Acima de 1: seu freezer resfria mais rápido que a estimativa; abaixo: mais devagar. Medições já em equilíbrio com o freezer não entram.</p></div>
   </div>${scat?`<div style="margin-top:10px"><span class="lbl">Overrun previsto × medido</span>${scat}</div>`:''}</div>`}
  <div class="card flat"><p class="note" style="margin:0"><b style="color:var(--t2)">Como medir sem laboratório.</b> Overrun: encha um copo de volume fixo com a mistura e pese; depois o mesmo copo com o gelato recém-extraído, nivelado (overrun = (mistura − gelato) ÷ gelato). Derretimento: 100 g de gelato numa grade a 20 °C; pese o que escorreu em 10 min. Textura: avalie na espátula, de −2 (muito mole) a +2 (muito duro), anotando a temperatura da vitrine. Gelo: anote o dia em que percebeu cristais na língua.</p></div></div>`;}
 function lotEditor(L){const me=L.meas||{},se=L.sens||{};const ov=measuredOverrun(me);const h=haccp(L);
@@ -4512,7 +4546,7 @@ function protocolCard(L){const P=protocol(L);const ok=P.filter(p=>p[1]).length;c
  return`<div class="card flat" style="margin:12px 0"><div class="row"><h3 style="margin:0">Protocolo de medição</h3><span class="sp"></span><span class="chip ${ok>=6?'ok':ok>=3?'warn':'info'}">${ok}/${P.length} · ${ok>=4?'pronto para calibrar':'faltam medições'}</span></div>
   <div class="pills" style="margin:10px 0">${P.map(([n,d,x])=>`<div class="pill2 ${d?'ok':'info'}"><span class="dot"></span><span class="n">${n}</span><span class="v">${d?'feito':''}${x?(d?' · ':'')+esc(x):''}</span></div>`).join('')}</div>
   <div class="row"><button class="btn sm ${run?'':'pri'}" data-a="meltTimer" data-v="${L.id}">${run?'Parar cronômetro':'Iniciar derretimento (10 min)'}</button>${run?`<span class="mono c-ice" style="font-size:18px">${String(Math.floor(left/60000)).padStart(2,'0')}:${String(Math.floor(left/1000)%60).padStart(2,'0')}</span><span class="note">pese o que escorreu quando zerar</span>`:''}</div>
-  <div class="form" style="margin-top:10px">${iceSel(1)}${iceSel(3)}${iceSel(7)}<label class="field"><span class="lbl">Núcleo após abatimento (°C)</span><input type="number" id="lot-meas-coreT" data-i="lot" data-k="meas.coreT" value="${has0(me.coreT)}" step=".5"><span class="hint">termômetro de espeto no centro da cuba</span></label></div></div>`;}
+  <div class="form" style="margin-top:10px">${iceSel(1)}${iceSel(3)}${iceSel(7)}<label class="field"><span class="lbl">Núcleo após abatimento (°C)</span><input type="number" id="lot-meas-coreT" data-i="lot" data-k="meas.coreT" value="${has0(me.coreT)}" step=".5"><span class="hint">${(()=>{const rc=(CAL.res||[]).find(x=>x.id===L.id);if(!rc||!rc.core)return'termômetro de espeto no centro do pote';const c=rc.core;return(c[0]!=null?'previsto '+fT(c[0])+' °C (freezer de literatura)':'')+(c[4]?' · '+c[4]:' · seu freezer: '+f0(c[2])+' W/m²K');})()}</span></label><label class="field"><span class="lbl">Minutos no freezer (na medição)</span><input type="number" id="lot-meas-coreMin" data-i="lot" data-k="meas.coreMin" value="${has0(me.coreMin)}" step="1"><span class="hint">${flowHardAt(L)?'preenchido pela Produção ao vivo; corrija se mediu depois':'desde que o pote entrou no freezer; calibra o tempo de endurecimento. Meça quando o centro já estiver bem abaixo da saída (em geral 60–150 min)'}</span></label></div></div>`;}
 const has0=v=>v!=null&&v!==''?esc(v):'';
 
 /* ---------- PAINEL CEGO ---------- */
@@ -5712,7 +5746,10 @@ const INP={
  nxG:(v,t)=>{S.nxEdit.parts[t.dataset.k]=num(v,0,1e4,0);U.nxTest=null;render();},
  libQ:v=>{U.libQ=v;U.libN=0;render();},
  cq:v=>{U.cq=v;render();},days:v=>{U.days=num(v,0,14,0);render();},
- lot:(v,t)=>{const L=LOTS.find(l=>l.id===U.lotOpen);if(!L)return;setPath(L,t.dataset.k,v===''?'':(t.type==='number'?+v:v));saveLotSoon(L);render();},
+ lot:(v,t)=>{const L=LOTS.find(l=>l.id===U.lotOpen);if(!L)return;setPath(L,t.dataset.k,v===''?'':(t.type==='number'?+v:v));
+  /* v18.2 · núcleo digitado num lote da Produção ao vivo: os minutos no freezer saem da hora em que o pote entrou nele */
+  if(t.dataset.k==='meas.coreT'&&v!==''){const me=L.meas=L.meas||{},at=flowHardAt(L);if((me.coreMin==null||me.coreMin==='')&&at)me.coreMin=Math.max(0,Math.round((Date.now()-at)/60000));}
+  saveLotSoon(L);render();},
  lotTxt:v=>{const L=LOTS.find(l=>l.id===U.lotOpen);if(L){L.notes=v;saveLotSoon(L);}},
  ingQ:v=>{U.ingQ=v;render();},
  ing:(v,t)=>{const E=U.ingEdit;if(!E)return;const[p,k]=t.dataset.k.split('.');(p==='c'?E.c:E.x)[k]=v===''?'':(t.type==='number'?(p==='c'?num(v,0,100,0):num(v,...(({ph:[2,7.5],sat:[0,1],de:[1,100],brix:[0,90],na:[0,40000],cost:[0,1e6]})[k]||[-1e6,1e6]),0)):v);render();},

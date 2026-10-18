@@ -35,11 +35,17 @@ for (const [name, eng] of engines) {
     const L = { id: 'L-t', code: 'IF-T', name: 't', tipo: 'crema', vit: -12, recipe: [{ id: 'leite', g: 600 }], proc: {}, meas: {}, trace: {} };
     LOTS.unshift(L); U.lotOpen = 'L-t'; ACT.lotConsume(); ACT.lotConsume();
     const stockOk = invStock(INV).leite.q === 4400 && INV.filter(isMov).length === 1 && INV.find(e => e.id === 'E-t').qty === 5000 && L.trace.leite === 'X';
+    /* núcleo digitado num lote da Produção ao vivo: minutos no freezer preenchidos pela hora de entrada */
+    const Lc = { id: 'L-core', code: 'IF-C', name: 'c', tipo: 'crema', vit: -12, recipe: [{ id: 'leite', g: 600 }, { id: 'sacarose', g: 160 }], proc: {}, meas: {}, trace: {},
+      flow: { stage: 'hard', ev: [{ s: 'prep', at: Date.now() - 3 * 3600e3 }, { s: 'hard', at: Date.now() - 90 * 60e3 }] } };
+    LOTS.unshift(Lc); U.lotOpen = 'L-core'; INP.lot('-15', { dataset: { k: 'meas.coreT' }, type: 'number' });
+    const coreOk = Lc.meas.coreT === -15 && Lc.meas.coreMin === 90;
+    fitCalibration(LOTS); const cacheOk = (JSON.parse(localStorage.getItem('fredolin_hfit_v1') || '[]')).length >= 1 && CAL.res.some(x => x.id === 'L-core' && x.core);
     const backup = plan.cols.lib.keep === 1 && plan.cols.lib.add.length === 1 && card.includes('1 novos') && card.includes('mantidos');
     return { pages: Object.keys(VIEW).length, bad, tests: [t.pass, t.list.length], textura: q.includes('Estabilidade da textura') && !/Vida útil prevista/.test(q) && (q.match(/chip nat/g) || []).length >= 4,
-      quarentena: acc.includes('Alterações recusadas'), aviso: acc.includes('Gravação neste aparelho falhou'), backup, stockOk };
+      quarentena: acc.includes('Alterações recusadas'), aviso: acc.includes('Gravação neste aparelho falhou'), backup, stockOk, coreOk, cacheOk };
   });
-  const ok = !errs.length && !r.bad.length && r.tests[0] === r.tests[1] && r.textura && r.quarentena && r.aviso && r.backup && r.stockOk;
+  const ok = !errs.length && !r.bad.length && r.tests[0] === r.tests[1] && r.textura && r.quarentena && r.aviso && r.backup && r.stockOk && r.coreOk && r.cacheOk;
   console.log(`${ok ? '✓' : '✗'} ${name}: ${r.pages} páginas, testes ${r.tests.join('/')}, erros ${errs.length}`, ok ? '' : JSON.stringify({ r, errs }));
   if (!ok) failed++; await b.close();
   if (name !== 'chromium') continue;
