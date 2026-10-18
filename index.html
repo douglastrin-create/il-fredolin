@@ -858,6 +858,52 @@ const PROF={
  gastro:{n:'Gastronômico (salgado)',sol:[30,42],fat:[5,14],msnf:[5,11],swt:[4,14],pod:[3,10],prot:[2,8],stab:[.2,.6],fz:[66,74],ov:[20,35],draw:[-11,-7],frt:null},
  semacucar:{n:'Sem açúcar / low-carb',sol:[30,40],fat:[6,12],msnf:[6,11],swt:[12,22],pod:[14,19],prot:[3,8],stab:[.3,.6],fz:[68,74],ov:[20,35],draw:[-11,-7],frt:null}
 };
+/* ---------- v18.3 · FAMÍLIAS DE PRODUTO (especificação §20–21) ----------
+   Cada perfil diz: família, comportamento-base nas regras do motor (like), processo (batch = mantecadora;
+   soft = servido direto da máquina; still = congelado parado após aerar fora da máquina; molded = forma/palito sem ar;
+   scraped = raspado), contexto e temperatura de serviço, objetivo de cristal (fine/coarse) e a ORIGEM de cada faixa.
+   conf:'fonte' = faixas de composição com referência citada; conf:'prática' = valores de prática a confirmar medindo. */
+const FAM_N={italiana:'Italiana',internacional:'Internacional',tradicional:'Tradicional e regional',vegetal:'Vegetal',gastronomica:'Gastronômica'};
+Object.assign(PROF.crema,{fam:'italiana'});Object.assign(PROF.frutta,{fam:'italiana'});Object.assign(PROF.sorbetto,{fam:'italiana'});
+Object.assign(PROF.vegan,{fam:'vegetal'});Object.assign(PROF.gastro,{fam:'gastronomica'});Object.assign(PROF.semacucar,{fam:'italiana'});
+const SRC_GOFF='Goff, Ice Cream Technology e-book (Univ. de Guelph): "Suggested mixes for ice cream" e "Formulation considerations"';
+Object.assign(PROF,{
+ granita:{n:'Granita (raspada)',fam:'italiana',like:'sorbetto',proc:'scraped',crystal:'coarse',serveT:-8,serveCtx:'raspada',
+  sol:[17,28],fat:[0,1],msnf:[0,.5],swt:[15,25],pod:[15,25],prot:[0,1],stab:[0,.3],fz:[50,68],ov:[0,10],draw:[-10,-6],frt:[0,50],
+  conf:'prática',src:['Sem fonte primária de composição: faixas de prática siciliana (xarope 15–25% de açúcar), menos sólidos que um sorbetto para cristais grandes e soltos']},
+ semifreddo:{n:'Semifreddo',fam:'italiana',like:'crema',proc:'still',serveT:-13,serveCtx:'fatia',
+  sol:[38,50],fat:[14,26],msnf:[4,9],swt:[17,26],pod:[17,25],prot:[2.5,6],stab:[0,.4],fz:[50,66],ov:[80,150],draw:[-14,-10],frt:null,
+  conf:'prática',src:['Sem fonte primária: creme batido + pâte à bombe/merengue congelados em forma; o ar vem do batimento, não da mantecadora']},
+ americano:{n:'Ice cream americano (premium)',fam:'internacional',like:'crema',proc:'batch',serveT:-15,serveCtx:'vitrine',
+  sol:[36,42],fat:[10,16],msnf:[9,11],swt:[13,18],pod:[14,19],prot:[3.2,4.2],stab:[.1,.35],fz:[68,76],ov:[60,90],draw:[-7,-5],frt:null,
+  conf:'fonte',src:[SRC_GOFF+': misturas hard-frozen com 10–16% de gordura, 9,5–11% de MSNF, 36,5–41,4% de sólidos; overrun premium 60–90%','21 CFR 135.110: sorvete ≥ 10% de gordura láctea']},
+ philadelphia:{n:'Philadelphia (sem ovo)',fam:'internacional',like:'crema',proc:'batch',serveT:-15,serveCtx:'vitrine',yolkMax:.3,
+  sol:[36,42],fat:[10,16],msnf:[9,11],swt:[13,18],pod:[14,19],prot:[3.2,4.2],stab:[.1,.35],fz:[68,76],ov:[40,90],draw:[-7,-5],frt:null,
+  conf:'fonte',src:[SRC_GOFF,'Estilo sem gema: limite de gema fresca de 0,3% (traço)']},
+ custard:{n:'French / frozen custard',fam:'internacional',like:'crema',proc:'batch',serveT:-12,serveCtx:'vitrine',yolkSolMin:1.4,
+  sol:[37,44],fat:[10,16],msnf:[8.5,11],swt:[13,18],pod:[14,19],prot:[3.5,5],stab:[0,.3],fz:[66,74],ov:[20,45],draw:[-8,-5],frt:null,
+  conf:'fonte',src:['21 CFR 135.110: frozen custard com 1,4% de sólidos de gema (mínimo 1,12% com sabores volumosos)',SRC_GOFF+' (gordura e MSNF)','Overrun baixo: prática']},
+ soft:{n:'Soft serve',fam:'internacional',like:'crema',proc:'soft',serveT:-6.5,serveCtx:'máquina',
+  sol:[32,37],fat:[3,10],msnf:[10,13],swt:[12,16],pod:[13,18],prot:[3.5,5],stab:[.15,.4],fz:[35,55],ov:[30,45],draw:[-8,-5],frt:null,
+  conf:'fonte',src:[SRC_GOFF+': soft serve 10% gordura, 12–12,5% MSNF, 36% sólidos','SDSU Extension, "Soft serve frozen desserts and frozen yogurts": gordura 4–5%, ~33% de sólidos, overrun 30–35%','Temperatura de extração e fração congelada: prática, a confirmar medindo']},
+ froyo:{n:'Frozen yogurt',fam:'internacional',like:'crema',proc:'soft',serveT:-6.5,serveCtx:'máquina',
+  sol:[27,35],fat:[0,4],msnf:[11,15],swt:[13,18],pod:[13,19],prot:[4,6],stab:[.2,.5],fz:[35,55],ov:[30,45],draw:[-8,-5],frt:null,
+  conf:'fonte',src:[SRC_GOFF+': frozen yogurt 2% gordura, 14% MSNF, 15% açúcar, 0,35% estabilizante','SDSU Extension: gordura típica 0,5–3%; sem padrão legal de teor de iogurte (de cultura sem incubação a 15–20% de iogurte)']},
+ kulfi:{n:'Kulfi',fam:'tradicional',like:'crema',proc:'molded',serveT:-12,serveCtx:'palito',
+  sol:[38,47],fat:[9,14],msnf:[10,15],swt:[14,20],pod:[14,20],prot:[3.5,5.5],stab:[0,.6],fz:[58,72],ov:[0,10],draw:[-14,-10],frt:null,
+  conf:'fonte',src:['Formulação controle de "Preparation of Kulfi with incorporation of pineapple pulp" (The Pharma Innovation / phytojournal, 2021): leite evaporado a 75% do volume, creme, leite em pó, 15% de açúcar, 0,5% de estabilizante → ≈ 12,8% gordura, 11,9% MSNF, 42,6% sólidos (calculado aqui)','Moldado e congelado parado (sem ar). As tabelas de composição do artigo foram descartadas por inconsistência (sólidos totais de 5%)']},
+ dondurma:{n:'Dondurma (sorvete turco)',fam:'tradicional',like:'crema',proc:'batch',serveT:-12,serveCtx:'vitrine',
+  sol:[32,40],fat:[3,9],msnf:[7,11],swt:[16,23],pod:[16,22],prot:[3,5],stab:[.5,1.5],fz:[64,74],ov:[5,25],draw:[-9,-6],frt:null,
+  conf:'prática',src:['Sem fonte primária de composição: leite (tradicionalmente de cabra), açúcar, salep (glucomanano) e almécega; elástico e denso, sovado durante a mantecação']},
+ paleta_fruta:{n:'Paleta / picolé de fruta',fam:'tradicional',like:'sorbetto',proc:'molded',serveT:-15,serveCtx:'palito',
+  sol:[22,32],fat:[0,1],msnf:[0,.5],swt:[16,25],pod:[16,25],prot:[0,1.5],stab:[.1,.5],fz:[70,84],ov:[0,10],draw:[-30,-18],frt:[30,70],
+  conf:'prática',src:['Sem fonte primária: moldado, sem ar, mordido ainda duro (fração congelada maior que a de vitrine)']},
+ paleta_creme:{n:'Paleta / picolé cremoso',fam:'tradicional',like:'crema',proc:'molded',serveT:-15,serveCtx:'palito',
+  sol:[30,40],fat:[4,12],msnf:[7,11],swt:[15,22],pod:[15,22],prot:[2.5,4.5],stab:[.15,.5],fz:[70,82],ov:[0,15],draw:[-30,-18],frt:null,
+  conf:'prática',src:['Sem fonte primária: base de gelato em forma, sem ar, servida dura']}
+});
+/* comportamento-base de um tipo nas regras do motor (os tipos originais são eles mesmos) */
+const tbase=t=>PROF[t]&&PROF[t].like||t;
 const STAB_RNG={agar:[.05,.2],alg:[.1,.3],psy:[.1,.5],konj:[.1,.5],tara:[.05,.2],pect:[.05,.2],citf:[.15,.6],gel:[.1,.3],acacia:[.2,1],neutro:[.25,.6],lbg:[.1,.3],guar:[.05,.2],xan:[.03,.15],carr:[.01,.03],cmc:[.1,.3],starch:[.5,3],lec:[.2,.5],mono:[.1,.3]};
 const STAB_N={agar:'Ágar-ágar',alg:'Alginato',psy:'Psyllium',konj:'Glucomanano',tara:'Goma tara',pect:'Pectina',citf:'Fibra de citros',gel:'Gelatina',acacia:'Goma acácia',neutro:'Neutro',lbg:'Goma jataí (LBG)',guar:'Goma guar',xan:'Goma xantana',carr:'Carragena',cmc:'CMC',starch:'Amido',lec:'Lecitina',mono:'Mono e diglicerídeos'};
 
@@ -1123,7 +1169,7 @@ function analyzeRaw(st){
  m.hasEmul=m.emul>.05||m.yolkPct>=2;
  /* overrun */
  const mach=MACH[pr.machine]||MACH.horiz;let ov=mach.ov;
- if(st.tipo==='sorbetto')ov*=.7;
+ if(tbase(st.tipo)==='sorbetto')ov*=.7;
  ov+=clamp((m.fat-8)*.8,-5,3);if(m.fat>12)ov-=(m.fat-12)*1.5;
  ov+=clamp((m.prot-3.5)*2,-5,4);
  if(m.emul>.05)ov+=Math.min(3,m.emul*10);if(m.yolkPct>=2)ov+=1.5;
@@ -1132,7 +1178,10 @@ function analyzeRaw(st){
  ov+=pr.pastT>=80?2:pr.pastT>=72?1:0;ov+=pr.matH>=2?Math.min(3,pr.matH*.35):-2;
  if(pr.drawMin<6)ov-=5;else if(pr.drawMin>15)ov-=2;
  m.visc=mixViscosity(m,A);ov+=m.visc<25?-3:m.visc>800?-Math.log(m.visc/800)*6:m.visc>=50&&m.visc<=400?1.5:0;
- m.ovModel=clamp(ov,5,mach.max);m.ovBias=calOv(pr.machine);m.ov=clamp(m.ovModel+m.ovBias,5,mach.max+8);m.mach=mach;
+ m.ovModel=clamp(ov,5,mach.max);m.ovBias=calOv(pr.machine);m.ov=clamp(m.ovModel+m.ovBias,5,mach.max+8);m.mach=mach;m.ovSrc='máquina';
+ /* v18.3 · fora da mantecadora (soft, parado, moldado, raspado) o ar vem do processo da família, não da máquina;
+    a calibração pelos lotes é separada por família */
+ if(P.proc&&P.proc!=='batch'){m.ovModel=Math.round((P.ov[0]+P.ov[1])/2);m.ovBias=calOv('fam:'+st.tipo);m.ov=clamp(m.ovModel+m.ovBias,0,P.ov[1]+30);m.ovSrc='processo';}
  m.rhoMix=1/((m.wat/100)/1+(m.fat/100)/.93+((100-m.wat-m.fat)/100)/1.59);
  m.gPerL=m.rhoMix*1000/(1+m.ov/100);
  /* gordura sólida por temperatura (SFC) e desestabilização parcial da gordura */
@@ -1341,7 +1390,7 @@ function calOv(machine){return (CAL.on&&CAL.ov[machine])?CAL.ov[machine]:0;}
 function fitCalibration(lots){
  const prev=CAL.on;CAL.on=false;const ovR={},fzR=[],mR=[],kR=[],pS=[],pF=[],qR=[],hR=[];let phN=0;const res=[];
  (lots||[]).forEach(L=>{if(!L.recipe||!L.recipe.length)return;const st={tipo:L.tipo,vit:L.meas&&L.meas.texTemp!=null&&L.meas.texTemp!==''?+L.meas.texTemp:L.vit,recipe:L.recipe,proc:L.proc||{},brix:L.brix||{},costs:{}};const m=analyzeRaw(st);const me=L.meas||{};const r={id:L.id,code:L.code};
-  const ov=measuredOverrun(me);if(ov!=null){const mc=(L.proc&&L.proc.machine)||'horiz';(ovR[mc]=ovR[mc]||[]).push(ov-m.ovModel);r.ov=[m.ovModel,ov];}
+  const ov=measuredOverrun(me);if(ov!=null){const PF=PROF[L.tipo]||{};const mc=PF.proc&&PF.proc!=='batch'?'fam:'+L.tipo:(L.proc&&L.proc.machine)||'horiz';(ovR[mc]=ovR[mc]||[]).push(ov-m.ovModel);r.ov=[m.ovModel,ov];}
   if(me.tex!=null&&me.tex!==''){const tt=st.vit;const pred=(frozenPct(tt,m.SE,m.S)-m.fzMid)/3.5;fzR.push(-.8*(+me.tex-pred));r.tex=[Math.round(pred*10)/10,+me.tex];}
   if(me.melt10!=null&&me.melt10!==''){const pm=meltModel(m);mR.push(+me.melt10-pm);r.melt=[pm,+me.melt10];}
   if(me.icyDay!=null&&me.icyDay!==''&&+me.icyDay>0){const K=kinetics(m,st).Kvit;const implied=(Math.pow(50,3)-Math.pow(m.crystal,3))/(+me.icyDay);if(implied>0)kR.push(Math.log(implied/K));r.icy=+me.icyDay;}
@@ -1403,6 +1452,8 @@ function chemistry(m,st){const A=m.A,T=A.tot||1;
  if(m.pr.serveFrom==='pote'){const t0=m.temperMin;let v;Object.defineProperty(m,'temperMin',{configurable:true,enumerable:true,get(){if(v===undefined){const pt=poteModel(m,m.pr);v=pt&&pt.tReady!=null?pt.tReady:t0;}return v;}});}
  m.storeHard=m.fzStore>84?'muito duro':m.fzStore>78?'firme':m.fzStore>=m.P.fz[0]?'espatulável':'mole';
  m.shelfVit=m.crystal>=50?0:(Math.pow(50,3)-Math.pow(m.crystal,3))/k.Kvit;m.shelfStore=m.crystal>=50?0:(Math.pow(50,3)-Math.pow(m.crystal,3))/k.Kstore;
+ /* granita: cristais grandes são o objetivo; o horizonte de textura por crescimento de cristais não se aplica */
+ if(m.P.crystal==='coarse'){m.shelfVit=60;m.shelfStore=90;m.ciNotes=['granita: cristais grandes e soltos são o objetivo'];}
 }
 
 /* ---------- LAUDO ---------- */
@@ -1486,15 +1537,15 @@ function diagnoseCore(st,m){
  if(m.dexShare>45)add('warn','Doçura','Dextrose domina os açúcares ('+f0(m.dexShare)+'%)','Muita dextrose deixa o gelato pegajoso, com doçura curta e textura que "afunda" na vitrine.','Referência prática (não é limite de norma): manter a dextrose em até ~35–40% dos açúcares. Para completar o PAC, açúcar invertido; para baixar doçura sem perder corpo, trealose ou maltodextrina.');
  if(m.fruShare>25)add('warn','Doçura','Frutose acima de 25% dos açúcares','A frutose tem doçura forte e PAC alto; em excesso o gelato fica mole e com doçura enjoativa.','Troque parte da frutose por sacarose.');
  /* ---- 3. Sólidos ---- */
- if(m.sol<P.sol[0])add(m.sol<P.sol[0]-4?'crit':'warn','Sólidos','Sólidos totais baixos ('+f1(m.sol)+'%)','Alvo '+fRg(P.sol)+'%. Água livre em excesso forma cristais grandes: textura gelada e granulosa.',st.tipo==='sorbetto'?'Aumente a fruta, troque parte da água por polpa ou adicione '+gq((P.sol[0]-m.sol)/100*T*1.1)+' g de maltodextrina/inulina.':'Adicione '+gq((P.sol[0]-m.sol)/100*T*1.08)+' g de leite em pó desnatado (se a lactose permitir) ou maltodextrina DE 19.');
+ if(m.sol<P.sol[0])add(m.sol<P.sol[0]-4?'crit':'warn','Sólidos','Sólidos totais baixos ('+f1(m.sol)+'%)','Alvo '+fRg(P.sol)+'%. Água livre em excesso forma cristais grandes: textura gelada e granulosa.',tbase(st.tipo)==='sorbetto'?'Aumente a fruta, troque parte da água por polpa ou adicione '+gq((P.sol[0]-m.sol)/100*T*1.1)+' g de maltodextrina/inulina.':'Adicione '+gq((P.sol[0]-m.sol)/100*T*1.08)+' g de leite em pó desnatado (se a lactose permitir) ou maltodextrina DE 19.');
  else if(m.sol>P.sol[1])add(m.sol>P.sol[1]+3?'crit':'warn','Sólidos','Sólidos totais altos ('+f1(m.sol)+'%)','Alvo '+fRg(P.sol)+'%. Fica pesado, pastoso, gruda no palato e pode cristalizar lactose.','Substitua '+gq((m.sol-P.sol[1])/100*T*1.1)+' g de sólidos (pó, açúcar ou pasta) por líquido da base.');
  else add('ok','Sólidos','Sólidos totais equilibrados ('+f1(m.sol)+'%)','Na faixa '+fRg(P.sol)+'%: corpo, cremosidade e cristais pequenos.','');
  /* ---- 4. Estrutura ---- */
- if(st.tipo!=='sorbetto'){
-  if(m.fat<P.fat[0])add('warn','Estrutura','Gordura baixa ('+f1(m.fat)+'%)','Alvo '+fRg(P.fat)+'%. Menos gordura = menos cremosidade, menos corpo e derretimento aquoso.',st.tipo==='vegan'?'Use creme de coco ou pasta de oleaginosa.':'Troque '+gq((P.fat[0]+.5-m.fat)/100*T/.315)+' g de leite integral por creme 35%.');
+ if(tbase(st.tipo)!=='sorbetto'){
+  if(m.fat<P.fat[0])add('warn','Estrutura','Gordura baixa ('+f1(m.fat)+'%)','Alvo '+fRg(P.fat)+'%. Menos gordura = menos cremosidade, menos corpo e derretimento aquoso.',tbase(st.tipo)==='vegan'?'Use creme de coco ou pasta de oleaginosa.':'Troque '+gq((P.fat[0]+.5-m.fat)/100*T/.315)+' g de leite integral por creme 35%.');
   else if(m.fat>P.fat[1])add(m.fat>P.fat[1]+3?'crit':'warn','Estrutura','Gordura alta ('+f1(m.fat)+'%)','Alvo '+fRg(P.fat)+'%. Excesso de gordura mascara o sabor, satura o paladar e pode amanteigar na mantecação.','Troque '+gq((m.fat-P.fat[1]+.5)/100*T/.315)+' g de creme 35% por leite integral'+(m.hasEmul?'':', e use emulsificante (gema ou lecitina) para estabilizar a emulsão')+'.');
   else add('ok','Estrutura','Gordura adequada ('+f1(m.fat)+'%)','Dentro de '+fRg(P.fat)+'%.','');
-  if(m.prot<P.prot[0]-.3)add('info','Estrutura','Proteína baixa ('+f1(m.prot)+'%)','As proteínas seguram ar e água; abaixo de '+fT(P.prot[0])+'% o gelato fica com menos corpo e menor overrun.',st.tipo==='vegan'?'Adicione 1–2% de proteína de ervilha ou use bebida de soja.':'Adicione leite em pó desnatado ou WPC 80.');
+  if(m.prot<P.prot[0]-.3)add('info','Estrutura','Proteína baixa ('+f1(m.prot)+'%)','As proteínas seguram ar e água; abaixo de '+fT(P.prot[0])+'% o gelato fica com menos corpo e menor overrun.',tbase(st.tipo)==='vegan'?'Adicione 1–2% de proteína de ervilha ou use bebida de soja.':'Adicione leite em pó desnatado ou WPC 80.');
   if(m.prot>P.prot[1]+1)add('warn','Estrutura','Proteína alta ('+f1(m.prot)+'%)','Excesso de proteína deixa textura borrachuda e sabor de leite cozido.','Reduza leite em pó / WPC.');
  }else{
   if(m.fat>1)add('info','Estrutura','Gordura em sorbetto ('+f1(m.fat)+'%)','Vem da fruta ou de oleaginosas; tudo bem se for intencional.','');
@@ -1505,17 +1556,28 @@ function diagnoseCore(st,m){
   if(m.lacW>10.5)add('crit','Lactose','Risco alto de arenosidade (lactose '+f1(m.lacW)+'% da água)','Acima de ~10% a lactose supersatura na água não congelada e cristaliza com o tempo: grãos que não derretem na língua.','Reduza '+f0((m.lacW-9)/100*m.A.w/.525)+' g de leite em pó desnatado e substitua por maltodextrina DE 19 ou proteína do soro WPC.');
   else if(m.lacW>9)add('warn','Lactose','Lactose no limite ('+f1(m.lacW)+'% da água)','Entre 9 e 10,5% o risco aparece em armazenamento longo ou com variações de temperatura.','Produza para venda em até 3 dias ou reduza um pouco o leite em pó.');
   else add('ok','Lactose','Lactose segura ('+f1(m.lacW)+'% da água)','Abaixo de 9%: sem risco de arenosidade.','');
-  if(st.tipo==='crema'||st.tipo==='frutta'||st.tipo==='gastro'){
+  if(tbase(st.tipo)==='crema'||tbase(st.tipo)==='frutta'||tbase(st.tipo)==='gastro'){
    if(m.msnf<P.msnf[0])add('info','Lactose','MSNF baixo ('+f1(m.msnf)+'%)','Alvo '+fRg(P.msnf)+'%. Os sólidos do leite dão corpo e sabor lácteo.',m.lacW<8?'Adicione '+gq((P.msnf[0]-m.msnf)/100*T/.94)+' g de leite em pó desnatado.':'A lactose já está alta; aumente MSNF com WPC 80.');
    else if(m.msnf>P.msnf[1])add('warn','Lactose','MSNF alto ('+f1(m.msnf)+'%)','Acima de '+fT(P.msnf[1])+'% o sabor fica de leite em pó e o risco de arenosidade cresce.','Reduza o leite em pó.');
   }
  }
- if(st.tipo==='vegan'&&m.A.al.has('leite'))add('crit','Ingredientes','Ingrediente de origem láctea em receita vegana','A receita contém leite ou derivado.','Remova os lácteos ou mude o tipo.');
- if(st.tipo==='vegan'&&m.A.animal)add('crit','Ingredientes','Gelatina animal em receita vegana','O estabilizante contém gelatina.','Troque por um neutro vegetal (jataí, guar, tara, fibra de citros).');
- if(st.tipo==='vegan'&&m.A.al.has('ovo'))add('crit','Ingredientes','Ovo em receita vegana','','Remova ovos.');
+ if(tbase(st.tipo)==='vegan'&&m.A.al.has('leite'))add('crit','Ingredientes','Ingrediente de origem láctea em receita vegana','A receita contém leite ou derivado.','Remova os lácteos ou mude o tipo.');
+ if(tbase(st.tipo)==='vegan'&&m.A.animal)add('crit','Ingredientes','Gelatina animal em receita vegana','O estabilizante contém gelatina.','Troque por um neutro vegetal (jataí, guar, tara, fibra de citros).');
+ if(tbase(st.tipo)==='vegan'&&m.A.al.has('ovo'))add('crit','Ingredientes','Ovo em receita vegana','','Remova ovos.');
+ /* ---- v18.3 · regras próprias de cada família ---- */
+ {const ys=m.A.lines.reduce((a,l)=>a+(l.ing.yolk?l.g*(100-((l.c&&l.c.w)||0))/100:0),0)/T*100;m.yolkSol=ys;
+  if(P.yolkSolMin&&ys<P.yolkSolMin)add('warn','Composição','Pouca gema para '+P.n.toLowerCase(),'O frozen custard americano exige '+f1(P.yolkSolMin)+'% de sólidos de gema (21 CFR 135.110); esta receita tem '+f2(ys)+'%.','Gema fresca tem ≈ 47,5% de sólidos: ≈ '+f1(P.yolkSolMin/.475)+'% de gema na mistura dá '+f1(P.yolkSolMin)+'% de sólidos.');
+  else if(P.yolkSolMin)add('ok','Composição','Gema dentro da definição de custard ('+f2(ys)+'% de sólidos)','','');
+  if(P.yolkMax!=null&&m.yolkPct>P.yolkMax)add('warn','Composição','Gema em estilo Philadelphia','O estilo Philadelphia é a base de creme e leite sem ovo; esta receita tem '+f1(m.yolkPct)+'% de gema.','Retire a gema ou mude para French / frozen custard.');}
+ if(st.tipo==='froyo'&&!m.A.lines.some(l=>/iogurt|yogurt|kefir|coalhad|cultura/i.test(l.ing.id+' '+(l.ing.n||''))))add('warn','Composição','Frozen yogurt sem iogurte','Não há padrão legal de teor de iogurte, mas o produto precisa de iogurte ou cultura (de cultura sem incubação a 15–20% de iogurte na mistura).','Inclua iogurte natural ou cultura láctea.');
+ if(P.proc==='still')add('info','Processo','Congelado parado: o ar vem do batimento','Esta família não passa pela mantecadora. O overrun do laudo ('+f0(m.ov)+'%) é o típico da família, não uma previsão da máquina.','Bata o creme e a base com ovos separadamente e incorpore com cuidado; congele na forma.');
+ if(P.proc==='molded')add('info','Processo','Moldado: quase sem ar','Produto em forma ou palito, congelado parado. O overrun do laudo é o da família.','Desenforme com a forma rapidamente aquecida; mantenha a −18 °C ou abaixo.');
+ if(P.proc==='scraped')add('info','Processo','Granita: cristais grandes são o objetivo','Os avisos de cristal do gelato não se aplicam. A textura vem de raspar ou mexer durante o congelamento.','Raspe a cada 20–30 min no freezer, ou use granitore.');
+ if(P.proc==='soft')add('info','Processo','Servido direto da máquina','Avaliado na temperatura de extração ('+fT(st.vit)+' °C). A fração congelada alvo é menor que a do gelato de vitrine.','');
+ if(P.conf==='prática')add('info','Referência','Faixas de prática nesta família','As faixas de '+P.n.toLowerCase()+' não têm fonte primária de composição. Use os lotes medidos para ajustá-las.','');
  /* ---- 6. Estabilização ---- */
  const kp=m.keyPct;const hasStab=m.hydro>.02||kp.starch>.3;
- if(!hasStab&&st.tipo!=='gastro')add(m.sol<P.sol[1]?'warn':'info','Estabilização','Sem estabilizante','Sem hidrocoloides a água livre migra e recristaliza: o gelato fica cristalino em 1–2 dias e derrete rápido.','Adicione neutro a '+f1(P.stab[0]+.1)+'% ('+f0((P.stab[0]+.1)/100*T)+' g) ou uma mistura de goma jataí + guar.');
+ if(!hasStab&&tbase(st.tipo)!=='gastro'&&P.stab[0]>0)add(m.sol<P.sol[1]?'warn':'info','Estabilização','Sem estabilizante','Sem hidrocoloides a água livre migra e recristaliza: o gelato fica cristalino em 1–2 dias e derrete rápido.','Adicione neutro a '+f1(P.stab[0]+.1)+'% ('+f0((P.stab[0]+.1)/100*T)+' g) ou uma mistura de goma jataí + guar.');
  else if(m.hydro>0&&m.hydro<P.stab[0]*.8&&!kp.starch)add('info','Estabilização','Estabilizante abaixo do usual ('+f2(m.hydro)+'%)','Faixa usual '+fRg(P.stab)+'% para este tipo.','Aumente para '+f0((P.stab[0]+.05)/100*T)+' g.');
  else if(m.hydro>P.stab[1]*1.25)add('warn','Estabilização','Excesso de estabilizante ('+f2(m.hydro)+'%)','Acima de '+fT(P.stab[1])+'% a textura fica elástica, gomosa e o sabor fica abafado.','Reduza para ~'+f0(P.stab[1]/100*T)+' g.');
  else if(m.hydro>0)add('ok','Estabilização','Estabilização correta ('+f2(m.hydro)+'%)','Dentro da faixa usual para este tipo.','');
@@ -1524,7 +1586,7 @@ function diagnoseCore(st,m){
  if(kp.guar>.03&&!kp.carr&&m.A.dairyG>0)add('info','Estabilização','Guar em base láctea sem carragena','Guar (e jataí) com proteínas do leite podem separar soro na mistura maturada.','Adicione 0,01–0,02% de carragena ('+f1(.015/100*T)+' g) para estabilizar as proteínas.');
  if((kp.lbg>.02||kp.carr>.005)&&pr.pastT<80)add('warn','Estabilização','Goma jataí/carragena sem hidratar','Esses hidrocoloides só se hidratam por completo acima de 80–85 °C. Pasteurizando a '+fT(pr.pastT)+' °C eles trabalham pela metade.','Pasteurize a 85 °C ou troque por guar/xantana (hidratam a frio).');
  if(kp.starch>.3&&pr.pastT<85)add('warn','Estabilização','Amido sem gelatinizar','O amido de milho precisa de 85–90 °C para engrossar completamente.','Leve a 85–90 °C por 1–2 minutos (técnica siciliana).');
- if(m.fat>8&&!m.hasEmul&&st.tipo!=='sorbetto')add('info','Estabilização','Sem emulsificante com '+f1(m.fat)+'% de gordura','Emulsificantes controlam a desestabilização parcial da gordura: textura mais seca e cremosa, derretimento mais lento.','Use 2–4% de gema ou 0,2–0,3% de lecitina ('+f1(.25/100*T)+' g).');
+ if(m.fat>8&&!m.hasEmul&&tbase(st.tipo)!=='sorbetto')add('info','Estabilização','Sem emulsificante com '+f1(m.fat)+'% de gordura','Emulsificantes controlam a desestabilização parcial da gordura: textura mais seca e cremosa, derretimento mais lento.','Use 2–4% de gema ou 0,2–0,3% de lecitina ('+f1(.25/100*T)+' g).');
  /* ---- 7. Ingredientes específicos ---- */
  if(kp.lec>.6)add('warn','Ingredientes','Lecitina em excesso','Acima de 0,5% aparece sabor de feijão/gordura.','Reduza para '+f1(.4/100*T)+' g.');
  if(m.A.ery/T*100>6)add('warn','Ingredientes','Eritritol acima de 6%','O eritritol tem baixa solubilidade a frio: recristaliza (textura arenosa) e dá sensação refrescante de menta.','Limite a ~5% e complete com alulose, inulina ou maltitol.');
@@ -1533,14 +1595,14 @@ function diagnoseCore(st,m){
  if((m.A.inu+m.A.fos)/T*100>5)add('warn','Ingredientes','Fibras solúveis acima de 5%','Inulina/FOS em excesso causam desconforto intestinal e textura gomosa.','Reduza para 3–4%.');
  if(m.alc>3.5)add('crit','Ingredientes','Álcool acima de 3,5% ('+f1(m.alc)+'% etanol)','O etanol tem o PAC mais alto da receita (740): o gelato não firma na vitrine.','Reduza o destilado ou sirva como "affogato" sobre o gelato.');
  else if(m.alc>2)add('warn','Ingredientes','Álcool relevante ('+f1(m.alc)+'% etanol)','Cada 1% de etanol amolece muito; já está considerado no PAC.','Adicione após a pasteurização para não evaporar o aroma.');
- if(m.salt>.9&&st.tipo==='gastro')add('warn','Sabor','Sal alto mesmo para salgado ('+f2(m.salt)+'%)','No frio o sal é menos percebido, mas acima de ~0,9% ele domina quando o gelato é servido como prato; gelatos salgados de alta cozinha ficam em 0,3–0,8%. Como guarnição em porção pequena, mais sal pode ser intencional.','Baixe o sal e use glicose ou trealose para o PAC.')
- if(m.salt>.4&&st.tipo!=='gastro')add('warn','Sabor','Sal alto para doce ('+f2(m.salt)+'%)','Acima de ~0,3% o sal aparece como salgado.','Use 0,05–0,15% para realçar sabor.');
- else if(m.salt<.02&&st.tipo!=='sorbetto'&&st.tipo!=='gastro')add('info','Sabor','Sem sal','Uma pitada de sal (0,05–0,1%) realça laticínios, chocolate, caramelo e oleaginosas sem ser percebida.','Adicione '+f1(.08/100*T)+' g de sal.');
+ if(m.salt>.9&&tbase(st.tipo)==='gastro')add('warn','Sabor','Sal alto mesmo para salgado ('+f2(m.salt)+'%)','No frio o sal é menos percebido, mas acima de ~0,9% ele domina quando o gelato é servido como prato; gelatos salgados de alta cozinha ficam em 0,3–0,8%. Como guarnição em porção pequena, mais sal pode ser intencional.','Baixe o sal e use glicose ou trealose para o PAC.')
+ if(m.salt>.4&&tbase(st.tipo)!=='gastro')add('warn','Sabor','Sal alto para doce ('+f2(m.salt)+'%)','Acima de ~0,3% o sal aparece como salgado.','Use 0,05–0,15% para realçar sabor.');
+ else if(m.salt<.02&&tbase(st.tipo)!=='sorbetto'&&tbase(st.tipo)!=='gastro')add('info','Sabor','Sem sal','Uma pitada de sal (0,05–0,1%) realça laticínios, chocolate, caramelo e oleaginosas sem ser percebida.','Adicione '+f1(.08/100*T)+' g de sal.');
  if(m.A.cocoaG/T*100>5.5)add('info','Ingredientes','Cacau intenso ('+f1(m.A.cocoaG/T*100)+'% de sólidos de cacau)','Muito cacau absorve água: textura seca e adstringente se não houver água e açúcar suficientes.','Hidrate o cacau em água/leite quente e mantenha os sólidos totais dentro da faixa.');
  /* frutas */
  if(P.frt){if(m.fruit<P.frt[0])add('warn','Ingredientes','Pouca fruta ('+f0(m.fruit)+'%)','Para '+P.n.toLowerCase()+' o usual é '+fRg(P.frt)+'% (cítricos ficam no limite inferior: 20–30%).','Aumente a polpa e reduza água.');
   else add('ok','Ingredientes','Teor de fruta adequado ('+f0(m.fruit)+'%)','','');}
- if(m.brixAcid!=null&&m.acd>.15&&(st.tipo==='sorbetto'||st.tipo==='frutta')){const r=m.brixAcid;
+ if(m.brixAcid!=null&&m.acd>.15&&(tbase(st.tipo)==='sorbetto'||tbase(st.tipo)==='frutta')){const r=m.brixAcid;
   if(r<20)add('warn','Sabor','Muito ácido (relação Brix/acidez '+f0(r)+')','Abaixo de 20 a acidez domina.','Aumente a fruta doce ou a sacarose; ou reduza o limão.');
   else if(r>60)add('info','Sabor','Pouco ácido (relação Brix/acidez '+f0(r)+')','Acima de 60 o sabor fica plano e doce demais.','Acrescente 1–2% de suco de limão para dar frescor.');
   else add('ok','Sabor','Relação Brix/acidez equilibrada ('+f0(r)+')','Entre 20 e 60: fruta viva e refrescante.','');}
@@ -1558,7 +1620,7 @@ function diagnoseCore(st,m){
  else if(pr.matT>4.5)add('warn','Processo','Maturação a '+fT(pr.matT)+' °C','Ideal 2–4 °C para cristalizar a gordura e segurar a mistura.','');
  if(pr.matH>96)add('crit','Segurança','Mistura pasteurizada há mais de 4 dias','Dondoli dá até 4 dias para a mistura pasteurizada e resfriada rápido; depois disso, pasteurizar de novo.','Use em até 72 h ou repasteurize (pode ser a temperatura mais baixa, para não cansar o sabor).');
  else if(pr.matH>72)add('warn','Segurança','Maturação acima de 72 h','No limite do prazo da mistura pasteurizada (Dondoli: até 4 dias com resfriamento rápido; Corvitto matura no máximo 36 h).','Mantecar logo ou repasteurizar.');
- else if(pr.matH<4&&st.tipo!=='sorbetto')add('warn','Processo','Maturação curta ('+fT(pr.matH)+' h)','Abaixo de 4–6 h estabilizantes não hidratam e a gordura não cristaliza: menos corpo e overrun. Corvitto recomenda 6–12 h.','Mature por no mínimo 6 h.');
+ else if(pr.matH<4&&tbase(st.tipo)!=='sorbetto')add('warn','Processo','Maturação curta ('+fT(pr.matH)+' h)','Abaixo de 4–6 h estabilizantes não hidratam e a gordura não cristaliza: menos corpo e overrun. Corvitto recomenda 6–12 h.','Mature por no mínimo 6 h.');
  else if(pr.matH>=4)add('ok','Processo','Maturação adequada ('+fT(pr.matH)+' h a '+fT(pr.matT)+' °C)','Estabilizantes hidratados e gordura parcialmente cristalizada.','');
  if(m.A.acidFruitG>0&&m.A.dairyG>0&&pr.fruitStage==='antes')add('crit','Processo','Fruta ácida pasteurizada com leite','O ácido coagula a caseína no calor (talha) e o aroma fresco da fruta se perde.','Adicione a fruta à mistura fria, após a maturação, antes de mantecar.');
  if(m.A.alc>0&&pr.alcStage==='antes')add('warn','Processo','Álcool adicionado antes do calor','Parte do álcool evapora: pelas tabelas de retenção do USDA, fica ~85% quando a bebida só ferve e sai do fogo e ~40% depois de 15 min de fervura. O cálculo usa o álcool todo, então o gelato real sai mais duro que o previsto.','Se a intenção é o sabor cozido (zabaione), confira o ponto na primeira produção; se não, adicione o destilado na mistura fria ou na metade da mantecação.');
@@ -1592,7 +1654,7 @@ function diagnoseCore(st,m){
  /* ---- 9. Gordura: sólida por temperatura e desestabilização ---- */
  const hardShare=((m.fatTypes.cocoa||0)+(m.fatTypes.palm||0)+(m.fatTypes.coco||0))/100;
  if(m.fat>3&&m.sfcMouth>9&&hardShare>.4)add('warn','Gordura','Sensação cerosa na boca ('+f0(m.sfcMouth)+'% da gordura sólida a 35 °C)','Gorduras duras (manteiga de cacau, karité, gordura animal) ainda sólidas na temperatura da boca deixam película cerosa e abafam o sabor.','Troque parte por gordura do leite ou óleo; em chocolate, use mais cacau em pó e menos cobertura.');
- if(m.fat>4&&st.tipo!=='sorbetto'){
+ if(m.fat>4&&tbase(st.tipo)!=='sorbetto'){
   if(m.destab>55)add('warn','Gordura','Risco de amanteigar (desestabilização ≈'+f0(m.destab)+'%)','Gordura demais coalescida na mantecadora vira grânulos de manteiga: textura gordurosa e seca na boca.','Reduza mono e diglicerídeos/lecitina, extraia menos frio (−8/−9 °C) e encurte a mantecação.');
   else if(m.destab<12&&m.fat>6)add('info','Gordura','Pouca desestabilização da gordura (≈'+f0(m.destab)+'%)','Sem coalescência parcial a rede de gordura não sustenta o ar: derretimento rápido e textura úmida.','Use 2–4% de gema ou 0,1–0,2% de mono e diglicerídeos; extraia a −9/−10 °C.');
   else add('ok','Gordura','Desestabilização da gordura na faixa (≈'+f0(m.destab)+'%)','Coalescência parcial entre 12 e 55%: textura seca e cremosa, derretimento lento.','');
@@ -1619,10 +1681,10 @@ function scoreCore(st,m,F){
   ['Congelamento',22,rangeScore(m.fzVit,P.fz,10)],
   ['Doçura',12,rangeScore(m.pod,P.pod,5)],
   ['Sólidos',14,rangeScore(m.sol,P.sol,6)],
-  ['Estrutura',10,st.tipo==='sorbetto'?rangeScore(m.fat,P.fat,3):(rangeScore(m.fat,P.fat,4)*.6+rangeScore(m.prot,P.prot,2.5)*.4)],
+  ['Estrutura',10,tbase(st.tipo)==='sorbetto'?rangeScore(m.fat,P.fat,3):(rangeScore(m.fat,P.fat,4)*.6+rangeScore(m.prot,P.prot,2.5)*.4)],
   ['Lactose',12,m.lac>0?clamp(1-(m.lacW-9)/3,0,1):1],
   ['Estabilização',10,(m.hydro>.02||m.keyPct.starch>.3)?rangeScore(m.hydro,P.stab,P.stab[1]):.3],
-  ['Processo',12,m.ci/100*.6+clamp(1-Math.max(0,4-m.pr.matH)/4,0,1)*.4],
+  ['Processo',12,(P.crystal==='coarse'?1:m.ci/100)*.6+clamp(1-Math.max(0,4-m.pr.matH)/4,0,1)*.4],
   ['Segurança',8,F.some(f=>f.sev==='crit'&&f.area==='Segurança')?0:1]
  ];
  let t=parts.reduce((s,p)=>s+p[1]*p[2],0);
@@ -1637,7 +1699,7 @@ function solve3(a,b){const d=x=>x[0][0]*(x[1][1]*x[2][2]-x[1][2]*x[2][1])-x[0][1
  const D=d(a);if(Math.abs(D)<1e-9)return null;return[0,1,2].map(i=>{const c=a.map((r,k)=>r.map((v,j)=>j===i?b[k]:v));return d(c)/D;});}
 function solve2(a,b){const D=a[0][0]*a[1][1]-a[0][1]*a[1][0];if(Math.abs(D)<1e-9)return null;return[(b[0]*a[1][1]-a[0][1]*b[1])/D,(a[0][0]*b[1]-b[0]*a[1][0])/D];}
 function balanceExact(st){
- const P=PROF[st.tipo];if(!P||st.tipo==='gastro'||st.tipo==='semacucar')return{ok:false,msg:'O balanceador automático trabalha com açúcares convencionais (crema, frutta, sorbetto e vegano).'};
+ const P=PROF[st.tipo];if(!P||tbase(st.tipo)==='gastro'||tbase(st.tipo)==='semacucar')return{ok:false,msg:'O balanceador automático trabalha com açúcares convencionais (crema, frutta, sorbetto e vegano).'};
  const dexId=dexPref(st);
  const ctrl=['sacarose',dexId,'malto'];
  const rest={...st,recipe:(st.recipe||[]).filter(r=>!ctrl.includes(r.id))};
@@ -1675,7 +1737,7 @@ function balanceExact(st){
    na temperatura de serviço como prioridade, e termina com um ajuste fino iterativo até o congelamento bater. */
 function balance(st){const ex=balanceExact(st);
  if(ex.ok&&ex.mode!=='2s')return ex;
- const P=PROF[st.tipo];if(!P||st.tipo==='gastro'||st.tipo==='semacucar')return ex;
+ const P=PROF[st.tipo];if(!P||tbase(st.tipo)==='gastro'||tbase(st.tipo)==='semacucar')return ex;
  const rb=balanceRobust(st);if(!rb.ok)return ex.ok?ex:rb;
  if(ex.ok){const sc=b=>Math.abs(b.m1.fzVit-b.m1.fzMid)*10+(b.mode==='aprox'?(b.prop[b.prop.length-1].g-b.cur[b.cur.length-1])/Math.max(1,b.m1.tot)*12:0)+Math.max(0,b.m1.P.pod[0]-b.m1.pod,b.m1.pod-b.m1.P.pod[1])+Math.max(0,b.m1.P.sol[0]-b.m1.sol,b.m1.sol-b.m1.P.sol[1])*.5;return sc(rb)<sc(ex)-.05?rb:ex;}
  return rb;}
@@ -1700,7 +1762,7 @@ function balanceRobust(st){
  const sug=[...new Set(['sacarose',dexId,'malto',...(st.recipe||[]).map(r=>r.id).filter(id=>BAL_SUG.has(id))])];const D=sug.length;
  /* líquido da base para diluir quando a receita já tem anticongelante demais */
  const liq=(st.recipe||[]).filter(r=>ING_BY[r.id]&&!sug.includes(r.id)&&(ING_BY[r.id].c.w||0)>=85&&!(ING_BY[r.id].c.alc>0)).sort((a,b)=>b.g-a.g)[0];
- const dil=liq?liq.id:(st.tipo==='crema'?'leite':'agua');
+ const dil=liq?liq.id:(tbase(st.tipo)==='crema'?'leite':'agua');
  const ctrl=[...sug,dil];
  const rest={...st,recipe:(st.recipe||[]).filter(r=>!sug.includes(r.id))};const m0=analyze(rest);if(m0.empty)return{ok:false,msg:'Adicione a base da receita primeiro.'};
  const mc=analyze(st),Pp=mc.P;const podT=(Pp.pod[0]+Pp.pod[1])/2/100,solT=clamp(mc.sol,Pp.sol[0]+.5,Pp.sol[1]-.5)/100,fzT=(Pp.fz[0]+Pp.fz[1])/2;
@@ -1776,11 +1838,11 @@ const DEFECTS=[
   c:[
   [m=>lo(m.sol,m.P.sol[0],m.P.sol[0]-6),m=>'Sólidos totais em '+f1(m.sol)+'% (mínimo '+fT(m.P.sol[0])+'%).','Aumente sólidos com leite em pó, maltodextrina ou mais fruta.'],
   [m=>lo(m.fzDraw,45,25)*(m.mach&&m.mach.drawT!=null&&m.pr.drawT<=m.mach.drawT+.5?.4:1),m=>'Só '+f0(m.fzDraw)+'% da água congela na mantecadora (saída a '+fT(m.pr.drawT)+' °C)'+(m.mach&&m.mach.drawT!=null&&m.pr.drawT<=m.mach.drawT+.5?', limite do equipamento':'')+'.',m=>m.mach&&m.mach.drawT!=null&&m.pr.drawT<=m.mach.drawT+.5?'Limite da '+m.mach.n.split(' (')[0]+': compense com endurecimento rápido (turbo/abatedor) e estabilizante na dose.':'Mantecar até −9/−10 °C.'],
-  [m=>lo(m.ci,80,40),m=>'Índice de cristalização '+f0(m.ci)+'/100: '+(m.ciNotes.join(', ')||'processo lento')+'.','Abatedor a −35 °C logo após mantecar.'],
+  [m=>m.P.crystal==='coarse'?0:lo(m.ci,80,40),m=>'Índice de cristalização '+f0(m.ci)+'/100: '+(m.ciNotes.join(', ')||'processo lento')+'.','Abatedor a −35 °C logo após mantecar.'],
   [m=>lo(m.hydro,m.P.stab[0],0),m=>'Estabilizante baixo: a água migra e recristaliza.','Aumente estabilizante.'],
   [m=>hi(Math.abs(m.pr.storeT-m.vit),10,18),m=>'Choque térmico entre armazenamento e vitrine.','Transfira de forma gradual.'],
   [m=>hi(m.pr.storeFluct,1.5,4),m=>'Freezer oscila ±'+fT(m.pr.storeFluct)+' °C: cada ciclo engrossa os cristais.','Freezer sem degelo frequente, porta fechada, termômetro de máxima e mínima.'],
-  [m=>hi(m.crystal,40,55),m=>'Cristal previsto de '+f0(m.crystal)+' µm.','Veja o Laudo: endurecimento, estabilizante e açúcares.']],
+  [m=>m.P.crystal==='coarse'?0:hi(m.crystal,40,55),m=>'Cristal previsto de '+f0(m.crystal)+' µm.','Veja o Laudo: endurecimento, estabilizante e açúcares.']],
   pc:[['Lâminas da mantecadora gastas ou mal ajustadas à parede.','Revisão das pás; elas precisam raspar a parede do cilindro.'],['Mantecação lenta (cilindro sobrecarregado, gás ou compressor fraco).','Respeite a carga máxima; manutenção da máquina.'],['Gelato deixado fora do frio entre a máquina e o abatedor.','Do cilindro direto para o abatedor.'],['Maturação insuficiente.','Veja o tempo calculado em Processo → Maturação.']],
   prev:['Mantecar até −9/−10 °C (Maqp1: −4 °C no centro da massa)','Abater imediatamente','Armazenar a −20 °C ou menos, estável','Estabilizante na dose','Vitrine com o mínimo de oscilação'],
   src:['corvitto','preti','migoya','goffTex','goffShelf']},
@@ -1860,7 +1922,7 @@ const DEFECTS=[
   mec:'Pouco ingrediente de sabor, frio que anestesia o paladar, viscosidade alta que prende os aromas ou aroma perdido no calor.',
   c:[
   [m=>lo(m.pod,m.P.pod[0],m.P.pod[0]-5),m=>'POD baixo ('+f1(m.pod)+'%).','Aumente sacarose.'],
-  [m=>(m.salt<.03&&m.tipo!=='sorbetto')?.6:0,m=>'Sem sal.','0,05–0,1% de sal realça o sabor.'],
+  [m=>(m.salt<.03&&tbase(m.tipo)!=='sorbetto')?.6:0,m=>'Sem sal.','0,05–0,1% de sal realça o sabor.'],
   [m=>hi(m.serveT-m.vit,1.5,5),m=>'Servido frio demais: o frio anestesia o paladar.',m=>'Suba a vitrine para '+f1(m.serveT)+' °C.'],
   [m=>hi(m.hydro,m.P.stab[1],m.P.stab[1]*2),m=>'Excesso de estabilizante abafa o aroma.','Reduza.'],
   [m=>(m.A.acidFruitG>0&&m.pr.fruitStage==='antes')?1:0,m=>'Fruta aquecida perdeu aroma fresco.','Adicione a fruta fria.']],
@@ -1881,7 +1943,7 @@ const DEFECTS=[
   c:[
   [m=>hi(m.ov,40,60),m=>'Overrun alto ('+f0(m.ov)+'%).','Reduza ar.'],
   [m=>hi(Math.abs(m.pr.storeT-m.vit),10,18),m=>'Choque térmico.','Transferência gradual.'],
-  [m=>m.tipo==='sorbetto'?0:lo(m.prot,m.P.prot[0],m.P.prot[0]-1.5),m=>'Pouca proteína para estabilizar as bolhas.','Leite em pó/WPC.'],
+  [m=>tbase(m.tipo)==='sorbetto'?0:lo(m.prot,m.P.prot[0],m.P.prot[0]-1.5),m=>'Pouca proteína para estabilizar as bolhas.','Leite em pó/WPC.'],
   [m=>hi(m.pr.storeFluct,1.5,4),m=>'Oscilação de ±'+fT(m.pr.storeFluct)+' °C no freezer.','Freezer estável.']],
   pc:[['Endurecimento em temperatura extremamente baixa logo após a mantecação.','Abatedor −30/−35 °C; evitar choques maiores.'],['Transporte com variação de altitude ou pressão.','Embalagem bem fechada; evitar viagens longas com o produto.']],
   prev:['Overrun dentro da faixa','Temperatura estável'],src:['goffShr','vanwees']},
@@ -1902,7 +1964,7 @@ const DEFECTS=[
   [m=>hi(m.ov,m.P.ov[1],m.P.ov[1]+20),m=>'Overrun previsto '+f0(m.ov)+'% (faixa até '+fT(m.P.ov[1])+'%).','Reduza ar: menos tempo de batimento ou cilindro mais cheio.'],
   [m=>lo(m.hydro,m.P.stab[0],0),m=>'Estabilizante baixo ('+f2(m.hydro)+'%).','Neutro na dose usual.'],
   [m=>lo(m.sol,m.P.sol[0],m.P.sol[0]-6),m=>'Sólidos em '+f1(m.sol)+'%.','Aumente sólidos.'],
-  [m=>m.tipo==='sorbetto'?0:lo(m.prot,m.P.prot[0],m.P.prot[0]-1.5),m=>'Proteína em '+f1(m.prot)+'%.','Leite em pó ou WPC.'],
+  [m=>tbase(m.tipo)==='sorbetto'?0:lo(m.prot,m.P.prot[0],m.P.prot[0]-1.5),m=>'Proteína em '+f1(m.prot)+'%.','Leite em pó ou WPC.'],
   [m=>(!m.hasEmul&&m.fat>6)?.2:0,m=>'Sem emulsificante na base com gordura.','Gema, lecitina ou mono-diglicerídeos.']],
   pc:[['Maturação insuficiente (neutro e proteínas não hidratados).','Maturar o tempo calculado.'],['Mantecação longa demais em sorbet.','Tirar no ponto.']],
   prev:['Overrun na faixa','Neutro e maturação corretos'],src:['corvitto','goffTex','migoya']},
@@ -1913,7 +1975,7 @@ const DEFECTS=[
   [m=>hi(m.ov,m.P.ov[1]+5,m.P.ov[1]+25),m=>'Overrun previsto '+f0(m.ov)+'%.','Reduza o ar.'],
   [m=>lo(m.sol,m.P.sol[0],m.P.sol[0]-6),m=>'Sólidos em '+f1(m.sol)+'%.','Aumente sólidos.'],
   [m=>lo(m.hydro,m.P.stab[0],0),m=>'Estabilizante baixo.','Neutro na dose.'],
-  [m=>m.tipo==='sorbetto'?lo(m.pod,m.P.pod[0],m.P.pod[0]-6):0,m=>'Sorbet com pouco açúcar (POD '+f1(m.pod)+'%).','Ajuste os açúcares (balanceador).']],
+  [m=>tbase(m.tipo)==='sorbetto'?lo(m.pod,m.P.pod[0],m.P.pod[0]-6):0,m=>'Sorbet com pouco açúcar (POD '+f1(m.pod)+'%).','Ajuste os açúcares (balanceador).']],
   pc:[['Sorbet feito só com fruta e pouco xarope.','Balancear açúcares e neutro.']],
   prev:['Overrun e sólidos na faixa'],src:['corvitto','goffTex','migoya']},
  {id:'pastoso',n:'Pastoso',d:'Gruda no céu da boca, textura de pudim',cat:'textura',al:{it:'pastoso / colloso',es:'pastoso',en:'pasty / doughy'},sint:['pastoso','denso','naoderr'],sev:'qualidade',
@@ -1933,7 +1995,7 @@ const DEFECTS=[
   [m=>lo(m.sol,m.P.sol[0],m.P.sol[0]-6),m=>'Sólidos em '+f1(m.sol)+'%.','Aumente sólidos.'],
   [m=>hi(m.ov,m.P.ov[1],m.P.ov[1]+20),m=>'Overrun '+f0(m.ov)+'%.','Menos ar.'],
   [m=>lo(m.hydro,m.P.stab[0],0),m=>'Estabilizante baixo.','Neutro na dose.'],
-  [m=>m.tipo==='sorbetto'||m.tipo==='vegan'?0:lo(m.fat,m.P.fat[0],m.P.fat[0]-3),m=>'Gordura em '+f1(m.fat)+'%.','Mais creme.']],
+  [m=>tbase(m.tipo)==='sorbetto'||tbase(m.tipo)==='vegan'?0:lo(m.fat,m.P.fat[0],m.P.fat[0]-3),m=>'Gordura em '+f1(m.fat)+'%.','Mais creme.']],
   pc:[],prev:['Sólidos, gordura e estabilizante na faixa'],src:['goffTex','tharpMelt']},
  {id:'xaroposo',n:'Xaroposo / pegajoso',d:'Gruda, forma poça de calda',cat:'corpo',al:{it:'appiccicoso',es:'almibarado',en:'sticky / syrupy'},sint:['pegajoso','mole','fundo','doce'],sev:'qualidade',
   how:'Gruda na espátula como calda; no fundo da cuba aparece xarope e o que fica congelado é gelado.',
@@ -1941,7 +2003,7 @@ const DEFECTS=[
   c:[
   [m=>hi(m.pod,m.P.pod[1]+2,m.P.pod[1]+8),m=>'POD '+f1(m.pod)+'%.','Reduza açúcares.'],
   [m=>lo(m.fzVit,62,50),m=>'Só '+f0(m.fzVit)+'% da água congelada.','Rebalanceie os açúcares.'],
-  [m=>hi(m.swt,m.tipo==='sorbetto'?32:24,m.tipo==='sorbetto'?38:30),m=>'Açúcares em '+f1(m.swt)+'% da mistura.','Reduza açúcares.']],
+  [m=>hi(m.swt,tbase(m.tipo)==='sorbetto'?32:24,tbase(m.tipo)==='sorbetto'?38:30),m=>'Açúcares em '+f1(m.swt)+'% da mistura.','Reduza açúcares.']],
   pc:[],prev:['Açúcares e PAC calculados'],src:['migoya','corvitto']},
  {id:'naoderr',n:'Não derrete',d:'Mantém a forma, derretimento lento demais',cat:'derrete',al:{it:'non si scioglie',es:'no se funde',en:'excess shape retention'},sint:['naoderr','untuoso','denso'],sev:'qualidade',
   how:'Teste de derretimento: depois de 30 min a 20 °C a bola mantém o desenho; costuma vir com textura gordurosa ou curta.',
@@ -1982,7 +2044,7 @@ const DEFECTS=[
   how:'Ao raspar o fundo da cuba aparece calda líquida ou uma camada de polpa de fruta separada.',
   mec:'Fase não congelada concentrada demais (açúcar) ou partículas de fruta sem estabilizante que as mantenha suspensas escorrem por gravidade.',
   c:[
-  [m=>m.tipo==='sorbetto'||m.tipo==='frutta'?lo(m.hydro,m.P.stab[0],0):0,m=>'Sorbet/fruta com estabilizante baixo ('+f2(m.hydro)+'%).','Neutro para frutas na dose.'],
+  [m=>tbase(m.tipo)==='sorbetto'||tbase(m.tipo)==='frutta'?lo(m.hydro,m.P.stab[0],0):0,m=>'Sorbet/fruta com estabilizante baixo ('+f2(m.hydro)+'%).','Neutro para frutas na dose.'],
   [m=>hi(m.pod,m.P.pod[1]+2,m.P.pod[1]+8),m=>'Açúcar alto (POD '+f1(m.pod)+'%).','Reduza açúcares.'],
   [m=>lo(m.fzVit,64,52),m=>'Pouca água congelada ('+f0(m.fzVit)+'%).','Rebalanceie.']],
   pc:[['Calda de fruta sem mixer antes de mantecar.','Passe o mixer na calda de fruta.']],
@@ -2048,7 +2110,7 @@ const DEFECTS=[
   how:'Salgado perceptível, sem ingrediente salgado proposital.',
   mec:'Sal adicionado em excesso ou sólidos do leite/soro em pó altos (minerais).',
   c:[
-  [m=>m.tipo==='gastro'?0:hi(m.salt,.25,.6),m=>'Sal em '+f2(m.salt)+'%.','0,05–0,15% realça sem salgar.'],
+  [m=>tbase(m.tipo)==='gastro'?0:hi(m.salt,.25,.6),m=>'Sal em '+f2(m.salt)+'%.','0,05–0,15% realça sem salgar.'],
   [m=>hi(m.msnf,m.P.msnf[1],m.P.msnf[1]+4),m=>'Sólidos do leite em '+f1(m.msnf)+'%.','Reduza leite/soro em pó.']],
   pc:[['Manteiga salgada no lugar da sem sal.','Manteiga sem sal.']],
   prev:['Sal pesado em balança de precisão'],src:['goffFlav','tharpFlav']},
@@ -2174,7 +2236,7 @@ function generate(o){
    if(Math.abs(m.S-S)<2e-3)break;S=m.S;}
   const rec=fixed.concat(VARS.map((id,i)=>({id,g:x[i]}))).filter(r=>r.g>=.3).map(r=>({id:r.id,g:Math.round(r.g*10)/10}));
   return{rec,m:analyze({tipo:o.tipo,vit:o.vit,recipe:rec,proc,brix:{}})};};
- const W={mass:1e4,pac:3e3,pod:o.tipo==='gastro'?.6:4,fat:3,msnf:2.5,sol:dairy?0:1.2};
+ const W={mass:1e4,pac:3e3,pod:tbase(o.tipo)==='gastro'?.6:4,fat:3,msnf:2.5,sol:dairy?0:1.2};
  let r=solve(W,tgt.sol);
  if(dairy){const rg=r.m.P.sol;if(r.m.sol>rg[1]+.5||r.m.sol<rg[0]-.5)r=solve({...W,sol:.8},r.m.sol>rg[1]?rg[1]:rg[0]);}
  const recR=r.rec,m=r.m;
@@ -2641,7 +2703,7 @@ const isMac=()=>{try{return /Mac|iPhone|iPad/.test(navigator.platform||navigator
 const kbd=k=>`<kbd>${isMac()?'⌘':'Ctrl '}${k}</kbd>`;
 
 /* ---------- marca ---------- */
-const VERSION='v18.2';
+const VERSION='v18.3';
 const brandHTML=()=>`<div class="brand"><div class="hex"></div><div><b>Il <span>Fredolin</span></b><small>Gelato Lab ${VERSION}${APP_MODE==='app'&&ME.email?' · '+ROLE_N[ROLE]:''}</small></div></div>`;
 
 /* ---------- termômetro da receita: vitrine, serviço ideal (com faixa de incerteza) e freezer numa régua só ---------- */
@@ -2703,7 +2765,7 @@ function hdr(m,sc,F){F=F||[];
   return`<div class="hbrand">${brandHTML()}</div><div class="rcp"><span class="r-lbl">Receita em execução</span><output class="rname ro">${ex?esc(ex.name)+' <span class="muted">v'+ex.v+'</span>':'Escolha uma receita em "Em execução"'}</output></div><div class="hright">${find}<button class="btn sm ghost" data-a="logout">Sair</button></div>`;}
  return`<div class="hbrand">${brandHTML()}</div>
  <div class="rcp"><input type="text" id="nm" class="rname" data-i="name" value="${esc(S.name)}" maxlength="60" aria-label="Nome da receita" placeholder="Receita sem nome">
-  <div class="rrow"><select id="tipo" class="rtype" data-c="tipo" aria-label="Tipo de gelato">${Object.entries(PROF).map(([k,p])=>`<option value="${k}"${k===S.tipo?' selected':''}>${p.n}</option>`).join('')}</select>${setSwitchHTML('ph')}</div></div>
+  <div class="rrow"><select id="tipo" class="rtype" data-c="tipo" aria-label="Tipo de produto">${Object.keys(FAM_N).map(f=>{const L=Object.entries(PROF).filter(([,p])=>(p.fam||'italiana')===f);return L.length?`<optgroup label="${FAM_N[f]}">${L.map(([k,p])=>`<option value="${k}"${k===S.tipo?' selected':''}>${p.n}</option>`).join('')}</optgroup>`:'';}).join('')}</select>${setSwitchHTML('ph')}</div></div>
  ${thermo(m)}
  <div class="hright">${setSwitchHTML('dk')}${scoreBtn(m,sc,F)}${find}</div>`;}
 
@@ -2860,7 +2922,7 @@ function pgLaudo(m,F,sc){
  </tbody></table></div></div>`;}
  else{lead='Cada parâmetro é comparado com a faixa de '+esc(P.n.toLowerCase())+' e com o processo informado. As soluções trazem gramagens calculadas para o lote atual de '+f0(m.tot)+' g.';
   const R=defectRisks(m),ok=F.filter(f=>f.sev==='ok');
-  body=`<div class="card"><div class="row" style="gap:20px;align-items:center">${ring(sc.total)}<div style="flex:1;min-width:240px;display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px 16px">
+  body=famCard(m)+`<div class="card"><div class="row" style="gap:20px;align-items:center">${ring(sc.total)}<div style="flex:1;min-width:240px;display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px 16px">
   ${sc.parts.map(([n,w,v])=>`<div><div class="row" style="justify-content:space-between"><span class="t2" style="font-size:12.5px">${n}</span><span class="mono" style="font-size:11px">${f0(v*100)}</span></div>${rbar(v*100,[85,100],0,100)}</div>`).join('')}</div></div>
   <div class="row" style="margin-top:12px">${groups.map(g=>{const n=F.filter(f=>f.sev===g).length;const PL={crit:['crítico','críticos'],warn:['alerta','alertas'],info:['observação','observações'],ok:['acerto','acertos']}[g];return n?`<span class="chip ${g}">${n} ${PL[n>1?1:0]}</span>`:'';}).join('')}<span class="sp"></span><span class="chip" title="Faixa provável com a variação natural dos ingredientes">serviço ideal ${f1(m.serveT)} °C · ${uncLine(m)}</span></div></div>
   ${groups.slice(0,3).map(g=>{const L=F.filter(f=>f.sev===g);return L.length?`<div class="card"><h2>${{crit:'Erros críticos',warn:'Atenção',info:'Observações'}[g]}</h2>${L.map(findHTML).join('')}</div>`:'';}).join('')}
@@ -2946,6 +3008,14 @@ const DOE_ACT={
 const DOE_INP={doeName:v=>{doeState().name=v;},doeLim:(v,t)=>{const[k,w]=String(t.dataset.k).split('|');const D=doeState();(D.lim[k]=D.lim[k]||{})[w]=v;}};
 const DOE_CHG={doeSel:t=>{const D=doeState();D.sel[+t.dataset.k]=t.value;U.doePlan=null;},doeOpt:t=>{const D=doeState(),k=t.dataset.k;D[k]=k==='filler'?t.value:+t.value;U.doePlan=null;},
  doeResp:t=>{U.doeResp=U.doeResp||{};U.doeResp[t.dataset.k]=t.value;}};
+
+/* ---------- FAMÍLIA DO PRODUTO (v18.3) ---------- */
+const PROC_N={batch:'mantecadora (batch)',soft:'servido direto da máquina',still:'congelado parado após bater',molded:'moldado, sem ar',scraped:'raspado durante o congelamento'};
+function famCard(m){const P=m.P;if(!P||!P.fam||(!P.proc&&!P.src))return'';
+ return`<div class="card"><div class="row" style="gap:8px;align-items:baseline"><h2 style="margin:0;flex:1">${esc(P.n)}</h2><span class="chip">${FAM_N[P.fam]||''}</span><span class="chip${P.conf==='fonte'?' ok':''}">${P.conf==='fonte'?'faixas com fonte':'faixas de prática'}</span></div>
+  <div class="kv"><span>Processo</span><span>${PROC_N[P.proc||'batch']}</span></div><div class="kv"><span>Serviço</span><span>${esc(P.serveCtx||'vitrine')}${P.serveT!=null?' · '+fT(P.serveT)+' °C':''}</span></div>
+  <div class="kv"><span>Overrun</span><span>${f0(m.ov)}% (${m.ovSrc==='processo'?'típico da família':'previsto pela máquina'}; faixa ${f0(P.ov[0])}–${f0(P.ov[1])}%)</span></div>
+  ${(P.src||[]).length?`<details><summary class="t2">Origem das faixas</summary>${P.src.map(x=>`<p class="note" style="margin:6px 0">${esc(x)}</p>`).join('')}</details>`:''}</div>`;}
 
 /* ---------- O QUE MEDIR (v18.1, especificação §30) ---------- */
 function measureCard(m){const P=measurePlan(S,m,CAL.on?CAL:{counts:{}},uncertainty(S));if(!P.length)return'<div class="card"><p class="muted">Monte uma receita para ver o que medir.</p></div>';
@@ -3099,7 +3169,7 @@ function brixFruitCard(m){const fr=(S.recipe||[]).filter(r=>ING_BY[r.id]&&ING_BY
 </details>`;}
 function brixMixCards(m){if(m.empty)return'';return`<div class="g2">
   <div class="card"><h2>Brix estimado da mistura</h2><div class="big c-ice">${m.empty?'—':f1(m.brixMix)}<small class="muted" style="font-size:14px"> °Bx</small></div>
-   <p class="t2" style="margin:6px 0 0">${S.tipo==='sorbetto'?'Sorbetto: leitura no refratômetro entre 28 e 32 °Bx. Se medir diferente do previsto, a fruta ou a pesagem divergem.':'Em bases lácteas a gordura e a proteína distorcem a leitura do refratômetro; use o valor só como controle de lote para lote.'}</p></div>
+   <p class="t2" style="margin:6px 0 0">${tbase(S.tipo)==='sorbetto'?'Sorbetto: leitura no refratômetro entre 28 e 32 °Bx. Se medir diferente do previsto, a fruta ou a pesagem divergem.':'Em bases lácteas a gordura e a proteína distorcem a leitura do refratômetro; use o valor só como controle de lote para lote.'}</p></div>
   <div class="card"><h2>Relação Brix / acidez</h2><div class="big ${m.brixAcid==null?'muted':m.brixAcid<20?'c-warn':m.brixAcid>60?'c-info':'c-ok'}">${m.brixAcid==null||m.acd<.05?'—':f0(m.brixAcid)}</div>
    <p class="t2" style="margin:6px 0 0">Abaixo de 20: ácido dominante · 20–35: vivo, cítrico · 35–60: fruta madura equilibrada · acima de 60: plano. Acidez orgânica da mistura: ${f2(m.acd)}%.</p></div>
  </div></div>`;}
@@ -3230,7 +3300,7 @@ function labGerar(){
   ${[['fat','Gordura (%)',P.fat],['msnf','MSNF (%)',P.msnf],['pod','Doçura POD (%)',P.pod],['sol','Sólidos (%)',P.sol]].map(([k,n,rg])=>`<label class="field"><span class="lbl">${n}</span><input type="number" id="gen-${k}" data-i="gen" data-k="${k}" value="${g[k]}" step=".5"><span class="hint">Faixa ${rg[0]}–${rg[1]}</span></label>`).join('')}
   <label class="field"><span class="lbl">Estabilizante</span><select id="gen-stab" data-c="gen" data-k="stabId">${ingOpts(g.stabId,stabFilter)}</select></label>
   <label class="field"><span class="lbl">Dose (g/kg)</span><input type="number" id="gen-dose" data-i="gen" data-k="stabGkg" value="${g.stabGkg}" step=".5" min="0"></label>
- </div><p class="note">Congelamento é sempre meta obrigatória (${fT(P.fz[0])}–${fT(P.fz[1])}% a ${f1(S.vit)} °C). ${g.tipo==='sorbetto'||g.tipo==='vegan'?'Os sólidos entram como meta.':'Sólidos resultam das demais metas.'} Se alguma meta for impossível com os ingredientes fixos, o motor a libera e avisa.</p>
+ </div><p class="note">Congelamento é sempre meta obrigatória (${fT(P.fz[0])}–${fT(P.fz[1])}% a ${f1(S.vit)} °C). ${tbase(g.tipo)==='sorbetto'||tbase(g.tipo)==='vegan'?'Os sólidos entram como meta.':'Sólidos resultam das demais metas.'} Se alguma meta for impossível com os ingredientes fixos, o motor a libera e avisa.</p>
  <div class="row"><button class="btn pri" data-a="genRun">Gerar receita</button><button class="btn sm" data-a="genDefaults">Metas padrão do tipo</button></div></div>
  ${r?(r.ok?`<div class="card"><div class="row"><h2 style="margin:0">Receita gerada</h2><span class="sp"></span>${(()=>{const st=stReal(stOf(r.recipe,g.tipo)),gs=score(st,r.m,diagnose(st,r.m)).total;return`<span class="chip ${scoreCls(gs)}">Índice ${gs}</span>`;})()}</div>
   ${r.dropped.length?`<p class="c-warn" style="margin:8px 0">Com esses ingredientes fixos nem todas as metas cabem juntas; o motor priorizou congelamento, doçura e gordura e chegou o mais perto possível: ${r.dropped.map(k=>({pod:'doçura',fat:'gordura',msnf:'MSNF',sol:'sólidos'})[k]+' '+f1(r.miss[k])+'% (meta '+f1(g[k])+'%)').join(' · ')}.</p>`:''}
@@ -3304,6 +3374,8 @@ function pgBiblioteca(){
 /* ===================== LOTES E CALIBRAÇÃO ===================== */
 function lotCode(){const d=new Date();const ymd=d.toISOString().slice(2,10).replace(/-/g,'');const n=LOTS.filter(l=>(l.code||'').includes(ymd)).length+1;return'IF-'+ymd+'-'+String(n).padStart(2,'0');}
 function newLotFromBench(){return newLotFromSt(S);}
+/* previsão guardada no lote, formatada; '—' se o lote não tiver (registro antigo ou importado) */
+const lotPred=(L,k,fmt)=>L&&L.pred&&Number.isFinite(+L.pred[k])&&L.pred[k]!==null&&L.pred[k]!==''?fmt(+L.pred[k]):'—';
 /* hora em que o pote entrou no freezer (evento 'hard' da Produção ao vivo), se houver */
 function flowHardAt(L){const ev=L&&L.flow&&L.flow.ev;if(!Array.isArray(ev))return null;const e=ev.filter(x=>x&&x.s==='hard').pop();return e&&e.at?+e.at:null;}
 /* v18.1 · mesmo lote a partir de qualquer estado de receita (a bancada ou uma corrida de experimento) */
@@ -3331,7 +3403,7 @@ function pgLotes(m){
  return`<div class="pg"><div><h1>Lotes e calibração</h1><p class="lead">Cada calda iniciada na Produção ao vivo já vira um lote aqui. Registre as medições reais: os desvios entre previsto e medido ajustam o motor para a sua máquina, seus fornecedores e seu paladar.</p></div>
  <div class="card"><div class="row"><h2 style="margin:0">Diário de produção</h2><span class="sp"></span><button class="btn pri" data-a="lotNew"${m.empty?' disabled':''}>${m.empty?'Abra uma receita aprovada':'Registrar lote já produzido'}</button></div>
   ${LOTS.length?`<div class="tw" style="margin-top:10px"><table class="tbl"><thead><tr><th>Lote</th><th>Receita</th><th>Data</th><th class="r">Overrun prev./med.</th><th>APPCC</th><th></th></tr></thead><tbody>
-   ${LOTS.map(L=>{const ov=measuredOverrun(L.meas||{});const h=haccp(L);const worst=h.some(x=>x[1]==='crit')?'crit':h.some(x=>x[1]==='warn')?'warn':'ok';return`<tr${U.lotOpen===L.id?' style="background:var(--hov)"':''}><td class="mono">${esc(L.code)}</td><td>${esc(L.name)}</td><td class="mono">${esc(L.date)}</td><td class="r mono">${f0(L.pred.ov)}% / ${ov!=null?f0(ov)+'%':'—'}</td><td><span class="chip ${worst}">${worst==='ok'?'conforme':worst==='warn'?'pendências':'não conforme'}</span></td><td class="r"><button class="btn sm" data-a="lotOpen" data-v="${L.id}">${U.lotOpen===L.id?'Fechar':'Abrir'}</button></td></tr>`;}).join('')}</tbody></table></div>`:'<p class="muted" style="margin:10px 0 0">Nenhum lote registrado. Produza a receita da bancada e registre aqui as medições.</p>'}</div>
+   ${LOTS.map(L=>{const ov=measuredOverrun(L.meas||{});const h=haccp(L);const worst=h.some(x=>x[1]==='crit')?'crit':h.some(x=>x[1]==='warn')?'warn':'ok';return`<tr${U.lotOpen===L.id?' style="background:var(--hov)"':''}><td class="mono">${esc(L.code)}</td><td>${esc(L.name)}</td><td class="mono">${esc(L.date)}</td><td class="r mono">${lotPred(L,'ov',f0)}% / ${ov!=null?f0(ov)+'%':'—'}</td><td><span class="chip ${worst}">${worst==='ok'?'conforme':worst==='warn'?'pendências':'não conforme'}</span></td><td class="r"><button class="btn sm" data-a="lotOpen" data-v="${L.id}">${U.lotOpen===L.id?'Fechar':'Abrir'}</button></td></tr>`;}).join('')}</tbody></table></div>`:'<p class="muted" style="margin:10px 0 0">Nenhum lote registrado. Produza a receita da bancada e registre aqui as medições.</p>'}</div>
  ${open?lotEditor(open):''}
  ${ROLE==='sous'?'':` <div class="card"><div class="row"><h2 style="margin:0">Calibração do motor</h2><span class="sp"></span><label class="row" style="gap:6px;font-size:13px"><input type="checkbox" id="calOn" data-c="calOn" ${CAL.on?'checked':''}> Aplicar calibração</label></div>
   <div class="g3" style="margin-top:12px;gap:12px">
@@ -3349,8 +3421,8 @@ function lotEditor(L){const me=L.meas||{},se=L.sens||{};const ov=measuredOverrun
  ${protocolCard(L)}
  <h3 style="margin:14px 0 8px">Processo real (APPCC)</h3><div class="form">${num('meas.pastT','Pasteurização (°C)',1)}${num('meas.pastHold','Retenção ('+(L.proc.pastHoldU||'s')+')',1)}${num('meas.coolMin','Resfriar a 4 °C (min)',5)}${num('meas.matH','Maturação (h)',1)}${num('meas.matT','Maturação (°C)',.5)}${num('meas.drawT','Saída (°C)',.5)}${num('meas.drawMin','Mantecação (min)',1)}</div>
  <h3 style="margin:16px 0 8px">Medições do produto</h3><div class="form">
-  ${num('meas.brix','Brix da mistura (°Bx)',.1,'previsto '+f1(L.pred.brix))}${num('meas.ph','pH medido',.01,L.pred&&L.pred.ph!=null?'estimado '+f1(L.pred.ph)+' (pHmetro calibrado)':'pHmetro calibrado')}${num('meas.cupMix','Copo com mistura (g)',1)}${num('meas.cupGel','Copo com gelato (g)',1,ov!=null?'overrun '+f0(ov)+'% (previsto '+f0(L.pred.ov)+'%)':'mesmo copo, nivelado')}
-  ${num('meas.melt10','Derretido em 10 min (%)',1,'previsto '+f0(L.pred.melt10)+'%')}
+  ${num('meas.brix','Brix da mistura (°Bx)',.1,'previsto '+lotPred(L,'brix',f1))}${num('meas.ph','pH medido',.01,L.pred&&L.pred.ph!=null?'estimado '+f1(L.pred.ph)+' (pHmetro calibrado)':'pHmetro calibrado')}${num('meas.cupMix','Copo com mistura (g)',1)}${num('meas.cupGel','Copo com gelato (g)',1,ov!=null?'overrun '+f0(ov)+'% (previsto '+lotPred(L,'ov',f0)+'%)':'mesmo copo, nivelado')}
+  ${num('meas.melt10','Derretido em 10 min (%)',1,'previsto '+lotPred(L,'melt10',f0)+'%')}
   <label class="field"><span class="lbl">Textura na vitrine</span><select id="lot-tex" data-c="lot" data-k="meas.tex"><option value=""${me.tex==null||me.tex===''?' selected':''}>não avaliada</option>${[[-2,'muito mole'],[-1,'mole'],[0,'ideal'],[1,'duro'],[2,'muito duro']].map(([v,n])=>`<option value="${v}"${String(me.tex)===String(v)?' selected':''}>${v>0?'+':''}${v} · ${n}</option>`).join('')}</select></label>
   ${num('meas.texTemp','Temperatura avaliada (°C)',.5)}${num('meas.icyDay','Dia em que percebeu gelo',1,'vazio = não percebeu')}
   ${num('meas.qT','Quenelle: temperatura do gelato (°C)',.5,'termômetro de espeto no centro')}
@@ -3536,7 +3608,7 @@ function microModel(st,m,F,sc,days){
  o.K=k.Kvit;o.d0=m.crystal;o.d=Math.cbrt(Math.pow(o.d0,3)+o.K*days);o.shelf=m.shelfVit;o.shelfStore=m.shelfStore;
  o.fStab=k.fStab;o.fShock=k.fShock;o.fSerum=k.fKinVit;o.km=k.km;
  /* ar */
- const protOk=m.prot>=Math.max(.5,P.prot[0]-.5)||st.tipo==='sorbetto';const bubbleStable=protOk&&m.hydro>=P.stab[0]*.6;
+ const protOk=m.prot>=Math.max(.5,P.prot[0]-.5)||tbase(st.tipo)==='sorbetto';const bubbleStable=protOk&&m.hydro>=P.stab[0]*.6;
  o.airD=AIR_D*(1+(bubbleStable?0:.05*days))*(m.ov>P.ov[1]+5?1.15:1);o.bubbleStable=bubbleStable;
  /* gordura e proteína (aglomerados ampliados para visibilidade) */
  o.nFat=Math.round(clamp(m.fat*7,0,90));o.destab=clamp((m.destab||0)/100,0,.9);o.butter=m.fat>11.5||(m.keyPct.mono||0)>.35||(m.fat>10.5&&pr.drawMin>13);
@@ -3559,9 +3631,9 @@ function microModel(st,m,F,sc,days){
   ['Cristais de gelo','≈'+f0(o.d)+' µm',st3(o.d<=42,o.d<=SENS_D)],
   ['Doçura','POD '+f1(m.pod)+'%',st3(m.pod>=P.pod[0]&&m.pod<=P.pod[1],m.pod>=P.pod[0]-3&&m.pod<=P.pod[1]+3)],
   ['Sólidos',f1(m.sol)+'%',st3(m.sol>=P.sol[0]&&m.sol<=P.sol[1],m.sol>=P.sol[0]-3&&m.sol<=P.sol[1]+3)],
-  ['Emulsão',st.tipo==='sorbetto'?'sem gordura':f1(m.fat)+'% gordura',st.tipo==='sorbetto'?'ok':st3(m.fat>=P.fat[0]&&m.fat<=P.fat[1]&&!o.butter&&(m.fat<=8||m.hasEmul),!o.butter)],
+  ['Emulsão',tbase(st.tipo)==='sorbetto'?'sem gordura':f1(m.fat)+'% gordura',tbase(st.tipo)==='sorbetto'?'ok':st3(m.fat>=P.fat[0]&&m.fat<=P.fat[1]&&!o.butter&&(m.fat<=8||m.hasEmul),!o.butter)],
   ['Ar incorporado',f0(m.ov)+'%',st3(m.ov>=P.ov[0]&&m.ov<=P.ov[1]&&bubbleStable,bubbleStable)],
-  ['Rede estabilizante',m.hydro>.02?f2(m.hydro)+'%':'ausente',st3(m.hydro>=P.stab[0]&&!o.netExcess,m.hydro>0||st.tipo==='gastro')],
+  ['Rede estabilizante',m.hydro>.02?f2(m.hydro)+'%':'ausente',st3(m.hydro>=P.stab[0]&&!o.netExcess,m.hydro>0||tbase(st.tipo)==='gastro')],
   ['Lactose',m.lac>0?f1(m.lacW)+'% da água':'sem lactose',st3(m.lacW<=9&&o.nLac===0,m.lacW<=10.5)]
  ];
  return o;
@@ -4058,11 +4130,11 @@ const LAB_POLY=['eritritol','alulose','xilitol','maltitol','sorbitol','inulina',
 function labLevers(st){const rec=st.recipe||[];const has=id=>rec.some(r=>r.id===id);const tot=rec.reduce((a,r)=>a+(+r.g||0),0)||1;const L=[];
  const add=(id,kind,lo,hi,sc)=>{if(ING_BY[id]&&!L.some(l=>l.id===id))L.push({id,kind,lo:lo||0,hi:hi!=null?hi:tot*.45,sc:sc||1});};
  const dairy=rec.some(r=>ING_BY[r.id]&&ING_BY[r.id].cat==='Lácteos');
- if(st.tipo==='semacucar'){['eritritol','alulose','fibramilho'].forEach(id=>add(id,'sug'));rec.forEach(r=>{if(LAB_POLY.includes(r.id))add(r.id,'sug');});add(has('stevia')?'stevia':'sucralose','hi',0,tot*.0006,.004);}
- else if(st.tipo==='gastro'){[dexPref(st),'trealose','glicose38'].forEach(id=>add(id,'sug'));if(has('sacarose'))add('sacarose','sug');add('sal','salt',0,tot*.008,.08);}
+ if(tbase(st.tipo)==='semacucar'){['eritritol','alulose','fibramilho'].forEach(id=>add(id,'sug'));rec.forEach(r=>{if(LAB_POLY.includes(r.id))add(r.id,'sug');});add(has('stevia')?'stevia':'sucralose','hi',0,tot*.0006,.004);}
+ else if(tbase(st.tipo)==='gastro'){[dexPref(st),'trealose','glicose38'].forEach(id=>add(id,'sug'));if(has('sacarose'))add('sacarose','sug');add('sal','salt',0,tot*.008,.08);}
  else{add('sacarose','sug');add(dexPref(st),'sug');add('glicose38','sug');}
- rec.forEach(r=>{if(BAL_SUG.has(r.id)&&st.tipo!=='semacucar')add(r.id,'sug');});
- if(dairy&&st.tipo!=='vegan')add('lpd','sol',0,tot*.08);else if(st.tipo!=='semacucar')add('malto','sol',0,tot*.12);
+ rec.forEach(r=>{if(BAL_SUG.has(r.id)&&tbase(st.tipo)!=='semacucar')add(r.id,'sug');});
+ if(dairy&&tbase(st.tipo)!=='vegan')add('lpd','sol',0,tot*.08);else if(tbase(st.tipo)!=='semacucar')add('malto','sol',0,tot*.12);
  rec.forEach(r=>{const i=ING_BY[r.id];if(i&&(i.c.alc||0)>0)add(r.id,'alc',+r.g*.55,+r.g);});
  const BASEL=['agua','leite','leite15','leite0','aveia','amendoab','soja','arrozb','cocoleite','aguacoco'];const liq=rec.filter(r=>{const i=ING_BY[r.id];return i&&!L.some(l=>l.id===r.id)&&(i.c.w||0)>=85&&!(i.c.alc>0);}).sort((a,b)=>(BASEL.includes(b.id)-BASEL.includes(a.id))||b.g-a.g)[0];
  const lid=liq?liq.id:(dairy?'leite':'agua');const lg=liq?+liq.g:0;add(lid,'liq',lg*.6,lg+tot*.3);
@@ -4109,7 +4181,7 @@ function atAddBalanced(st,id){const i=ING_BY[id];if(!i)return null;const orig=st
  return{recipe:out,msg,swap,balanced:bal===true};}
 /* índice contínuo para comparar criações finas (o índice oficial satura em 100) */
 function fineScore(st,m,F){if(m.empty)return 0;const sc=score(st,m,F);let q=sc.parts.reduce((s,p)=>s+p[1]*p[2],0);const crit=F.filter(f=>f.sev==='crit').length;if(crit)q=Math.min(q,62-crit*4);
- q-=Math.abs(m.fzVit-m.fzMid)*.25+Math.max(0,m.crystal-30)*.12+Math.max(0,7-Math.min(m.shelfVit,30))*.25+F.filter(f=>f.sev==='warn').length*.6;return Math.round(q*10)/10;}
+ q-=Math.abs(m.fzVit-m.fzMid)*.25+(m.P.crystal==='coarse'?0:Math.max(0,m.crystal-30)*.12+Math.max(0,7-Math.min(m.shelfVit,30))*.25)+F.filter(f=>f.sev==='warn').length*.6;return Math.round(q*10)/10;}
 /* o melhor entre o balanceador clássico e o do laboratório (pelo índice contínuo) */
 function balanceBest(st,maxE){const pote=st.proc&&st.proc.serveFrom==='pote';let a=null;try{a=pote?balancePote(st):balance(st);}catch(e){a=null;}
  const ev=r=>{const s2=stReal({...st,recipe:r});const m=analyze(s2);return fineScore(s2,m,diagnose(s2,m));};
@@ -4166,8 +4238,8 @@ function exploreGelato(st,n,seed){
   rec=>{if(rec.some(r=>r.id==='sal')||!ING_BY.sal)return null;rec.push({id:'sal',g:tot*.0015});return'+ sal 0,15% (realça o sabor)';},
   rec=>{const a=find(rec,i=>(i.c.alc||0)>0)[0];if(!a)return null;a.g*=.7;return nm(a.id).toLowerCase()+' −30% (álcool)';},
   rec=>{if(base0.sol<=base0.P.sol[1])return null;const w=find(rec,i=>(i.c.w||0)>=85&&!(i.c.alc>0)).sort((a,b)=>b.g-a.g)[0];if(!w)return null;w.g+=tot*.08;return nm(w.id).toLowerCase()+' +8% (sólidos altos)';},
-  rec=>{if(base0.sol>=base0.P.sol[0])return null;const id=find(rec,i=>i.cat==='Lácteos').length&&st.tipo!=='vegan'?'lpd':'fibramilho';if(!ING_BY[id])return null;const ex=rec.find(r=>r.id===id);if(ex)ex.g+=tot*.03;else rec.push({id,g:tot*.03});return'+ '+nm(id).toLowerCase()+' 3% (sólidos baixos)';},
-  rec=>{if(st.tipo==='sorbetto'||st.tipo==='vegan')return null;const id=pick(['gema','mascarpone','creamcheese']);if(!ING_BY[id]||rec.some(r=>r.id===id))return null;rec.push({id,g:tot*(id==='gema'?.04:.06)});return'+ '+nm(id).toLowerCase()+' (corpo e emulsão)';}];
+  rec=>{if(base0.sol>=base0.P.sol[0])return null;const id=find(rec,i=>i.cat==='Lácteos').length&&tbase(st.tipo)!=='vegan'?'lpd':'fibramilho';if(!ING_BY[id])return null;const ex=rec.find(r=>r.id===id);if(ex)ex.g+=tot*.03;else rec.push({id,g:tot*.03});return'+ '+nm(id).toLowerCase()+' 3% (sólidos baixos)';},
+  rec=>{if(tbase(st.tipo)==='sorbetto'||tbase(st.tipo)==='vegan')return null;const id=pick(['gema','mascarpone','creamcheese']);if(!ING_BY[id]||rec.some(r=>r.id===id))return null;rec.push({id,g:tot*(id==='gema'?.04:.06)});return'+ '+nm(id).toLowerCase()+' (corpo e emulsão)';}];
  const out=[],seen=new Set();
  for(let tries=0;tries<n*5&&out.length<n;tries++){
   const rec=R.map(r=>({...r}));const labs=[];const k=rnd()<.45?2:1;
@@ -5706,7 +5778,7 @@ const ACT={
  invDel:v=>{STORE.del('inv',v);render();},
  impGo:()=>{if(!can.cost())return denied();applyImport();},impNo:()=>{U.imp=null;render();},impDel:()=>{if(U.imp){U.imp.withDel=!U.imp.withDel;render();}},
  expJson:async()=>{const cols={};BACKUP_COLS.forEach(c=>cols[c]=COLS[c].get());const data=JSON.stringify(Object.assign(backupPayload(cols,STORE.tomb,{v:VERSION,date:today(),exportedAt:new Date().toISOString()}),{vitrine:S.vitrine}),null,1);await saveFile('il_fredolin_backup_'+today()+'.json',data);},
- expCsv:async()=>{const h=['lote','data','receita','overrun_prev','overrun_med','brix_prev','brix_med','derretimento_prev','derretimento_med','textura','pasteurizacao','resfriamento_min','maturacao_h'];const rows=LOTS.map(L=>{const me=L.meas||{};return[L.code,L.date,L.name,f1(L.pred.ov),measuredOverrun(me)!=null?f1(measuredOverrun(me)):'',f1(L.pred.brix),me.brix||'',f0(L.pred.melt10),me.melt10||'',me.tex!=null?me.tex:'',me.pastT||'',me.coolMin||'',me.matH||''].map(x=>'"'+String(x).replace(/"/g,'""')+'"').join(';');});await saveFile('il_fredolin_lotes_'+today()+'.csv','﻿'+[h.join(';'),...rows].join('\n'));},
+ expCsv:async()=>{const h=['lote','data','receita','overrun_prev','overrun_med','brix_prev','brix_med','derretimento_prev','derretimento_med','textura','pasteurizacao','resfriamento_min','maturacao_h'];const rows=LOTS.map(L=>{const me=L.meas||{};return[L.code,L.date,L.name,lotPred(L,'ov',f1),measuredOverrun(me)!=null?f1(measuredOverrun(me)):'',lotPred(L,'brix',f1),me.brix||'',lotPred(L,'melt10',f0),me.melt10||'',me.tex!=null?me.tex:'',me.pastT||'',me.coolMin||'',me.matH||''].map(x=>'"'+String(x).replace(/"/g,'""')+'"').join(';');});await saveFile('il_fredolin_lotes_'+today()+'.csv','﻿'+[h.join(';'),...rows].join('\n'));},
  frz:v=>{S.proc.storeT=clamp(Math.round((+S.proc.storeT+ +v)*2)/2,-35,-8);if(S.proc.serveFrom==='freezer')S.vit=S.proc.storeT;U.bal=null;render();},
  vit:v=>{S.vit=clamp(Math.round((+S.vit+ +v)*2)/2,-35,-6);if(S.proc.serveFrom==='freezer')S.proc.storeT=S.vit;U.bal=null;render();},
  pick:v=>{U.sel=v;U.q=ING_BY[v].n;renderNow();const g=$('#addG');g&&g.focus();g&&g.select();},
@@ -5770,7 +5842,7 @@ const INP={
 const CHG={
  compBal:t=>{S.compBal=!!t.checked;},
  defChk:t=>{U.defChk=U.defChk||{};U.defChk[t.dataset.v]=t.checked;},
- tipo:t=>{S.tipo=t.value;U.bal=null;},
+ tipo:t=>{S.tipo=t.value;U.bal=null;const P=PROF[t.value];if(P&&P.serveT!=null){S.vit=P.serveT;if(P.proc==='soft'||P.serveCtx==='palito'||P.serveCtx==='fatia')S.proc.serveFrom='vitrine';}},
  proc:t=>{const k=t.dataset.k;S.proc[k]=t.value;if(k==='pastHoldU'&&t.value==='min'&&S.proc.pastHold>60)S.proc.pastHold=30;},
  gen:t=>{const k=t.dataset.k;S.lab.gen[k]=t.value;if(k==='tipo')Object.assign(S.lab.gen,GEN_DEF[t.value]);U.gen=null;},
  genfx:t=>{S.lab.gen.fixed[+t.dataset.k].id=t.value;U.gen=null;},

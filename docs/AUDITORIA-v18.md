@@ -171,6 +171,36 @@ O núcleo medido no endurecimento era registrado e **nunca usado**. Agora ele ca
 
 **Limite:** os dados de teste foram gerados pelo próprio modelo. Isso prova que o ajuste é correto e identificável, não que o modelo representa o seu freezer. Essa validação só virá com medições reais.
 
+## 5-G. v18.3 — famílias de produto (especificação §20–21)
+
+**Auditoria:** os 6 tipos originais eram todos variações de gelato de vitrine: mesma fração congelada no serviço (68–74%) e mesma saída (−11 a −7 °C). O motor comparava o tipo diretamente em 54 pontos, então um tipo novo cairia sempre nas regras de "crema".
+
+**Infraestrutura:** cada perfil traz família, comportamento-base nas regras (`like`), processo (batch, soft, still, molded, scraped), contexto e temperatura de serviço, objetivo de cristal (fino ou grosso) e a origem das faixas (`src`, com `conf` = fonte ou prática). As 54 comparações passam por `tbase()`. Nos 6 tipos originais o resultado é **idêntico**: 24/24 internos e os 88 valores GOLDEN.
+
+**11 famílias novas:**
+
+| Família | Origem das faixas |
+|---|---|
+| Ice cream americano (premium), Philadelphia | Goff/Guelph (misturas hard-frozen), overrun premium 60–90% (Guelph), 21 CFR 135.110 (≥ 10% gordura) |
+| French / frozen custard | 21 CFR 135.110: **1,4% de sólidos de gema** (regra calculada pelos sólidos, não pela gema fresca) |
+| Soft serve, frozen yogurt | Goff/Guelph e SDSU Extension; temperatura de extração é **prática** |
+| Kulfi | Composição **calculada** da formulação controle de um artigo de 2021. As tabelas do artigo foram descartadas por inconsistência (5% de sólidos totais) |
+| Granita, semifreddo, dondurma, paleta de fruta, paleta cremosa | **Prática** (sem fonte primária de composição). O app avisa isso no laudo |
+
+**Comportamentos por processo:**
+- Fora da mantecadora, o overrun é o da família, e a calibração pelos lotes é separada por família.
+- Granita: cristais grandes não são defeito; "sem estabilizante" não é aviso; o horizonte de textura não se aplica.
+- Regras próprias: gema de custard, Philadelphia sem gema, frozen yogurt com iogurte, avisos de processo e aviso de faixa de prática.
+- Trocar o tipo ajusta a temperatura de serviço. O seletor é agrupado por família e o laudo mostra um cartão com processo, serviço, overrun e a origem das faixas.
+
+**Consequência real exposta:** o americano premium (overrun 60–90%) acusa overrun baixo na Maestro Gelatiere (máximo 35%). É um limite da máquina, não um defeito.
+
+**Robustez corrigida no caminho:** um lote sem previsões derrubava a página de Lotes inteira (9 acessos diretos). Agora aparece "—".
+
+**Testes:** `families.test.mjs` (8, com uma receita de exemplo por família feita de ingredientes da base, balanceador incluído) e E2E com as 24 páginas × 17 tipos = 408 combinações sem erro. Também o seletor agrupado e a temperatura de serviço do soft serve. Node 45/45.
+
+**Fontes consultadas:** Goff, *Ice Cream Technology e-book* (Univ. de Guelph), capítulos "Suggested mixes for ice cream" e "Formulation considerations"; 21 CFR § 135.110 (Cornell LII); SDSU Extension, "Soft serve frozen desserts and frozen yogurts: real and perceived differences"; "Preparation of Kulfi with incorporation of pineapple pulp" (phytojournal, 2021).
+
 ## 6. Para publicar (requer sua autorização)
 1. Conferir a execução do workflow *Testes* na branch (inclui WebKit e o job *banco*).
 1b. Aplicar a migração 001 seguindo `supabase/README.md` (ensaio num projeto de teste primeiro). A ordem entre banco e app é indiferente.

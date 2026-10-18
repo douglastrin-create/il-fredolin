@@ -48,5 +48,14 @@ check(await pg.locator('input[data-k="meas.ph"]').count() === 1, 'campo pH medid
 // Sous Chef não vê Experimentos
 await pg.evaluate(() => { ROLE = 'sous'; S.page = 'lotes'; U.sub = { lotes: 'doe' }; renderNow(); });
 check(!/Novo experimento/.test(await pg.locator('#main').innerText()), 'Sous Chef não vê a aba Experimentos');
+// seletor de tipo agrupado por família; trocar o tipo ajusta a temperatura de serviço
+await pg.evaluate(() => { ROLE = 'maestro'; S.page = 'bancada'; renderNow(); });
+const groups = await pg.$$eval('#tipo optgroup', g => g.map(x => x.label));
+check(groups.length >= 5 && groups.includes('Internacional') && groups.includes('Tradicional e regional'), 'seletor de tipo agrupado por família: ' + groups.join(', '));
+await pg.selectOption('#tipo', 'soft'); await pg.waitForTimeout(200);
+check(await pg.evaluate(() => S.tipo === 'soft' && S.vit === -6.5), 'soft serve: temperatura de serviço vai para −6,5 °C');
+await pg.evaluate(() => { S.page = 'laudo'; U.sub = { laudo: 'resumo' }; renderNow(); });
+const res = await pg.locator('#main').innerText();
+check(/Soft serve/.test(res) && /servido direto da máquina/.test(res) && /faixas com fonte/.test(res), 'Laudo mostra a família, o processo e a origem das faixas');
 check(!errs.length, 'sem erros de página ' + errs.join(' | '));
 await b.close(); srv.close(); process.exit(fails.length ? 1 : 0);

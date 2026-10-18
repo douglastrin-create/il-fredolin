@@ -41,11 +41,17 @@ for (const [name, eng] of engines) {
     LOTS.unshift(Lc); U.lotOpen = 'L-core'; INP.lot('-15', { dataset: { k: 'meas.coreT' }, type: 'number' });
     const coreOk = Lc.meas.coreT === -15 && Lc.meas.coreMin === 90;
     fitCalibration(LOTS); const cacheOk = (JSON.parse(localStorage.getItem('fredolin_hfit_v1') || '[]')).length >= 1 && CAL.res.some(x => x.id === 'L-core' && x.core);
+    /* v18.3 · todas as páginas em todos os tipos de produto */
+    const S0 = JSON.parse(JSON.stringify(S)); const famBad = [];
+    for (const k of Object.keys(PROF)) { S.tipo = k; if (PROF[k].serveT != null) S.vit = PROF[k].serveT;
+      const mm = analyze(S), FF = diagnose(S, mm), ss = score(S, mm, FF);
+      for (const v of Object.keys(VIEW)) { try { const h = VIEW[v](mm, FF, ss); if (badText(h.replace(/<input[^>]*value=""[^>]*>/g, ''))) famBad.push(k + '/' + v); } catch (e) { famBad.push(k + '/' + v + ': ' + e.message); } } }
+    S = S0; const famOk = !famBad.length && Object.keys(PROF).length >= 17; if (famBad.length) console.log('famílias:', famBad.slice(0, 8).join(' · '));
     const backup = plan.cols.lib.keep === 1 && plan.cols.lib.add.length === 1 && card.includes('1 novos') && card.includes('mantidos');
     return { pages: Object.keys(VIEW).length, bad, tests: [t.pass, t.list.length], textura: q.includes('Estabilidade da textura') && !/Vida útil prevista/.test(q) && (q.match(/chip nat/g) || []).length >= 4,
-      quarentena: acc.includes('Alterações recusadas'), aviso: acc.includes('Gravação neste aparelho falhou'), backup, stockOk, coreOk, cacheOk };
+      quarentena: acc.includes('Alterações recusadas'), aviso: acc.includes('Gravação neste aparelho falhou'), backup, stockOk, coreOk, cacheOk, famOk, famBad: famBad.slice(0, 12) };
   });
-  const ok = !errs.length && !r.bad.length && r.tests[0] === r.tests[1] && r.textura && r.quarentena && r.aviso && r.backup && r.stockOk && r.coreOk && r.cacheOk;
+  const ok = !errs.length && !r.bad.length && r.tests[0] === r.tests[1] && r.textura && r.quarentena && r.aviso && r.backup && r.stockOk && r.coreOk && r.cacheOk && r.famOk;
   console.log(`${ok ? '✓' : '✗'} ${name}: ${r.pages} páginas, testes ${r.tests.join('/')}, erros ${errs.length}`, ok ? '' : JSON.stringify({ r, errs }));
   if (!ok) failed++; await b.close();
   if (name !== 'chromium') continue;
