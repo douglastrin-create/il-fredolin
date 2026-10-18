@@ -2161,13 +2161,31 @@ function bestVitrineTemp(rows){const v=rows.map(r=>r.m.serveT).filter(x=>isFinit
 
 /* ---------- PLANEJAMENTO E ESTOQUE ---------- */
 /* saldo por ingrediente (puro: pode ser chamado no render) */
-function invStock(inv){const by={};(inv||[]).forEach(e=>{if(+e.qty<=0)return;const b=by[e.ingId]=by[e.ingId]||{q:0,c:0};b.q+=+e.qty;b.c+=+e.qty*(+e.costKg||0);});return by;}
+/* v18 · ESTOQUE POR MOVIMENTOS. Até a v17.12 a baixa reduzia o saldo (qty) dentro do registro da entrada e regravava
+   o registro inteiro: duas baixas em aparelhos diferentes se sobrescreviam (vence o último) e baixar o mesmo lote duas
+   vezes descontava duas vezes. Agora a entrada guarda a quantidade recebida e cada baixa é um registro próprio
+   {kind:'mov'} com id determinístico (lote + ingrediente + entrada): só é inserido, nunca alterado, então baixas
+   concorrentes se somam e repetir a baixa de um lote não desconta de novo. Saldo = entrada − soma dos movimentos.
+   Entradas antigas já trazem o saldo descontado e continuam valendo como estão. */
+const isMov=e=>!!e&&e.kind==='mov';
+function invLeft(inv){const used={};(inv||[]).forEach(e=>{if(isMov(e))used[e.entry]=(used[e.entry]||0)+(+e.g||0);});
+ const left=new Map();(inv||[]).forEach(e=>{if(!isMov(e))left.set(String(e.id),Math.max(0,(+e.qty||0)-(used[e.id]||0)));});return left;}
+/* entradas com o saldo atual em qty (cópias: só para leitura) */
+function invEntries(inv){const L=invLeft(inv);return(inv||[]).filter(e=>!isMov(e)).map(e=>Object.assign({},e,{qty:L.get(String(e.id))}));}
+function invStock(inv){const by={};invEntries(inv).forEach(e=>{if(+e.qty<=0)return;const b=by[e.ingId]=by[e.ingId]||{q:0,c:0};b.q+=+e.qty;b.c+=+e.qty*(+e.costKg||0);});return by;}
 /* custo médio ponderado do estoque → custos das receitas; só invalida a memória de cálculo se mudou */
 function invRecompute(inv){const by=invStock(inv);const nc={};for(const k in by)if(by[k].q>0&&by[k].c>0)nc[k]=by[k].c/by[k].q;
  if(JSON.stringify(nc)!==JSON.stringify(INVCOST)){INVCOST=nc;INVVER++;}return by;}
 function planNeeds(plan,getRec,cap){const need={},runs=[];(plan||[]).forEach(p=>{const r=getRec(p);if(!r||!(+p.kg>0))return;const tot=r.recipe.reduce((a,x)=>a+(+x.g||0),0)||1;const g=+p.kg*1000;const f=g/tot;
   r.recipe.forEach(x=>{need[x.id]=(need[x.id]||0)+x.g*f;});runs.push({name:r.name,g,cycles:cap?Math.ceil(g/cap):1,perCycle:cap?g/Math.ceil(g/cap):g});});return{need,runs};}
-function consumeFIFO(inv,id,g){let rest=g;inv.filter(e=>e.ingId===id&&+e.qty>0).sort((a,b)=>String(a.exp||'9999').localeCompare(String(b.exp||'9999'))).forEach(e=>{if(rest<=0)return;const t=Math.min(+e.qty,rest);e.qty=+e.qty-t;rest-=t;e._dirty=1;});return rest;}
+/* baixa FEFO de g gramas do ingrediente id para o lote lotId: devolve os movimentos a gravar (não altera nada).
+   Se o lote já tem baixa desse ingrediente, não desconta de novo (already). */
+function consumeFIFO(inv,id,g,lotId){const tag=String(lotId||'x');
+ if((inv||[]).some(e=>isMov(e)&&e.ingId===id&&String(e.lot)===tag))return{rest:0,movs:[],already:true,firstLot:''};
+ let rest=+g||0;const movs=[];let firstLot='';
+ invEntries(inv).filter(e=>e.ingId===id&&+e.qty>0).sort((a,b)=>String(a.exp||'9999').localeCompare(String(b.exp||'9999'))).forEach(e=>{if(rest<=0)return;const t=Math.min(+e.qty,rest);
+  if(!movs.length)firstLot=e.lot||'';movs.push({id:('M-'+tag+'-'+id+'-'+e.id).slice(0,120),kind:'mov',entry:String(e.id),ingId:id,g:Math.round(t*10)/10,lot:tag});rest-=t;});
+ return{rest,movs,already:false,firstLot};}
 
 /* ==== 33-golden.js ==== */
 /* referência do motor (gerada pelo build a partir de golden.json — não editar) */
@@ -3174,7 +3192,7 @@ function pgEstoque(){const by=invStock(INV);const N=U.invNew||{ingId:'leite',kg:
   <label class="field"><span class="lbl">Validade</span><input type="date" id="inv-exp" data-i="invNew" data-k="exp" value="${esc(N.exp)}"></label></div>
   <div class="row" style="margin-top:10px"><button class="btn okb" data-a="invAdd">Registrar entrada</button></div></div>
  <div class="card"><h2>Saldo</h2>${groups.length?`<div class="tw"><table class="tbl"><thead><tr><th>Ingrediente</th><th class="r">Saldo</th>${$cost('<th class="r">Custo médio</th>')}<th>Lotes</th></tr></thead><tbody>
-  ${groups.map(id=>{const es=INV.filter(e=>e.ingId===id&&+e.qty>0);if(!es.length)return'';return`<tr><td>${esc(ING_BY[id]?ING_BY[id].n:id)}</td><td class="r mono">${f2(by[id].q/1000)} kg</td>${$cost(`<td class="r mono">R$ ${f2(INVCOST[id]||0)}</td>`)}<td>${es.map(e=>`<span class="chip ${soon(e.exp)?'warn':''}" style="margin:2px">${esc(e.lot||'s/ lote')} · ${f2(e.qty/1000)} kg${e.exp?' · '+esc(e.exp):''}<button class="btn del" data-a="invDel" data-v="${e.id}" style="padding:0 5px;margin-left:4px" aria-label="Excluir entrada">✕</button></span>`).join('')}</td></tr>`;}).join('')}</tbody></table></div>`:'<p class="muted" style="margin:0">Estoque vazio.</p>'}
+  ${groups.map(id=>{const es=invEntries(INV).filter(e=>e.ingId===id&&+e.qty>0);if(!es.length)return'';return`<tr><td>${esc(ING_BY[id]?ING_BY[id].n:id)}</td><td class="r mono">${f2(by[id].q/1000)} kg</td>${$cost(`<td class="r mono">R$ ${f2(INVCOST[id]||0)}</td>`)}<td>${es.map(e=>`<span class="chip ${soon(e.exp)?'warn':''}" style="margin:2px">${esc(e.lot||'s/ lote')} · ${f2(e.qty/1000)} kg${e.exp?' · '+esc(e.exp):''}<button class="btn del" data-a="invDel" data-v="${e.id}" style="padding:0 5px;margin-left:4px" aria-label="Excluir entrada">✕</button></span>`).join('')}</td></tr>`;}).join('')}</tbody></table></div>`:'<p class="muted" style="margin:0">Estoque vazio.</p>'}
   <p class="note">Laranja: vence em até 7 dias.</p></div></div>`;}
 
 /* ===================== DADOS ===================== */
@@ -3183,7 +3201,7 @@ function pgDados(){const st=STORE.status;
  return`<div class="pg"><div><h1>${APP_MODE==='app'?'Conta e sincronização':'Dados e sincronização'}</h1><p class="lead">Onde seus dados ficam e como levá-los.</p></div>
  ${APP_MODE==='app'?accountCard(pend):''}
  <div class="card"><div class="row"><span class="chip ${st==='cloud'?'ok':st==='error'?'crit':st==='syncing'?'info':'warn'}">${st==='cloud'?'Nuvem':st==='syncing'?'Sincronizando':st==='error'?'Erro':st==='offline'?'Sem internet':'Este aparelho'}</span><span class="t2" style="font-size:13px">${esc(STORE.msg)}</span><span class="sp"></span>${APP_MODE==='app'?`<button class="btn sm" data-a="syncNow">Sincronizar agora</button>`:''}</div>
-  <div class="g3" style="margin-top:12px">${(ROLE==='sous'?[['Receitas em execução',EXEC.length],['Lotes',LOTS.length]]:[['Receitas em execução',EXEC.length],['Minhas receitas',LIB.length],['Lotes',LOTS.length],['Ingredientes próprios',CUST.length],['Neutros',NXLIB.length],['Entradas de estoque',INV.length]]).map(([n,v])=>`<div class="kv"><span>${n}</span><span>${v}</span></div>`).join('')}${pend?`<div class="kv"><span>Aguardando envio</span><span class="c-warn">${pend}</span></div>`:''}</div></div>
+  <div class="g3" style="margin-top:12px">${(ROLE==='sous'?[['Receitas em execução',EXEC.length],['Lotes',LOTS.length]]:[['Receitas em execução',EXEC.length],['Minhas receitas',LIB.length],['Lotes',LOTS.length],['Ingredientes próprios',CUST.length],['Neutros',NXLIB.length],['Entradas de estoque',INV.filter(e=>!isMov(e)).length],['Baixas registradas',INV.filter(isMov).length]]).map(([n,v])=>`<div class="kv"><span>${n}</span><span>${v}</span></div>`).join('')}${pend?`<div class="kv"><span>Aguardando envio</span><span class="c-warn">${pend}</span></div>`:''}</div></div>
  ${can.cost()?`<div class="card"><h2>Exportar e importar</h2><div class="row"><button class="btn pri" data-a="expJson">Exportar backup (JSON)</button><button class="btn" data-a="expCsv">Exportar lotes (CSV)</button><label class="btn" for="impFile">Importar backup</label><input type="file" id="impFile" accept=".json,application/json" style="display:none"></div>
   ${U.exp?`<textarea id="expArea" rows="8" readonly style="margin-top:10px;font-family:var(--fm);font-size:11px">${esc(U.exp)}</textarea><p class="note">Download indisponível nesta visualização: selecione e copie o texto.</p>`:''}
   <p class="note">O backup inclui biblioteca, receitas em execução, lotes, ingredientes, neutros, estoque, vitrine, sets e itens apagados. Ao importar, você vê o que muda antes de confirmar; nada mais novo deste aparelho é sobrescrito.${APP_MODE==='app'?' Para trazer os dados do artefato: exporte o backup lá e importe aqui — tudo vai para a nuvem da equipe.':''}</p></div>${importCard()}`:''}
@@ -4982,7 +5000,7 @@ function balanceCard(m){const h=liveBalCard(m);if(!h)return'';const k=h.lastInde
    por uma fila; sem internet o app segue funcionando e a fila é enviada quando a conexão volta.
    Custos e preços viajam separados (coleção "fin"), que só o Maestro recebe. */
 const CFG=(()=>{const c=window.FREDOLIN_CONFIG||{},l=LS.get('fredolin_app_cfg')||{};return{url:String(c.url||l.url||'').trim().replace(/\/+$/,''),key:String(c.key||l.key||'').trim()};})();
-const SESSKEY='fredolin_app_session',OWNKEY='fredolin_app_owner',CURKEY='fredolin_app_cursor',OUTKEY='fredolin_app_outbox',FINKEY='fredolin_app_fin',MEKEY='fredolin_app_me',REJKEY='fredolin_app_rejected';
+const SESSKEY='fredolin_app_session',OWNKEY='fredolin_app_owner',CURKEY='fredolin_app_cursor',OUTKEY='fredolin_app_outbox',FINKEY='fredolin_app_fin',MEKEY='fredolin_app_me',REJKEY='fredolin_app_rejected',VERKEY='fredolin_app_vers';
 /* v18 (auditoria): o que conta como recusa definitiva do servidor. Sessão vencida (401), excesso de pedidos (429),
    falha do servidor (5xx) e falta de rede NÃO são definitivas: a alteração continua na fila e é reenviada.
    As definitivas (permissão, dado inválido, conflito de chave) vão para a quarentena: nada é descartado sem o usuário ver. */
@@ -5020,15 +5038,27 @@ const SB={sess:LS.get(SESSKEY),
 /* ---------- custos separados: só o Maestro grava e recebe ---------- */
 let FIN=LS.get(FINKEY)||{};
 const FIN_FIELD={inv:[r=>r.costKg,(r,v)=>{if(v==null)delete r.costKg;else r.costKg=v;}],ings:[r=>r.x&&r.x.cost,(r,v)=>{r.x=r.x||{};if(v==null)delete r.x.cost;else r.x.cost=v;}],lib:[r=>r.st&&r.st.costs,(r,v)=>{if(!r.st)return;if(v==null)delete r.st.costs;else r.st.costs=v;}]};
+/* v18 · o multiplicador de preço (markup) também é dado financeiro: sai da receita/execução/lote e viaja em fin
+   (id "mk:<coleção>:<id>"), que só o Maestro lê. O banco (migração 001) também retira, se um app antigo mandar. */
+const FIN_MK={lib:['st','proc'],exec:['proc'],lots:['proc']};
+const mkObj=(c,d)=>FIN_MK[c].reduce((a,k)=>a&&typeof a==='object'?a[k]:undefined,d);
 function toRows(c,rec){const ts=rec.updatedAt||Date.now();if(rec.deleted)return[{col:c,id:String(rec.id),data:{},deleted:true,updated_at:ts}];
- const data=plain(rec);delete data.updatedAt;delete data._by;const rows=[];const f=FIN_FIELD[c];
+ const data=plain(rec);delete data.updatedAt;delete data._by;delete data._ver;const rows=[];const f=FIN_FIELD[c];
  if(f){const v=f[0](data);f[1](data,null);if(ROLE==='maestro'&&v!=null&&v!==''&&!(typeof v==='object'&&!Object.keys(v).length))rows.push({col:'fin',id:c+':'+rec.id,data:{v},updated_at:ts});}
+ if(FIN_MK[c]){const o=mkObj(c,data);if(o&&o.markup!=null){const v=o.markup;delete o.markup;if(ROLE==='maestro')rows.push({col:'fin',id:'mk:'+c+':'+rec.id,data:{v},updated_at:ts});}}
  rows.unshift({col:c,id:String(rec.id),data,updated_at:ts});return rows;}
-function withFin(c,rec){const f=FIN_FIELD[c];if(f){const x=FIN[c+':'+rec.id];f[1](rec,x!=null?x:null);}return rec;}
+function withFin(c,rec){const f=FIN_FIELD[c];if(f){const x=FIN[c+':'+rec.id];f[1](rec,x!=null?x:null);}
+ if(FIN_MK[c]){const v=FIN['mk:'+c+':'+rec.id];const o=mkObj(c,rec);if(o&&v!=null)o.markup=v;}return rec;}
 
 const SUPA_BACKEND={running:null,again:false,cursor:LS.get(CURKEY)||'1970-01-01T00:00:00.000Z',outbox:LS.get(OUTKEY)||[],rejected:LS.get(REJKEY)||[],lastOk:0,
- reset(keepQueue){this.cursor='1970-01-01T00:00:00.000Z';FIN={};LS.set(CURKEY,this.cursor);LS.set(FINKEY,{});if(!keepQueue){this.outbox=[];this.rejected=[];LS.set(OUTKEY,[]);LS.set(REJKEY,[]);}},
- push(c,rec){let rj=false;for(const row of toRows(c,rec)){if(row.col==='fin'){FIN[row.id]=row.data.v;LS.set(FINKEY,FIN);}this.outbox=this.outbox.filter(o=>!(o.col===row.col&&o.id===row.id));this.outbox.push(row);
+ /* v18 · versão de cada registro como o servidor a numerou (migração 001). verMode: null = ainda não sabemos se o
+    banco já tem a coluna ver; false = banco antigo (regra do relógio); true = conflitos por versão. */
+ vers:LS.get(VERKEY)||{},verMode:null,
+ reset(keepQueue){this.cursor='1970-01-01T00:00:00.000Z';FIN={};LS.set(CURKEY,this.cursor);LS.set(FINKEY,{});if(!keepQueue){this.outbox=[];this.rejected=[];this.vers={};LS.set(OUTKEY,[]);LS.set(REJKEY,[]);LS.set(VERKEY,{});}},
+ push(c,rec){let rj=false;for(const row of toRows(c,rec)){if(row.col==='fin'){FIN[row.id]=row.data.v;LS.set(FINKEY,FIN);}
+  /* versão de partida: a da primeira edição ainda não enviada (duas edições seguidas partem da mesma versão do servidor) */
+  const prev=this.outbox.find(o=>o.col===row.col&&o.id===row.id),k=row.col+':'+row.id;row.base_ver=prev?prev.base_ver:(this.vers[k]!=null?this.vers[k]:null);
+  this.outbox=this.outbox.filter(o=>o!==prev);this.outbox.push(row);
   /* uma edição nova do mesmo registro substitui a versão que estava na quarentena */
   const n=this.rejected.length;this.rejected=this.rejected.filter(q=>!(q.row.col===row.col&&q.row.id===row.id));if(this.rejected.length!==n)rj=true;}
   LS.set(OUTKEY,this.outbox);if(rj)LS.set(REJKEY,this.rejected);this.kick();},
@@ -5038,7 +5068,7 @@ const SUPA_BACKEND={running:null,again:false,cursor:LS.get(CURKEY)||'1970-01-01T
  quarantine(row,e){this.rejected=this.rejected.filter(q=>!(q.row.col===row.col&&q.row.id===row.id));
   this.rejected.push({row,status:e&&e.status||0,msg:String(e&&(e.raw||e.message)||'erro'),at:Date.now()});LS.set(REJKEY,this.rejected);},
  /* devolve a quarentena para a fila (a não ser que já exista versão mais nova do mesmo registro na fila) */
- retryRejected(){const back=this.rejected.filter(q=>!this.outbox.some(o=>o.col===q.row.col&&o.id===q.row.id)).map(q=>q.row);
+ retryRejected(){const back=this.rejected.filter(q=>!this.outbox.some(o=>o.col===q.row.col&&o.id===q.row.id)).map(q=>q.status===409?Object.assign({},q.row,{force:true}):q.row);
   this.outbox.push(...back);this.rejected=[];LS.set(OUTKEY,this.outbox);LS.set(REJKEY,[]);this.kick();return back.length;},
  dropRejected(){const n=this.rejected.length;this.rejected=[];LS.set(REJKEY,[]);return n;},
  async start(){if(!SB.sess||!ME.ws)return false;const lib=loadLibrary();
@@ -5053,7 +5083,13 @@ const SUPA_BACKEND={running:null,again:false,cursor:LS.get(CURKEY)||'1970-01-01T
    STORE.setStatus('cloud','Sincronizado com a equipe às '+new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'})+'.');}
   catch(e){STORE.setStatus(e.offline?'offline':'error',e.offline?'Sem conexão: trabalhando neste aparelho'+(this.outbox.length?' · '+this.outbox.length+' alteração(ões) aguardando envio':'')+'.':'Falha ao sincronizar: '+e.message);}
   },
- async send(rows){return SB.req('POST','/rest/v1/records?on_conflict=workspace_id,col,id',rows.map(o=>({workspace_id:ME.ws,col:o.col,id:o.id,data:o.data,deleted:!!o.deleted,updated_at:o.updated_at})),{headers:{Prefer:'resolution=merge-duplicates,return=minimal'}});},
+ async send(rows){const vm=this.verMode===true;
+  const r=await SB.req('POST','/rest/v1/records?on_conflict=workspace_id,col,id',rows.map(o=>{const x={workspace_id:ME.ws,col:o.col,id:o.id,data:o.data,deleted:!!o.deleted,updated_at:o.updated_at};
+   /* todas as linhas com as mesmas chaves (exigência do envio em lote) */
+   if(vm){x.base_ver=o.force?null:(o.base_ver!=null?o.base_ver:null);x.force=!!o.force;}return x;}),{headers:{Prefer:'resolution=merge-duplicates,return=minimal'}});
+  /* gravou: a versão do servidor passou a ser a seguinte à de partida (a releitura confirma) */
+  if(vm){rows.forEach(o=>{const k=o.col+':'+o.id;if(o.base_ver!=null&&!o.force)this.vers[k]=o.base_ver+1;else delete this.vers[k];});LS.set(VERKEY,this.vers);}
+  return r;},
  /* envia a fila em lotes. Até a v17.12 um lote recusado era reenviado item a item e TODO item que falhasse
     (inclusive por sessão vencida ou erro 5xx passageiro) saía da fila e era perdido em silêncio, com o aviso de saída
     mostrando zero pendências. Agora: falha passageira → para e mantém a fila (o envio é idempotente: upsert por chave);
@@ -5067,17 +5103,27 @@ const SUPA_BACKEND={running:null,again:false,cursor:LS.get(CURKEY)||'1970-01-01T
   if(quar&&typeof toast==='function')toast(quar+' alteração(ões) recusada(s) pelo servidor ficaram em quarentena (Conta e sincronização).');
   return quar;},
  async pull(){const since=new Date(Date.parse(this.cursor)-120000).toISOString();const changed=new Set();let off=0,max=this.cursor;
-  for(;;){const rows=await SB.get('records?select=col,id,data,deleted,updated_at,updated_by,srv_at&workspace_id=eq.'+ME.ws+'&srv_at=gt.'+encodeURIComponent(since)+'&order=srv_at.asc,col.asc,id.asc&limit=1000&offset='+off);
+  const q=(cols,o)=>SB.get('records?select='+cols+'&workspace_id=eq.'+ME.ws+'&srv_at=gt.'+encodeURIComponent(since)+'&order=srv_at.asc,col.asc,id.asc&limit=1000&offset='+o);
+  for(;;){let rows;
+   if(this.verMode!==false){try{rows=await q('col,id,data,deleted,updated_at,updated_by,srv_at,ver',off);this.verMode=true;}
+    catch(e){if(e.offline||!(e.status===400&&/records\.ver|\bver\b|42703/.test(String(e.raw||e.message))))throw e;this.verMode=false;}}
+   if(!rows)rows=await q('col,id,data,deleted,updated_at,updated_by,srv_at',off);
    rows.forEach(r=>{this.apply(r,changed);if(r.srv_at>max)max=r.srv_at;});if(rows.length<1000)break;off+=1000;}
-  this.cursor=max;LS.set(CURKEY,max);
-  if(changed.has('fin')){LS.set(FINKEY,FIN);['inv','ings','lib'].forEach(c=>{COLS[c].get().forEach(r=>withFin(c,r));changed.add(c);});changed.delete('fin');}
+  this.cursor=max;LS.set(CURKEY,max);LS.set(VERKEY,this.vers);
+  if(changed.has('fin')){LS.set(FINKEY,FIN);['inv','ings','lib','exec','lots'].forEach(c=>{COLS[c].get().forEach(r=>withFin(c,r));changed.add(c);});changed.delete('fin');}
   changed.forEach(c=>{STORE.saveLocal(c);STORE.after(c);});if(changed.size)render();},
  apply(r,changed){
+  const pend=this.outbox.some(o=>o.col===r.col&&o.id===r.id);
+  /* a edição pendente partiu da versão antiga: não atualiza a versão conhecida, para o servidor acusar o conflito */
+  if(r.ver!=null&&!pend)this.vers[r.col+':'+r.id]=+r.ver;
   if(r.col==='fin'){if(r.deleted)delete FIN[r.id];else FIN[r.id]=r.data&&r.data.v;changed.add('fin');return;}
-  const C=COLS[r.col];if(!C)return;const ts=+r.updated_at||0;
+  const C=COLS[r.col];const ts=+r.updated_at||0;
+  if(!C)return;
   if(this.outbox.some(o=>o.col===r.col&&o.id===r.id&&o.updated_at>ts))return;   /* a edição local ainda não enviada é mais nova */
   const arr=C.get();let k=arr.findIndex(x=>String(x.id)===r.id);const cur=k>=0?arr[k]:null;
-  if(cur&&(cur.updatedAt||0)>ts)return;
+  /* depois de um conflito (409) a versão do servidor vale aqui também; a edição deste aparelho está na quarentena */
+  const lost=this.rejected.some(q=>q.status===409&&q.row.col===r.col&&q.row.id===r.id);
+  if(cur&&(cur.updatedAt||0)>ts&&!lost)return;
   if(r.deleted){if(k>=0){arr.splice(k,1);changed.add(r.col);}return;}
   if(cur&&(cur.updatedAt||0)===ts&&cur._by===r.updated_by)return;
   /* receita editada aqui sem ver a versão do outro aparelho: a nossa vira uma cópia de conflito */
@@ -5194,7 +5240,7 @@ function accountCard(pend){return`<div class="card"><div class="row"><div style=
  <p class="note">Ao sair, os dados deste aparelho são apagados (ficam na nuvem da equipe). Use isso em aparelhos compartilhados da produção.</p></div>${storageWarn()}${rejectedCard()}`;}
 function storageWarn(){const k=Object.keys(LS.bad||{});return k.length?`<div class="card"><h2 class="c-crit">Gravação neste aparelho falhou</h2><p class="note">O navegador recusou gravar ${k.length} conjunto(s) de dados (${esc(k.join(', '))}), em geral por falta de espaço. O que já foi enviado à nuvem está seguro; o resto pode se perder ao fechar o app. Exporte um backup agora.</p></div>`:'';}
 /* quarentena: alterações que o servidor recusou de forma definitiva (permissão, dado inválido). Continuam neste aparelho. */
-function rejectedCard(){const R=SUPA_BACKEND.rejected||[];if(!R.length)return'';const why=s=>s===403?'sem permissão':s===400||s===422?'dado recusado':s===409?'conflito de chave':s===413?'registro grande demais':'recusado ('+s+')';
+function rejectedCard(){const R=SUPA_BACKEND.rejected||[];if(!R.length)return'';const why=s=>s===403?'sem permissão':s===400||s===422?'dado recusado':s===409?'editado em outro aparelho':s===413?'registro grande demais':'recusado ('+s+')';
  return`<div class="card"><h2>Alterações recusadas pelo servidor <span class="chip">${R.length}</span></h2>
  <p class="note">Elas continuam guardadas neste aparelho e não foram apagadas. Reenvie (por exemplo, depois de o Maestro ajustar seu perfil) ou exporte para não perder nada.</p>
  ${R.slice(0,8).map(q=>`<div class="kv"><span>${esc(q.row.col)} · ${esc(String(q.row.id).slice(0,40))}</span><span class="c-warn">${why(q.status)}</span></div>`).join('')}${R.length>8?`<p class="muted">… e mais ${R.length-8}.</p>`:''}
@@ -5371,8 +5417,10 @@ const ACT={
  lotDel:()=>{STORE.del('lots',U.lotOpen);U.lotOpen=null;render();toast('Lote excluído');},
  lotBench:()=>{const L=LOTS.find(l=>l.id===U.lotOpen);if(!L)return;S.name=L.name;S.tipo=L.tipo;S.vit=L.vit;S.recipe=JSON.parse(JSON.stringify(L.recipe));S.page='bancada';render();},
  lotConsume:()=>{const L=LOTS.find(l=>l.id===U.lotOpen);if(!L)return;const miss=[];L.trace=L.trace||{};
-  L.recipe.forEach(r=>{const used=INV.filter(e=>e.ingId===r.id&&+e.qty>0).sort((a,b)=>String(a.exp||'9999').localeCompare(String(b.exp||'9999')));const rest=consumeFIFO(INV,r.id,+r.g);if(used[0]&&!L.trace[r.id])L.trace[r.id]=used[0].lot||'';if(rest>.5)miss.push(ING_BY[r.id]?ING_BY[r.id].n:r.id);});
-  INV.filter(e=>e._dirty).forEach(e=>{delete e._dirty;STORE.put('inv',e);});saveLot(L);render();toast(miss.length?'Baixado; faltou estoque de '+miss.length+' item(ns)':'Estoque baixado (FEFO)');},
+  let dup=0;const movs=[];
+  L.recipe.forEach(r=>{const R=consumeFIFO(INV,r.id,+r.g,L.id);if(R.already){dup++;return;}if(R.movs.length&&!L.trace[r.id])L.trace[r.id]=R.firstLot;movs.push(...R.movs);if(R.rest>.5)miss.push(ING_BY[r.id]?ING_BY[r.id].n:r.id);});
+  movs.forEach(mv=>STORE.put('inv',Object.assign(mv,{date:today(),by:ME.email||''})));saveLot(L);render();
+  toast(dup&&!movs.length?'Este lote já foi baixado: nada foi descontado de novo':(miss.length?'Baixado; faltou estoque de '+miss.length+' item(ns)':'Estoque baixado (FEFO)')+(dup?' · '+dup+' item(ns) já baixado(s) antes':''));},
  ingNew:()=>{U.ingEdit={id:null,n:'',c:{w:0},x:{cost:0,al:[]}};render();},
  ingDup:v=>{const i=ING_BY[v];U.ingEdit={id:null,n:i.n+' (meu)',c:JSON.parse(JSON.stringify(i.c)),x:{cost:i.cost||0,lab:i.lab||'',brix:i.brix,ph:i.ph,de:i.de,na:i.na,sat:i.sat,hfB:i.hfB,hfS:i.hfS,hfN:i.hfN,al:[...(i.al||[])],dairy:i.dairy,added:i.added,acid:i.acid,msnf:i.msnf,br:i.br}};render();scrollTopAll();},
  ingEdit:v=>{const c=CUST.find(x=>x.id===v);if(c){U.ingEdit=JSON.parse(JSON.stringify(c));render();scrollTopAll();}},

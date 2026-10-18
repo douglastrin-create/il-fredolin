@@ -26,7 +26,7 @@ export function loadEngine(html = readApp()) {
   const src = segment(html, '01-util.js', '38-mode.js');
   vm.runInContext(src + `\n;globalThis.__E={fpdSE,fpdNorrish,seFromFpd,frozenPct,tempForFrozen,seRequired,analyze,analyzeRaw,heatSim,
     hardenModel,poteModel,fitCalibration,uncertainty,runTests,testRecipes,stTest,CAL,PRESETS,MASTERS,ING,ING_BY,
-    setHardN:n=>{HARD_N=n;}};`, ctx, { filename: 'index.html#engine' });
+    invStock,invEntries,consumeFIFO,setHardN:n=>{HARD_N=n;}};`, ctx, { filename: 'index.html#engine' });
   return ctx.__E;
 }
 /** localStorage em memória; quotaBytes simula a cota do Safari. */

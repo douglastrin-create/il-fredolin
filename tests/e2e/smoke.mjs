@@ -30,11 +30,16 @@ for (const [name, eng] of engines) {
     file.lib.push({ id: 'r2', name: 'Nova', updatedAt: 10, st: { recipe: [{ id: 'leite', g: 1 }, { id: 'nao_existe', g: 5 }] } });
     file.lib[0].updatedAt = 100;
     const plan = planImport(file, cols, {}); U.imp = { name: 'b.json', plan, withDel: false }; const card = importCard(); U.imp = null;
+    /* baixa de estoque pelo botão real, duas vezes */
+    STORE.put('inv', { id: 'E-t', ingId: 'leite', qty: 5000, costKg: 4, lot: 'X', exp: '2030-01-01' });
+    const L = { id: 'L-t', code: 'IF-T', name: 't', tipo: 'crema', vit: -12, recipe: [{ id: 'leite', g: 600 }], proc: {}, meas: {}, trace: {} };
+    LOTS.unshift(L); U.lotOpen = 'L-t'; ACT.lotConsume(); ACT.lotConsume();
+    const stockOk = invStock(INV).leite.q === 4400 && INV.filter(isMov).length === 1 && INV.find(e => e.id === 'E-t').qty === 5000 && L.trace.leite === 'X';
     const backup = plan.cols.lib.keep === 1 && plan.cols.lib.add.length === 1 && card.includes('1 novos') && card.includes('mantidos');
     return { pages: Object.keys(VIEW).length, bad, tests: [t.pass, t.list.length], textura: q.includes('Estabilidade da textura') && !/Vida útil prevista/.test(q) && (q.match(/chip nat/g) || []).length >= 4,
-      quarentena: acc.includes('Alterações recusadas'), aviso: acc.includes('Gravação neste aparelho falhou'), backup };
+      quarentena: acc.includes('Alterações recusadas'), aviso: acc.includes('Gravação neste aparelho falhou'), backup, stockOk };
   });
-  const ok = !errs.length && !r.bad.length && r.tests[0] === r.tests[1] && r.textura && r.quarentena && r.aviso && r.backup;
+  const ok = !errs.length && !r.bad.length && r.tests[0] === r.tests[1] && r.textura && r.quarentena && r.aviso && r.backup && r.stockOk;
   console.log(`${ok ? '✓' : '✗'} ${name}: ${r.pages} páginas, testes ${r.tests.join('/')}, erros ${errs.length}`, ok ? '' : JSON.stringify({ r, errs }));
   if (!ok) failed++; await b.close();
   if (name !== 'chromium') continue;

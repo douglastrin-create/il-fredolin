@@ -24,3 +24,28 @@ jobs:
       - run: npm i --no-save playwright@1.56.0 && npx playwright install --with-deps chromium webkit
       - name: Fumaça em Chromium e WebKit (motor do Safari)
         run: node tests/e2e/smoke.mjs
+  banco:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env: { POSTGRES_PASSWORD: postgres }
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd pg_isready --health-interval 5s --health-timeout 5s --health-retries 12
+    env: { PGHOST: localhost, PGPORT: 5432, PGUSER: postgres, PGPASSWORD: postgres }
+    steps:
+      - uses: actions/checkout@v4
+        with: { fetch-depth: 0 }
+      - uses: actions/setup-node@v4
+        with: { node-version: 22 }
+      - name: Segurança do banco (esquema atual, só registro) e migrado (tem de passar inteiro)
+        run: tests/db/run.sh baseline && tests/db/run.sh migrated
+      - name: Desfazer a migração devolve o esquema e os dados originais
+        run: tests/db/roundtrip.sh
+      - name: PostgREST 12.2.3 (mesma série do Supabase)
+        run: |
+          mkdir -p "$HOME/bin"
+          curl -sL https://github.com/PostgREST/postgrest/releases/download/v12.2.3/postgrest-v12.2.3-linux-static-x64.tar.xz | tar xJ -C "$HOME/bin"
+      - name: Integração real com dois aparelhos (banco antigo e migrado, app atual e v17)
+        run: POSTGREST="$HOME/bin/postgrest" tests/integration/run.sh

@@ -18,7 +18,7 @@ Este documento separa três coisas que a especificação pede para não misturar
 | Funções citadas na especificação | **33 de 33 existem** (fpdNorrish … masterIndex) |
 | Bateria interna `runTests` | **24/24** em Node (1,85 s) e **24/24** no Chromium |
 | Regressão `GOLDEN` | 88 valores de 8 bases. As entradas `mas0…masN` **não são testadas**: as receitas dos mestres ficam só no Supabase e o código público carrega 0 mestres |
-| Esquema do banco (RLS) | `LEIAME.md` cita `supabase/schema.sql`, **mas o arquivo não está no repositório**. As políticas de segurança não puderam ser auditadas |
+| Esquema do banco (RLS) | Ausente do repositório na `main`. Reconstruído do catálogo de produção em 17/10 → `supabase/schema.sql` (ver §5-C) |
 | Armazenamento local | `localStorage` (biblioteca, lotes, ingredientes, neutros, estoque, execução, vitrine, lápides, fila de envio, sessão) |
 
 ## 2. Integridade dos dados — defeitos confirmados e corrigidos
@@ -35,13 +35,8 @@ Este documento separa três coisas que a especificação pede para não misturar
 - **Correção:** `LS.set` devolve `true/false`, registra chaves que falharam em `LS.bad`, mostra aviso (no máximo a cada 30 s) e um cartão permanente em *Conta e sincronização* até a gravação voltar a funcionar.
 - **Teste:** cota simulada de 200 B em `sync.test.mjs`.
 
-### 2.3 Riscos confirmados, ainda **não** corrigidos (próxima rodada)
-| Risco | Onde | Por que não foi corrigido agora |
-|---|---|---|
-| Conflito decidido pelo relógio do aparelho (`updatedAt = Date.now()`) | `STORE.put`, `SUPA_BACKEND.apply` | Exige versão por registro no banco (coluna/trigger), ou seja, mudança de esquema — precisa da sua autorização e do `schema.sql` |
-| Estoque e lotes em "último que grava vence" no registro inteiro | coleção `inv` | Duas baixas simultâneas de estoque em aparelhos diferentes podem se sobrepor. Solução correta: lançamentos (movimentos) somados, não saldo sobrescrito — também mexe no banco |
-| RLS, isolamento por espaço e separação de custos (`fin`) | servidor | Sem o `schema.sql` não há como verificar. A interface esconde custos do Chef/Sous, mas isso só vale se a RLS também bloquear |
-| Revogação offline | `AUTH` | Por natureza não é instantânea sem rede; falta uma política explícita (ex.: validade máxima do acesso offline) |
+### 2.3 Riscos de banco e concorrência — **tratados na rodada 3** (§5-C)
+Conflito decidido pelo relógio do aparelho, estoque em "último que grava vence", RLS sem auditoria e markup visível a Chef/Sous: ver §5-C. Permanece só o limite natural de revogação offline (documentado em `supabase/README.md`).
 
 ## 3. Credibilidade científica dos modelos (Fase 1)
 
@@ -116,15 +111,43 @@ Num iPhone espera-se algo como 2–4× isso: ainda abaixo de 60 ms. **Recomenda�
 
 **Resultados:** Node 21/21 · Chromium 24 páginas, 24/24 internos, offline OK · CI do commit `d4fca4e`: verde nos dois jobs.
 
+## 5-C. Terceira rodada — banco de dados (autorizada em 17/10/2026)
+
+**Auditoria do esquema real** (catálogo enviado pelo Maestro). O núcleo de segurança está bem construído: RLS ligada nas 4 tabelas; leitura e escrita por perfil via `can_read`/`can_write`; custos isolados em `fin`; autor (`updated_by`) e hora (`srv_at`) gravados pelo servidor; sem exclusão física; trava de "sempre um Maestro". Em `tests/db/policies.sql`, o esquema atual passa em **21 de 29** verificações e falha em **8**:
+
+| Falha no esquema atual | Severidade | Correção (migração 001 + app) |
+|---|---|---|
+| Convite reivindicável com e-mail não confirmado (2 testes) | Alta **se** "Confirm email" estiver desligado no Auth; nula se ligado | `claim_invites`/`create_workspace` exigem `email_confirmed_at` |
+| Gravação com relógio atrasado descartada em silêncio (`return null`); sem versão por registro (2) | Média: perda invisível de edições | Coluna `ver`; app envia `base_ver`; conflito = **409** → quarentena; "Tentar de novo" envia `force`. Depois de um conflito, a versão do servidor vale no aparelho (a do usuário fica na quarentena) |
+| Markup visível a Chef (receitas) e Sous (execuções e lotes), inclusive regravado por app antigo (3) | Baixa–média: política de preço | Markup migra para `fin` (`mk:<col>:<id>`); app separa ao gravar; o gatilho do banco retira de qualquer app |
+| Sous podia alterar uma baixa de estoque registrada (1) | Baixa | Movimentos de estoque só alteráveis pelo Maestro |
+
+**Estoque por movimentos (app).** A baixa FEFO alterava o saldo dentro da entrada e regravava o registro inteiro. Com isso, duas baixas concorrentes se sobrescreviam e baixar o mesmo lote duas vezes descontava duas vezes. Agora cada baixa é um movimento com id determinístico (lote + ingrediente + entrada), só de inserção. Saldo = entrada − movimentos. Entradas antigas continuam valendo. Testes: `tests/node/stock.test.mjs` (6) e o botão real no navegador (dois toques → uma baixa).
+
+**Evidência:**
+
+| Verificação | Resultado |
+|---|---|
+| `tests/db/run.sh` (Postgres 16 com emulação do `auth` do Supabase) | Atual: 8 falhas · Migrado: **29/29** |
+| `tests/db/roundtrip.sh` | Migrar → desfazer devolve esquema e dados idênticos; reaplicar é seguro |
+| `tests/integration/run.sh`: código real de sincronização, dois aparelhos, PostgREST 12.2.3 | Banco antigo: app novo detecta o modo e sincroniza · Banco migrado: **6/6**, incluindo **app v17 sincronizando com o banco novo** |
+| Node | 27/27 |
+| Chromium | 24 páginas, 24/24 internos, baixa de estoque real, PWA offline |
+
+**Erro meu corrigido nesta rodada:** na rodada 1 escrevi que o servidor sobrescrevia sem checar data. O gatilho `records_guard` já descartava gravações mais antigas. O problema real era o descarte **silencioso**.
+
+**Não verificado:** a emulação do `auth` não é o GoTrue do Supabase. O ensaio num projeto Supabase de teste (`supabase/README.md`, passo 2) continua necessário antes de produção.
+
 ## 6. Para publicar (requer sua autorização)
-1. Conferir a execução do workflow *Testes* na branch (inclui WebKit).
+1. Conferir a execução do workflow *Testes* na branch (inclui WebKit e o job *banco*).
+1b. Aplicar a migração 001 seguindo `supabase/README.md` (ensaio num projeto de teste primeiro). A ordem entre banco e app é indiferente.
 2. Testar no iPhone pela URL da branch ou após merge: abrir, trabalhar offline, fechar e reabrir.
 3. Atualizar a versão no `sw.js` (`CACHE='il-fredolin-…'`) junto com o merge.
 4. Fazer o merge em `main`.
 
 ## 7. Próximas fases, em ordem de prioridade (seção 53 da especificação)
-1. **Banco:** versionar `supabase/schema.sql` no repositório e auditar RLS (custos `fin`, isolamento por espaço, perfis).
-2. **Conflitos:** versão por registro no servidor; estoque por movimentos em vez de saldo.
+1. ~~Banco: schema.sql e auditoria de RLS~~ — feito (§5-C).
+2. ~~Conflitos e estoque~~ — feito (§5-C); falta aplicar a migração 001 no Supabase.
 3. **Backup automático** periódico (o manual já está completo e a restauração é segura) antes de migrar `localStorage` → IndexedDB.
 4. ~~Rótulos de natureza do resultado~~ — feito para 6 grandezas; estender a textura/quenelle, derretimento e incerteza.
 5. **Medições de baixo custo** que mais reduzem incerteza: temperatura do centro do pote no endurecimento e na espera (calibra h), overrun por copo, temperatura de extração da Maestro.
