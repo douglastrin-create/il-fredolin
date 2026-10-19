@@ -56,18 +56,22 @@ O laço de tempo do `heatSim` foi escrito em C, com a mesma discretização, a m
 | Pote 500 mL, 40 min (Node) | 19 ms | 1,9 ms | 0,4 ms | 3,6·10⁻¹⁵ °C |
 | Endurecimento 12 h (Node) | 118 ms | 7,1 ms | 1,8 ms | 7,1·10⁻¹⁵ °C |
 | Malha fina N = 40 (Node) | 443 ms | 21,5 ms | 5,9 ms | 5,3·10⁻¹⁵ °C |
-| Pote / endurecimento / malha (Chromium) | — | 0,4 / 2,1 / 5,3 ms | 0,4 / 2,0 / 5,9 ms | idem |
+| Pote / endurecimento / malha (Chromium) | — | 0,3 / 1,4 / 3,9 ms | 0,25 / 1,7 / 5,7 ms | idem |
+| Ganho do WebAssembly no **WebKit** (motor do Safari, CI em Linux) | — | — | 6× / 10× / 1,7× | idem |
 
 O achado que decide:
 - **A maior parte da lentidão era do jeito como o JavaScript estava escrito, não da linguagem.** O laço criava um objeto e somava a camada de servir com `reduce` a cada passo.
 - Reescrito com vetores tipados e sem alocação por passo, o `heatSim` ficou 3 a 20× mais rápido, com resultado **idêntico byte a byte** em todos os casos de referência (teste `perf.test.mjs`).
-- Depois disso, o WebAssembly ainda ganha 4× no Node, mas **no navegador o ganho é nulo** (0,7 a 1,3×, dentro do ruído da medição).
+- Depois disso, o WebAssembly ganha ~1,3× contra o mesmo laço isolado no Node e **nada no Chromium** (0,7 a 1,8×, dentro do ruído).
+- **No WebKit, o motor do Safari, o WebAssembly ganha de verdade: 6× no pote, 10× no endurecimento e 1,7× na malha fina** (CI em Linux, relógio com resolução de 1 ms, medição em lote). É o motor do iPhone, então é ali que a decisão se resolve.
+- Mesmo no WebKit, os tempos absolutos já estão muito abaixo do orçamento: o pote inteiro (análise + simulação) leva 1 ms, o ciclo completo 1,5 ms e o Monte Carlo 14 ms. Ganhar 6× em 1 ms não muda nada que você perceba.
+- Dentro do motor completo, o `heatSim` em JavaScript fica ~3× mais lento que o mesmo laço isolado. São muitos pontos de chamada com funções diferentes, e o compilador JIT gera código mais genérico; o WebAssembly não sofre esse efeito.
 
 ## 2. Comparação das três arquiteturas (§11)
 
 | Critério | A · JavaScript modular + Workers | B · Híbrida (JS + Rust/Wasm nos solucionadores) | C · Núcleo compilado |
 |---|---|---|---|
-| Desempenho medido | Dentro do orçamento em todas as operações, com folga de 6× nas diárias | Mesmo resultado no navegador para o núcleo térmico (0,7–1,3×); 4× no Node | Não medido além do núcleo; o resto do motor é lógica de regras, onde Wasm não ganha |
+| Desempenho medido | Dentro do orçamento em todas as operações, com folga de 6× nas diárias | Núcleo térmico: ~1× no Chromium, 1,7–10× no WebKit; ganho absoluto < 1–10 ms | Não medido além do núcleo; o resto do motor é lógica de regras, onde Wasm não ganha |
 | Precisão numérica | Double (IEEE 754) | Mesmo double; diferença de 10⁻¹⁵ °C | Idem |
 | Memória | 11–28 MB | + memória linear do Wasm (pequena) | Idem |
 | Latência de inicialização | 0,5–1,5 s, dominada pelo tamanho do script | + compilar e instanciar o Wasm (3 KB, desprezível) | Núcleo inteiro em Wasm: módulo maior e ponte JS↔Wasm em cada chamada |
@@ -85,7 +89,9 @@ O achado que decide:
 Vale portar um núcleo para WebAssembly quando **todas** estas condições forem verdadeiras:
 1. Uma operação passa do orçamento no aparelho real (medido em "Desempenho deste aparelho"), mesmo já otimizada em JavaScript (vetores tipados, sem alocação no laço, no Web Worker).
 2. O custo está num laço numérico denso (não em regras, objetos ou textos).
-3. Um protótipo mostra ganho de pelo menos 3× **no navegador**, não só no Node.
+3. Um protótipo mostra ganho de pelo menos 3× **no navegador do aparelho**, não só no Node.
+
+Hoje a condição 3 já vale no WebKit para o núcleo térmico, mas a condição 1 não: nenhuma operação chega perto do orçamento. Por isso a decisão continua sendo a Alternativa A. A página "Desempenho deste aparelho" também roda a comparação JavaScript × WebAssembly no próprio aparelho, quando há internet para baixar o protótipo. O número do iPhone real confirma ou derruba esta conclusão.
 
 Candidatos prováveis: condução 2-D/3-D no pote (tampa, parede, prateleira), inferência por MCMC com mais de 10⁵ avaliações e otimização multiobjetivo com o motor completo em cada ponto. O protótipo `tools/wasm-proto/` fica no repositório como ponto de partida e como teste de equivalência numérica. Ele não é carregado pelo app.
 

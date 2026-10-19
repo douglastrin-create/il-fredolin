@@ -649,13 +649,17 @@ O registro completo da decisão está em `docs/ARQUITETURA-COMPUTACAO.md`.
    - pote: 19 → 1,9 ms;
    - endurecimento: 118 → 7 ms;
    - oscilação simulada: 279 → 24 ms.
-2. Depois disso, o WebAssembly ganha 4× no Node, mas **nada no Chromium** (0,7–1,3×). No navegador ele não paga duas linguagens, um compilador no CI e um binário no cache offline.
+2. Depois disso, o WebAssembly ganha ~1× no Chromium, mas **6× a 10× no WebKit, o motor do Safari** (CI). Como os tempos absolutos já estão muito abaixo do orçamento (pote em 1 ms no WebKit), o ganho não muda nada perceptível e não paga duas linguagens, um compilador no CI e um binário no cache offline.
+   - **Correção do que escrevi na primeira versão desta seção:** eu tinha afirmado "nenhum ganho no navegador" só com os números do Chromium. O WebKit, que só roda no CI, mostrou o contrário. A conclusão (Alternativa A) se mantém, mas pelo motivo certo: o tempo absoluto, não a falta de ganho.
+   - A medição no aparelho (botão em Ciência do motor) agora também roda a comparação JavaScript × WebAssembly, quando há internet. O número do iPhone decide se a condição muda.
 3. Com a CPU 6× mais lenta, a operação diária mais pesada leva 8 ms (orçamento de 50 ms) e a mais pesada sob demanda, 0,3 s (orçamento de 2 s).
 4. **Abrir o app custa 100 vezes mais que qualquer cálculo:** 0,5 a 1,5 s, com o arquivo crescendo de 766 KB (v17.12) para 972 KB. É ali que está o próximo ganho perceptível.
 
 **Execução adaptativa (§13):**
 - Executor genérico de tarefas (`ui/tarefas.js`): Web Worker com o mesmo motor, progresso e cancelamento.
 - O **Monte Carlo** passou a rodar fora da tela, com barra de progresso, botão "Cancelar" e a opção de **alta resolução** (2000 sorteios), mostrando o tempo estimado neste aparelho. O resultado no worker é idêntico ao da página (teste ponta a ponta).
+
+**Medição em lote:** o Safari arredonda o relógio a 1 ms. Operações curtas agora rodam em lote até somar ≥ 4 ms, e o tempo é dividido.
 
 **Bug achado pelo teste ponta a ponta:** o gerador aleatório com semente estava fora do trecho que vai para o Web Worker, e o Monte Carlo no worker falhava. Ele foi para `core/util.js`, e um teste agora confere que tudo de que as tarefas do worker precisam está dentro desse trecho.
 
