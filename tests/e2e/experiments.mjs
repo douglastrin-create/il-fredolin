@@ -224,5 +224,26 @@ check(/Matriz não congelada/.test(mic) && /balanço/.test(mic) && /distribuiç�
 check(/Lote RH1/.test(mic) && /pseudoplástico/.test(mic) && /Herschel–Bulkley/.test(mic), 'reologia ajustada das leituras do lote');
 check(await pg.evaluate(() => document.documentElement.scrollWidth <= 390), 'microestrutura sem rolagem horizontal a 390 px');
 await pg.evaluate(() => { LOTS = LOTS.filter(L => L.id !== 'rh1'); });
+// Laboratório visual e fichas dos gráficos (v18.17)
+await pg.evaluate(() => { S = fromPreset(PRESETS.find(p => /Pistacchio/.test(p.name))); S.page = 'laudo'; U.sub = { laudo: 'congelamento' }; renderNow(); });
+await pg.waitForTimeout(150);
+const nMeta = await pg.locator('#main details.sci-meta').count();
+check(nMeta >= 1 && /Depressão do ponto de congelamento/.test(await pg.locator('#main details.sci-meta').first().textContent()), `gráficos do laudo ganham a ficha (fonte, método, modelo): ${nMeta}`);
+await pg.locator('#main details.sci-meta').first().evaluate(d => { d.open = true; });
+await pg.locator('#main details.sci-meta button[data-a="sciOpen"]').first().click();
+check(await pg.evaluate(() => S.page === 'ciencia' && !!U.sciOpen), 'o modelo na ficha abre a ficha do modelo em Ciência do motor');
+await pg.evaluate(() => { S.page = 'visual'; U.sub = { visual: 'camara' }; U.vis = null; renderNow(); });
+await pg.waitForSelector('#vis-camara svg', { timeout: 10000 });
+const camRects = await pg.locator('#vis-camara svg[aria-label^="Mapa de temperatura"] rect').count();
+check(camRects >= 14 * 20, `câmara térmica: mapa calculado célula a célula (${camRects} células)`);
+await pg.locator('#vis-camara select[data-k="vessel"]').selectOption('plastico'); await pg.waitForTimeout(200);
+check(await pg.evaluate(() => U.chamber && U.chamber.r.vessel === 'plastico' && U.chamber.r.hEff < U.chamber.r.h), 'parede de plástico reduz a troca de calor efetiva');
+await pg.evaluate(() => { U.sub = { visual: 'microscopio' }; U.mic = null; renderNow(); });
+await pg.waitForSelector('#micHost canvas', { timeout: 10000 });
+const mt = await pg.locator('#vis-micro').innerText();
+check(/modelada/.test(mt) && /ilustrativa/.test(mt) && /não é estimado/.test(mt) && /Não é imagem de microscópio|Esferas são geometria didática/.test(mt), 'microscópio declara o tipo de representação de cada fase');
+await pg.locator('button[data-a="micView"][data-v="slice"]').click(); await pg.locator('button[data-a="micShow"][data-v="air"]').click(); await pg.locator('button[data-a="micT"][data-v="store"]').click();
+check(await pg.evaluate(() => U.mic.view === 'slice' && !U.mic.show.air && U.mic.T === 'store' && !!document.querySelector('#micHost canvas')), 'corte, isolar fases e trocar a temperatura');
+check(await pg.evaluate(() => document.documentElement.scrollWidth <= 390), 'laboratório visual sem rolagem horizontal a 390 px');
 check(!errs.length, 'sem erros de página ' + errs.join(' | '));
 await b.close(); srv.close(); process.exit(fails.length ? 1 : 0);

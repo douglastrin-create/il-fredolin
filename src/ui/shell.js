@@ -6,7 +6,7 @@
 
 const FAMILIES=[
  ['formular','Formular',[['bancada','Bancada'],['creator','Creator'],['processo','Processo e equipamentos'],['componentes','Componentes']]],
- ['analisar','Analisar',[['laudo','Laudo técnico'],['vitrine','Vitrine'],['defeitos','Diagnóstico de defeitos'],['ciencia','Ciência do motor']]],
+ ['analisar','Analisar',[['laudo','Laudo técnico'],['vitrine','Vitrine'],['defeitos','Diagnóstico de defeitos'],['visual','Laboratório visual'],['ciencia','Ciência do motor']]],
  ['produzir','Produzir',[['linha','Produção ao vivo'],['producao','Ficha de produção'],['lotes','Lotes e qualidade'],['planejamento','Planejamento e estoque']]],
  ['acervo','Acervo',[['biblioteca','Biblioteca'],['ingredientes','Ingredientes'],['sazonal','Frutas da estação']]],
  ['gestao','Gestão',[['rotulo','Rótulo e alérgenos'],['custos','Custos'],...(APP_MODE==='app'?[['equipe','Equipe']]:[]),['dados','Dados e sincronização']]]
@@ -51,7 +51,7 @@ const isMac=()=>{try{return /Mac|iPhone|iPad/.test(navigator.platform||navigator
 const kbd=k=>`<kbd>${isMac()?'⌘':'Ctrl '}${k}</kbd>`;
 
 /* ---------- marca ---------- */
-const VERSION='v18.16';
+const VERSION='v18.17';
 const brandHTML=()=>`<div class="brand"><div class="hex"></div><div><b>Il <span>Fredolin</span></b><small>Gelato Lab ${VERSION}${APP_MODE==='app'&&ME.email?' · '+ROLE_N[ROLE]:''}</small></div></div>`;
 
 /* ---------- termômetro da receita: vitrine, serviço ideal (com faixa de incerteza) e freezer numa régua só ---------- */

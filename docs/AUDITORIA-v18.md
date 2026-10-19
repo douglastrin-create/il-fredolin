@@ -800,6 +800,48 @@ As tolerâncias são escolhas do app e estão declaradas no registro.
 - E2E com 3 verificações novas.
 - Node 112/112. Registro com 25 modelos.
 
+## 5-U. v18.17 — laboratório visual e gráficos com ficha científica (§35–39)
+
+**Página nova: Analisar → Laboratório visual.** Tudo é calculado só quando a página abre: os cálculos do dia a dia não pagam nada.
+
+**Câmara térmica (§37):**
+- Mapa de calor do pote, da borda ao centro (14 camadas) ao longo do tempo, em dois cenários: endurecimento no freezer (com Turbo) e temperagem na cozinha.
+- Corte do pote no instante escolhido, com centro, camada de servir, borda e o ponto ideal da receita.
+- **Cada cor é um valor calculado** pelo mesmo modelo de condução verificado (`heatSim`, agora com a opção de devolver o campo inteiro). A escala de cor tem unidade e valores. Não há animação.
+- Variáveis:
+  - tamanho do pote;
+  - temperatura do freezer ou da cozinha;
+  - **recipiente**: inox, alumínio, plástico ou vidro. A parede soma a resistência L/k à troca de calor; "sem parede" é o modelo que o resto do app usa.
+
+**Microscópio virtual (§36):**
+- Cubo de 400 µm que gira (arrastar), aproxima, corta numa profundidade, troca para a vista de lâmina (corte 2D, como ao microscópio), isola fases e muda de condição (saída da produtora, serviço, freezer) e de tempo (hoje, 7 e 30 dias).
+- **Cada fase declara a representação:**
+  - gelo **modelado**: frações de volume por balanço; diâmetros de uma gama com a média do motor e CV suposto. Vira "a partir de medição" quando um lote da receita tem a média medida ao microscópio;
+  - ar **ilustrativo**: a fração vem do overrun, mas o tamanho de 45 µm é só para desenhar, e a tela diz isso;
+  - gordura **ilustrativa**: fora de escala;
+  - matriz **modelada**.
+- Sombreamento discreto e o aviso "Esferas são geometria didática", para o 3D não sugerir fidelidade de microscópio. Reconstrução a partir de imagens reais fica para quando o app importar fotos de microscópio.
+- Canvas 2D próprio, sem biblioteca: offline, leve, funciona em qualquer navegador.
+- **Three.js, WebGL 2, WebGPU, D3 e Observable Plot** foram avaliados e não adotados: o app é um arquivo único offline, e esses volumes (algumas centenas de esferas, mapas de ~1.700 células) são desenhados em canvas 2D e SVG em ~0,3 s sem dependência.
+
+**Ficha científica em cada gráfico (§39):**
+- Todo gráfico tem uma "Ficha do gráfico" com fonte dos dados, variáveis e unidades, escalas, metodologia, modelo (botão que abre a ficha do modelo em Ciência do motor), condições simuladas e incerteza.
+- Os gráficos novos usam `sciFig`. Os 22 que já existiam ganharam a ficha por um registro (`FIG_META`) aplicado depois de cada desenho, sem reescrever cada gráfico.
+- Quando o gráfico é desenho de dados registrados ou é ilustrativo (roda aromática, história térmica, linha do tempo), a ficha diz isso ("sem modelo", "ilustrativa", "não estimada").
+- **Teste novo:** gráfico científico sem ficha falha o CI. Uma ficha que aponte para um modelo inexistente também.
+
+**Testes:**
+- `figures.test.mjs` (2): cobertura das fichas e campos/modelos válidos.
+- Câmara térmica (em `cycle.test.mjs`):
+  - centro igual à primeira camada;
+  - borda mais fria no endurecimento e mais quente na temperagem;
+  - parede de plástico reduz a troca efetiva;
+  - concorda com o endurecimento do app (malhas diferentes, < 0,6 °C).
+- E2E com 7 verificações novas: ficha no laudo, ficha abrindo o modelo, mapa célula a célula, parede, representação declarada, corte / isolar / temperatura, 390 px.
+- Node 115/115; fumaça com 26 páginas.
+
+**O que não foi feito no §35:** uma reformulação visual completa do app. A linguagem atual (escura, mono para números, selos de natureza) foi mantida, e os instrumentos novos seguem o mesmo padrão sóbrio. Redesenhar todas as telas é um trabalho grande, que deve ser decidido com você, não feito por iniciativa minha.
+
 ## 6. Para publicar (requer sua autorização)
 1. Conferir a execução do workflow *Testes* na branch (inclui WebKit e o job *banco*).
 1b. Aplicar a migração 001 seguindo `supabase/README.md` (ensaio num projeto de teste primeiro). A ordem entre banco e app é indiferente.

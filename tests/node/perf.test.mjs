@@ -19,7 +19,7 @@ test('heatSim otimizado dá exatamente o mesmo resultado da versão anterior (po
       { ml: 1000, N: 8, T0: -18, Tamb: t => -18 + Math.sin(t / 900), h: 14, tMax: 10800, step: 225, dtMax: 4.5 }];
     for (const o of cases) {
       const a = E.heatSim(m, o), b = heatSimRef(m, o);
-      assert.equal(JSON.stringify(a), JSON.stringify(b), n + ' ' + o.ml + ' mL');
+      assert.equal(JSON.stringify({ r: a.r, massG: a.massG, curve: a.curve }), JSON.stringify(b), n + " " + o.ml + " mL");
     }
     /* parada pelo watch: mesmo instante e mesmo estado */
     let ta = null, tb = null; const w = r => s => { if (s.scoop >= -12) { r(s.t); return true; } return false; };

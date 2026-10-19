@@ -8,7 +8,7 @@ APPEV.on('session',d=>{d=d||{};if(d.reset)S=fromPreset(PRESETS[0]);if(d.logout){
 const VIEW={execucao:pgExecucao,equipe:pgEquipe,bancada:pgBancada,creator:pgCreator,laudo:pgLaudo,congelamento:pgCongel,quimica:pgQuimica,vitrine:pgVitrine,
  lotes:pgLotesQual,planejamento:pgPlanEst,estoque:pgEstoque,processo:pgProcesso,brix:pgBrix,defeitos:pgDefeitos,producao:pgProducao,
  ingredientes:pgIngredientes,rotulo:pgRotulo,custos:pgCustos,biblioteca:pgBiblioteca,dados:pgDados,
- componentes:pgComponentes,ciencia:pgCiencia,linha:pgProducaoViva,degustacao:pgDegustacao,sazonal:pgSazonal};
+ componentes:pgComponentes,ciencia:pgCiencia,visual:pgVisual,linha:pgProducaoViva,degustacao:pgDegustacao,sazonal:pgSazonal};
 
 
 /* ---------- v17.7 · páginas-eixo: cada tarefa num lugar só ---------- */
@@ -40,7 +40,7 @@ function renderNow(){
  const gh=document.getElementById('gsimHost'),nh=document.getElementById('nsimHost');
  if(gh){if(!GSIM)GSIM=new GelSim();GSIM.mount(gh);GSIM.set(U.gp);}
  if(nh&&U.np){if(!NSIM)NSIM=new NeuSim();NSIM.mount(nh);NSIM.set(U.np);}
- setsAfterRender();const js=JSON.stringify(S);if(js!==renderNow.saved){renderNow.saved=js;LS.setRaw(KEY,js);}
+ setsAfterRender();visualAfterRender();figAfterRender();const js=JSON.stringify(S);if(js!==renderNow.saved){renderNow.saved=js;LS.setRaw(KEY,js);}
 }
 let _rq=false;
 function render(){if(typeof requestAnimationFrame!=='function'){renderNow();return;}if(_rq)return;_rq=true;requestAnimationFrame(()=>{_rq=false;renderNow();});}
@@ -195,6 +195,7 @@ const ACT={
  ...TEAM_ACT,
  ...V13_ACT,
  ...SENS_ACT,
+ ...VIS_ACT,
  ...AT_ACT,
  ...MAT_ACT,
  ...FLOW_ACT,
@@ -276,6 +277,7 @@ const CHG={
  ...TEAM_CHG,
  ...V13_CHG,
  ...SENS_CHG,
+ ...VIS_CHG,
  ...MAT_CHG
 };
 /* importar = ler, planejar e mostrar o plano; nada é gravado antes de "Restaurar" */
@@ -298,7 +300,7 @@ function importCard(){const I=U.imp;if(!I)return'';const P=I.plan,t=P.total;
 /* toda ação passa pela checagem do perfil (o servidor também recusa o que o perfil não pode) */
 const denied=()=>toast('Seu perfil não tem acesso a esta função.');
 /* ações que não mexem na receita não entram no desfazer */
-const NO_UNDO=new Set(['uncMCStop','benchRun','benchStop','benchCopy','twinBOn','twinBOff','uncMC','snapNow','snapRestore','sciOpen','offDiag','offRepair','doeGen','doeCancel','doeLots','impNo','impDel','rejDrop','rejDropNo','rejExport','appReload','go','sub','defMode','defSym','defClr','defOpen','defCat','fam','palOpen','palClose','palRun','undo','copy','chk','unchk','libTab','libAuthor','libMore','libTipo','libVitF','simOpen','simClose','cmpToggle','cmpClear','histOpen','lotOpen','crTab','crSub','atGoal','setSw','navTog','toTop','flowOpen','flowView','flowNotify','flowNext','flowBack','flowDisc','flowColor','flowStart','flowLot','procGo','procPlay','atSel','atPick','atCard','atExplore','nxGoal','sazM','del','delNo','meltTimer','panelSet','panelStart','panelNext','panelCancel','panelReveal','panelReset','testRun','syncNow','age','pick']);
+const NO_UNDO=new Set(['micT','micDay','micView','micShow','micZoom','uncMCStop','benchRun','benchStop','benchCopy','twinBOn','twinBOff','uncMC','snapNow','snapRestore','sciOpen','offDiag','offRepair','doeGen','doeCancel','doeLots','impNo','impDel','rejDrop','rejDropNo','rejExport','appReload','go','sub','defMode','defSym','defClr','defOpen','defCat','fam','palOpen','palClose','palRun','undo','copy','chk','unchk','libTab','libAuthor','libMore','libTipo','libVitF','simOpen','simClose','cmpToggle','cmpClear','histOpen','lotOpen','crTab','crSub','atGoal','setSw','navTog','toTop','flowOpen','flowView','flowNotify','flowNext','flowBack','flowDisc','flowColor','flowStart','flowLot','procGo','procPlay','atSel','atPick','atCard','atExplore','nxGoal','sazM','del','delNo','meltTimer','panelSet','panelStart','panelNext','panelCancel','panelReveal','panelReset','testRun','syncNow','age','pick']);
 function runAct(k,v,t){if(NO_UNDO.has(k))return ACT[k](v,t);const before=undoSnap();undoMark();const r=ACT[k](v,t);
  if(r&&typeof r.then==='function')return r;if(undoSnap()===before)undoSettle();else if(UNDO_TOAST.has(k))toastUndo();return r;}
 document.addEventListener('toggle',e=>{const d=e.target;if(d&&d.tagName==='DETAILS'&&d.id){U.dopen=U.dopen||{};U.dopen[d.id]=d.open;}},true);

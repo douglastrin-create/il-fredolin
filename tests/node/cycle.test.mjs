@@ -72,3 +72,17 @@ test('ciclo: modo pote tem temperagem simulada; tempo total soma as etapas; ráp
   assert.equal(E.twinRows(T).length, 11);
   assert.ok(ms < 1500, ms + ' ms');
 });
+
+test('câmara térmica: campo completo coerente com o centro e a borda, parede retarda, temperagem esquenta de fora para dentro', () => {
+  const { m, proc } = mk('Fiordilatte');
+  const A = E.chamberRun(m, { mode: 'hard', ml: 500, proc, min: 180 }), B = E.chamberRun(m, { mode: 'hard', ml: 500, vessel: 'plastico', proc, min: 180 });
+  assert.equal(A.field.length, A.times.length); assert.equal(A.field[0].length, 14);
+  A.field.forEach((f, j) => { assert.ok(Math.abs(f[0] - A.core[j]) < 1e-12, 'centro = primeira camada'); });
+  const last = A.field.length - 1; assert.ok(A.field[last][13] <= A.field[last][0] + 1e-9, 'no endurecimento a borda está mais fria que o centro');
+  assert.ok(B.hEff < B.h && B.core[last] > A.core[last], 'parede de plástico: troca efetiva menor e centro mais quente no mesmo tempo');
+  const T = E.chamberRun(m, { mode: 'temper', ml: 250, proc, min: 30 }); const tl = T.field.length - 1;
+  assert.ok(T.field[tl][13] > T.field[tl][0], 'na temperagem a borda esquenta antes do centro');
+  /* mesmo resultado do modelo usado no resto do app (sem parede) */
+  const H = E.hardenModel(m, proc, 500); const ix = A.times.findIndex(t => t >= 60); const hx = H.curve.find(c => c.t >= A.times[ix]);
+  assert.ok(Math.abs(A.core[ix] - hx.core) < .6, `centro a ~1 h: câmara ${A.core[ix].toFixed(2)} × endurecimento ${hx.core.toFixed(2)} (malhas diferentes)`);
+});

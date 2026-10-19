@@ -35,8 +35,9 @@ function heatSim(m,o){const V=clamp(+o.ml||500,100,5000)/1e6,r=Math.cbrt(V/(2*Ma
   for(let i=0;i<N;i++)Tn[i]+=q[i]*dt/(rho*cap[ji[i]]*vol[i]);t+=dt;
   const rec=t>=next;if(!watch&&!rec)continue;
   W.t=t/60;W.scoop=scoopT();W.core=Tn[0];W.surf=Tn[N-1];if(watch&&watch(W))break;
-  if(rec){curve.push({t:W.t,scoop:W.scoop,core:W.core,surf:W.surf});next+=stp;}}
- return{r,massG:rho*V*1000,curve};}
+  if(rec){const c={t:W.t,scoop:W.scoop,core:W.core,surf:W.surf};if(o.field)c.f=Array.from(Tn);curve.push(c);next+=stp;}}
+ if(o.field)curve[0].f=new Array(N).fill(o.T0);
+ return{r,massG:rho*V*1000,curve,N,dr};}
 function poteModel(m,prIn){if(m.empty||!(m.wat>0))return null;const pr=Object.assign({},PROC0,prIn||m.pr);
  const key=[pr.poteMl,pr.ambT,pr.storeT,pr.waitMin].join('|');if(m._pote&&m._pote.key===key)return m._pote;
  const Tamb=+pr.ambT||23,T0=Math.min(+pr.storeT,-1);let tReady=T0>=m.serveT?0:null;

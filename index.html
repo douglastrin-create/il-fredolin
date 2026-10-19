@@ -1473,8 +1473,9 @@ function heatSim(m,o){const V=clamp(+o.ml||500,100,5000)/1e6,r=Math.cbrt(V/(2*Ma
   for(let i=0;i<N;i++)Tn[i]+=q[i]*dt/(rho*cap[ji[i]]*vol[i]);t+=dt;
   const rec=t>=next;if(!watch&&!rec)continue;
   W.t=t/60;W.scoop=scoopT();W.core=Tn[0];W.surf=Tn[N-1];if(watch&&watch(W))break;
-  if(rec){curve.push({t:W.t,scoop:W.scoop,core:W.core,surf:W.surf});next+=stp;}}
- return{r,massG:rho*V*1000,curve};}
+  if(rec){const c={t:W.t,scoop:W.scoop,core:W.core,surf:W.surf};if(o.field)c.f=Array.from(Tn);curve.push(c);next+=stp;}}
+ if(o.field)curve[0].f=new Array(N).fill(o.T0);
+ return{r,massG:rho*V*1000,curve,N,dr};}
 function poteModel(m,prIn){if(m.empty||!(m.wat>0))return null;const pr=Object.assign({},PROC0,prIn||m.pr);
  const key=[pr.poteMl,pr.ambT,pr.storeT,pr.waitMin].join('|');if(m._pote&&m._pote.key===key)return m._pote;
  const Tamb=+pr.ambT||23,T0=Math.min(+pr.storeT,-1);let tReady=T0>=m.serveT?0:null;
@@ -1706,6 +1707,25 @@ function storeResponseSim(m,pr,P_h,A){const store=+pr.storeT,P=P_h*3600;const hM
  heatSim(m,{ml:pr.poteMl,N:12,T0:store,Tamb:t=>store+A*Math.sin(2*Math.PI*t/P),h:H_FREEZER*hM,tMax:4*P,step:P/48,dtMax:Math.min(30,P/400),
   watch:s=>{if(s.t*60>=3*P){w.s[0]=Math.min(w.s[0],s.scoop);w.s[1]=Math.max(w.s[1],s.scoop);w.c[0]=Math.min(w.c[0],s.core);w.c[1]=Math.max(w.c[1],s.core);}return false;}});
  return{P:P_h,A,scoop:(w.s[1]-w.s[0])/2,core:(w.c[1]-w.c[0])/2};}
+/* ===================== CÂMARA TÉRMICA (v18.17 · §37) =====================
+   Campo de temperatura dentro do pote (da superfície ao centro) ao longo do tempo, pelo mesmo modelo de condução
+   1-D com calor latente do endurecimento e da temperagem (heatSim, verificado contra o método da entalpia e por
+   convergência de malha). Nada é interpolado à mão: cada cor do mapa é um valor calculado.
+   Cenários:
+     endurecimento — sai da produtora (drawT) para o freezer (Turbo nos primeiros minutos, depois storeT);
+     temperagem    — sai do freezer (storeT) para a cozinha (ambT).
+   Recipiente: a parede soma a resistência L/k à troca com o ar (1/h_ef = 1/h + L/k), com as paredes da tabela do
+   resfriamento (Incropera, apêndice A). "Sem parede" é o modelo que o resto do app usa. */
+const CHAMBER_N=14;
+function chamberRun(m,sc){if(!m||m.empty||!(m.wat>0))return null;const pr=Object.assign({},PROC0,sc.proc||m.pr);const ml=+sc.ml||+pr.poteMl;
+ const wall=sc.vessel&&COOL_VESSEL[sc.vessel]?COOL_VESSEL[sc.vessel].L/COOL_VESSEL[sc.vessel].k:0;const hM=CAL.on&&CAL.hMult>0?CAL.hMult:1;
+ let T0,Tamb,h,tMax,lab;
+ if(sc.mode==='temper'){T0=Math.min(+pr.storeT,-1);const Ta=sc.Tamb!=null?+sc.Tamb:+pr.ambT;Tamb=()=>Ta;h=10;tMax=(+sc.min||40)*60;lab='Temperagem: do freezer ('+pr.storeT+' °C) para '+Ta+' °C';}
+ else{T0=Math.min(+pr.drawT,m.fp-.2);const store=sc.Tamb!=null?+sc.Tamb:+pr.storeT,turbo=Math.min(+pr.blastT,store),tb=clamp(+pr.turboMin||0,0,150)*60;Tamb=t=>t<tb?turbo:store;h=H_FREEZER*hM;tMax=(+sc.min||240)*60;lab='Endurecimento: da produtora ('+fT(T0)+' °C) para o freezer ('+store+' °C'+(tb?', Turbo '+turbo+' °C nos primeiros '+Math.round(tb/60)+' min':'')+')';}
+ const hEff=1/(1/h+wall);const step=Math.max(15,tMax/120);
+ const S=heatSim(m,{ml,N:CHAMBER_N,T0,Tamb,h:hEff,tMax,step,dtMax:sc.mode==='temper'?6:30,field:true});
+ const rad=Array.from({length:S.N},(_,i)=>(i+.5)*S.dr*1000);/* mm, centro da célula a partir do centro */
+ return{mode:sc.mode,lab,ml,vessel:sc.vessel||'',h,hEff,R:S.r*1000,rad,times:S.curve.map(c=>c.t),field:S.curve.map(c=>c.f),scoop:S.curve.map(c=>c.scoop),core:S.curve.map(c=>c.core),T0,fp:m.fp,serveT:m.serveT};}
 /* ---------- CALIBRAÇÃO PELA PRODUÇÃO ---------- */
 function calOv(machine){return (CAL.on&&CAL.ov[machine])?CAL.ov[machine]:0;}
 /* ajuste bayesiano simples: média dos resíduos encolhida em direção a zero (prior de 3 lotes) */
@@ -3204,7 +3224,7 @@ let ROLE='maestro';
 let ME={uid:null,email:'',ws:null,wsName:'',role:'maestro'};
 const ROLE_N={maestro:'Maestro',chef:'Chef',sous:'Sous Chef'};
 /* m = Maestro · c = Chef · s = Sous Chef */
-const PAGE_ROLES={ciencia:'mc',bancada:'mc',creator:'mc',laudo:'mc',congelamento:'mc',quimica:'mc',vitrine:'mc',
+const PAGE_ROLES={ciencia:'mc',visual:'mc',bancada:'mc',creator:'mc',laudo:'mc',congelamento:'mc',quimica:'mc',vitrine:'mc',
  linha:'mcs',execucao:'mcs',lotes:'mcs',planejamento:'mc',estoque:'mc',processo:'mc',brix:'mc',defeitos:'mcs',producao:'mcs',
  ingredientes:'mc',rotulo:'mcs',custos:'m',biblioteca:'mc',equipe:'m',dados:'mcs',
  componentes:'mc',degustacao:'mcs',sazonal:'mc'};
@@ -3376,6 +3396,61 @@ function radar(series,size=230){const ax=[['doce','Doçura'],['cremoso','Cremosi
 
 /* cabeçalho e navegação: ver 45-shell.js */
 
+/* ===================== FIGURA CIENTÍFICA (v18.17 · §38, §39) =====================
+   Todo gráfico novo passa por sciFig: o desenho e, logo abaixo, a "ficha do gráfico" com fonte dos dados,
+   variáveis e unidades, escalas, método, modelo, condições simuladas e incerteza. Campo sem informação aparece como
+   "não se aplica" ou "não estimada", nunca some (§39: não esconder limitações). */
+const SCI_META_F=[['src','Fonte dos dados'],['vars','Variáveis e unidades'],['scale','Escalas'],['method','Metodologia'],['model','Modelo'],['cond','Condições simuladas'],['unc','Incerteza']];
+function sciFig(svg,meta,id){meta=meta||{};const open=U.figOpen===id;
+ return`<figure class="sci-fig" style="margin:0"${id?` id="fig-${esc(id)}"`:''}>${svg}<details${open?' open':''} style="margin-top:4px"><summary class="muted" style="cursor:pointer;font-size:11.5px">Ficha do gráfico</summary>
+  <dl style="display:grid;grid-template-columns:minmax(110px,max-content) 1fr;gap:2px 10px;margin:6px 0 0;font-size:11.5px">${SCI_META_F.map(([k,n])=>`<dt class="muted">${n}</dt><dd style="margin:0">${meta[k]!=null&&meta[k]!==''?meta[k]:'<span class="muted">não se aplica</span>'}</dd>`).join('')}</dl></details></figure>`;}
+/* escala de cor sequencial para temperatura (frio → quente), interpolada entre paradas fixas; contraste nos dois temas */
+const TSCALE=[[0,[49,54,149]],[.25,[69,117,180]],[.5,[171,217,233]],[.75,[253,174,97]],[1,[215,48,39]]];
+function tColor(v,lo,hi){const x=clamp((v-lo)/((hi-lo)||1),0,1);let i=0;while(i<TSCALE.length-2&&x>TSCALE[i+1][0])i++;const[a,ca]=TSCALE[i],[b,cb]=TSCALE[i+1];const f=(x-a)/((b-a)||1);
+ return`rgb(${ca.map((c,j)=>Math.round(c+(cb[j]-c)*f)).join(',')})`;}
+function tLegend(lo,hi,W,unit){W=W||260;const n=40;let g='';for(let i=0;i<n;i++)g+=`<rect x="${10+i*(W-20)/n}" y="4" width="${(W-20)/n+.5}" height="10" fill="${tColor(lo+(hi-lo)*i/(n-1),lo,hi)}"/>`;
+ const ticks=5;for(let i=0;i<ticks;i++){const v=lo+(hi-lo)*i/(ticks-1);g+=`<text x="${10+(W-20)*i/(ticks-1)}" y="26" text-anchor="middle" font-size="9" fill="var(--t2)">${fT(Math.round(v*10)/10)}</text>`;}
+ return`<div class="row" style="gap:6px;align-items:center"><svg viewBox="0 0 ${W} 32" style="width:100%;max-width:${W}px;height:auto;display:block" role="img" aria-label="Escala de temperatura">${g}</svg><span class="muted" style="font-size:11px">${unit||'°C'}</span></div>`;}
+/* ---------- fichas dos gráficos que já existiam (§39) ----------
+   Chave = começo do aria-label do gráfico. Depois de cada desenho, figAfterRender() anexa a ficha logo abaixo de cada
+   gráfico registrado (os que já usam sciFig ficam como estão). Gráfico científico sem ficha falha em
+   tests/node/figures.test.mjs. "model" aponta para a ficha do modelo em Ciência do motor. */
+const VIT=()=>`vitrine/serviço a ${fT(+S.vit)} °C; tipo ${esc((PROF[S.tipo]||{}).n||S.tipo)}`;
+const FIG_META={
+ 'Curva de água congelada por temperatura':{src:'Composição da receita (banco de ingredientes)',vars:'água congelada (% da água) × temperatura (°C)',scale:'linear nos dois eixos',method:'Depressão do ponto de congelamento por equivalência de sacarose (Goff–Hartel até 180 g/100 g de água; acima, Norrish + Clausius–Clapeyron) e sais do leite (Leighton); limite pela água não congelável (Cg′)',model:['fpd','frozen-fraction'],cond:VIT,unc:'faixa de incerteza no laudo (linear e Monte Carlo)'},
+ 'Curvas de congelamento comparadas':{src:'Composição de cada variação',vars:'água congelada (%) × temperatura (°C)',scale:'linear',method:'Mesma curva de congelamento do laudo para cada variação',model:['fpd','frozen-fraction'],cond:VIT,unc:'±0,4 °C de erro do modelo mais a composição (ver incerteza no laudo)'},
+ 'Doçura percebida por temperatura':{src:'POD da receita',vars:'doçura percebida (% de sacarose equivalente) × temperatura (°C)',scale:'linear',method:'POD multiplicado por um fator de temperatura (queda de ~2,5% por °C abaixo de −12 °C)',model:['sensory-temperature'],cond:VIT,unc:'coeficiente sem painel próprio; conferível no Painel cego (física × percepção)'},
+ 'Gordura sólida por temperatura':{src:'Curvas típicas de RMN por tipo de gordura (literatura; tabela do app)',vars:'gordura sólida (% da gordura) × temperatura (°C)',scale:'linear',method:'Média das curvas dos tipos de gordura, ponderada pela gordura de cada ingrediente',model:['fat-destabilization'],cond:()=>'composição atual',unc:'curvas típicas, não do seu fornecedor'},
+ 'Aquecimento do pote fora do freezer':{src:'Calculado pelo motor',vars:'temperatura (°C) da camada de servir e do centro × tempo (min)',scale:'linear',method:'Condução 1-D com calor latente (diferenças finitas)',model:['heat-transfer'],cond:()=>`pote de ${S.proc.poteMl} mL, do freezer a ${S.proc.storeT} °C para a cozinha a ${S.proc.ambT} °C; troca de calor 10 W/m²K`,unc:'h da cozinha estimado, não calibrado'},
+ 'Temperatura em cada etapa do ciclo':{src:'Calculado pelo motor',vars:'temperatura (°C) × tempo em cada etapa',scale:'cada etapa com a sua própria escala de tempo',method:'Newton (resfriamento e maturação), balanço de energia (mantecação), condução 1-D (endurecimento e temperagem)',model:['process-cycle','heat-transfer'],cond:()=>`resfriamento: ${esc((COOL_MODE[S.proc.coolMode]||{}).n||'')}; pote ${S.proc.poteMl} mL`,unc:'etapas tracejadas não são simuladas; fidelidade de cada etapa na lista abaixo do gráfico'},
+ 'Frações de volume por temperatura':{src:'Composição, curva de congelamento e overrun',vars:'fração do volume (%) de gelo, ar, gordura e matriz × temperatura (°C)',scale:'linear; áreas empilhadas somam 100%',method:'Balanço de massa e volume',model:['microstructure-phases'],cond:VIT,unc:'herda a incerteza da curva de congelamento e do overrun'},
+ 'Distribuição hipotética de tamanho dos cristais':{src:'Índice de cristal do motor (heurístico) e forma suposta',vars:'densidade de probabilidade × diâmetro (µm)',scale:'linear',method:'Gama com coeficiente de variação suposto (dois extremos); envelhecimento por d³ = d0³ + K·t',model:['microstructure-phases','ice-crystal-size'],cond:()=>`freezer a ${S.proc.storeT} °C`,unc:'hipotética: não é medição'},
+ 'Curvas de dominância temporal':{src:'Avaliações do painel gravadas nos lotes',vars:'fração de provadores para quem cada sensação domina × tempo padronizado',scale:'0–100%; tempo de 0 (primeiro toque) a 1 (fim)',method:'TDS (Pineau et al., 2009); linhas de acaso e de significância de 5%',model:['sensory-panel'],cond:()=>'sessão do painel',unc:'linha de significância depende do número de provadores'},
+ 'Curvas de maturação':{src:'Calculado pelo motor (página Maturação)',vars:'ganho e prejuízo (0–1) × horas na geladeira',scale:'linear',method:'Newton para a calda, Avrami para a gordura, cinética de hidratação; 240 simulações de Monte Carlo (P10–P90)',model:['hydration-kinetics'],cond:()=>'geladeira e posição informadas na página',unc:'faixa P10–P90 desenhada'},
+ 'Janela de quenelle':{src:'Calculado pelo motor',vars:'temperatura (°C) da janela em que a quenelle se forma',scale:'linear',method:'Fração de gelo em volume + coesão heurística, ajustada pelos lotes',model:['quenelle','ice-volume'],cond:VIT,unc:'coeficientes ajustados por lotes, sem validação independente'},
+ 'Curvas de hidratação dos hidrocoloides':{src:'Fichas dos componentes (com fonte) e temperatura de pasteurização',vars:'fração hidratada (%) × tempo (min)',scale:'linear',method:'Cinética de primeira ordem por temperatura',model:['hydration-kinetics'],cond:()=>`pasteurização a ${S.proc.pastT} °C`,unc:'constantes com fonte quando registradas; demais são estimativa'},
+ 'Mapa de equilíbrio: água congelada × sólidos':{src:'Calculado pelo motor para cada variação',vars:'água congelada na vitrine (%) × sólidos totais (%)',scale:'linear',method:'Análise completa de cada variação',model:['composition','frozen-fraction'],cond:VIT,unc:'ver faixa de incerteza no laudo'},
+ 'Efeito da variação do ingrediente':{src:'Calculado pelo motor',vars:'variação das grandezas do laudo por variação de gramas',scale:'linear',method:'Diferenças finitas: a receita é recalculada com o ingrediente variado',model:['composition'],cond:VIT,unc:'efeito local, em torno da receita atual'},
+ 'Overrun previsto contra medido':{src:'Lotes medidos (copo de mistura e copo de gelato) e previsão do motor',vars:'overrun previsto × medido (%)',scale:'linear; diagonal = acerto',method:'Comparação direta; a calibração usa média posterior normal–normal',model:['overrun','calibration'],cond:()=>'lotes registrados',unc:'validação deixa-um-fora em Ciência do motor'},
+ 'Temperatura ideal de serviço por sabor':{src:'Composição de cada sabor da vitrine',vars:'temperatura de serviço ideal (°C) por sabor',scale:'linear',method:'Curva de congelamento: temperatura em que a fração congelada atinge a faixa do tipo',model:['fpd','frozen-fraction'],cond:()=>'vitrine configurada',unc:'±0,4 °C de erro do modelo, mais composição'},
+ 'História térmica do processo':{src:'Processo informado (temperaturas e tempos que você registrou)',vars:'temperatura (°C) × etapa',scale:'esquemático: tempos não proporcionais',method:'Desenho dos valores informados; não é simulação',model:null,cond:()=>'processo atual',unc:'não estimada'},
+ 'Índices do motor ligados à percepção':{src:'Índices calculados pelo motor',vars:'índices 0–100 (doçura, firmeza, cremosidade, derretimento, aroma, acidez, salgado)',scale:'0–100, sem unidade física',method:'Índices heurísticos do motor',model:['sensory-temperature','quenelle','melt'],cond:VIT,unc:'não é avaliação sensorial: confirmar no Painel cego'},
+ 'Mapa das variações':{src:'Variações geradas pelo explorador do Ateliê',vars:'gordura (%) × sólidos (%); cor = índice da receita; tamanho = ousadia',scale:'linear',method:'Análise completa de cada variação; índice da receita (pontuação do app)',model:['composition'],cond:VIT,unc:'o índice da receita é uma pontuação do app, não uma medida'},
+ 'Roda aromática da receita':{src:'Ingredientes da receita e famílias aromáticas atribuídas pelo app',vars:'participação de cada família aromática',scale:'proporcional',method:'Classificação dos ingredientes por família aromática',model:null,cond:()=>'receita atual',unc:'ilustrativa: não mede compostos voláteis'},
+ 'Linha do tempo da produção':{src:'Eventos registrados na Produção ao vivo',vars:'etapas × horário',scale:'tempo real',method:'Registro dos toques de início e fim de cada etapa',model:null,cond:()=>'lote em produção',unc:'precisão do registro manual'},
+ 'Perfil sensorial':{src:'Ficha sensorial preenchida no lote (1–5)',vars:'notas de 1 a 5 por atributo',scale:'1–5',method:'Avaliação de uma pessoa; para comparar versões use o Painel cego',model:null,cond:()=>'lote',unc:'uma avaliação só: sem incerteza estimável'}};
+const FIG_SKIP=['Índice ','Maturação: ','Escala de temperatura','Corte do pote','Mapa de temperatura do pote'];
+function figMetaHTML(meta){const r={};for(const k in meta){const v=meta[k];r[k]=typeof v==='function'?v():v;}
+ if(Array.isArray(r.model))r.model=r.model.map(id=>{const M=MODEL_REGISTRY&&MODEL_REGISTRY.models.find(x=>x.id===id);return M?`<button class="btn ghost sm" style="padding:1px 6px" data-a="sciOpen" data-v="${esc(id)}">${esc(M.name)}</button>`:esc(id);}).join(' ');
+ else if(r.model==null)r.model='<span class="muted">sem modelo: dados registrados ou desenho</span>';
+ return`<details class="sci-meta" style="margin-top:4px"><summary class="muted" style="cursor:pointer;font-size:11.5px">Ficha do gráfico</summary>
+  <dl style="display:grid;grid-template-columns:minmax(110px,max-content) 1fr;gap:2px 10px;margin:6px 0 0;font-size:11.5px">${SCI_META_F.map(([k,n])=>`<dt class="muted">${n}</dt><dd style="margin:0">${r[k]!=null&&r[k]!==''?r[k]:'<span class="muted">não se aplica</span>'}</dd>`).join('')}</dl></details>`;}
+function figMetaFor(label){const k=Object.keys(FIG_META).find(x=>label.startsWith(x));return k?FIG_META[k]:null;}
+function figAfterRender(){if(typeof document==='undefined'||!document.querySelectorAll)return;
+ document.querySelectorAll('#main svg[role="img"]').forEach(svg=>{if(svg.closest('figure.sci-fig'))return;const lab=svg.getAttribute('aria-label')||'';const meta=figMetaFor(lab);if(!meta)return;
+  let host=svg;const wrap=svg.parentElement;if(wrap&&wrap.children.length===1&&/overflow/.test(wrap.getAttribute('style')||''))host=wrap;
+  const nx=host.nextElementSibling;if(nx&&nx.classList&&nx.classList.contains('sci-meta'))return;
+  try{host.insertAdjacentHTML('afterend',figMetaHTML(meta));}catch(e){}});}
 /* ==== 45-shell.js ==== */
 /* ===================== IL FREDOLIN · ESTRUTURA DO APLICATIVO =====================
    Navegação por tarefa (Formular, Analisar, Produzir, Acervo, Gestão) que se adapta à tela:
@@ -3384,7 +3459,7 @@ function radar(series,size=230){const ax=[['doce','Doçura'],['cremoso','Cremosi
 
 const FAMILIES=[
  ['formular','Formular',[['bancada','Bancada'],['creator','Creator'],['processo','Processo e equipamentos'],['componentes','Componentes']]],
- ['analisar','Analisar',[['laudo','Laudo técnico'],['vitrine','Vitrine'],['defeitos','Diagnóstico de defeitos'],['ciencia','Ciência do motor']]],
+ ['analisar','Analisar',[['laudo','Laudo técnico'],['vitrine','Vitrine'],['defeitos','Diagnóstico de defeitos'],['visual','Laboratório visual'],['ciencia','Ciência do motor']]],
  ['produzir','Produzir',[['linha','Produção ao vivo'],['producao','Ficha de produção'],['lotes','Lotes e qualidade'],['planejamento','Planejamento e estoque']]],
  ['acervo','Acervo',[['biblioteca','Biblioteca'],['ingredientes','Ingredientes'],['sazonal','Frutas da estação']]],
  ['gestao','Gestão',[['rotulo','Rótulo e alérgenos'],['custos','Custos'],...(APP_MODE==='app'?[['equipe','Equipe']]:[]),['dados','Dados e sincronização']]]
@@ -3429,7 +3504,7 @@ const isMac=()=>{try{return /Mac|iPhone|iPad/.test(navigator.platform||navigator
 const kbd=k=>`<kbd>${isMac()?'⌘':'Ctrl '}${k}</kbd>`;
 
 /* ---------- marca ---------- */
-const VERSION='v18.16';
+const VERSION='v18.17';
 const brandHTML=()=>`<div class="brand"><div class="hex"></div><div><b>Il <span>Fredolin</span></b><small>Gelato Lab ${VERSION}${APP_MODE==='app'&&ME.email?' · '+ROLE_N[ROLE]:''}</small></div></div>`;
 
 /* ---------- termômetro da receita: vitrine, serviço ideal (com faixa de incerteza) e freezer numa régua só ---------- */
@@ -6148,6 +6223,111 @@ function microCard(m){const pr=m.pr||PROC0;const Tv=+m.vit,Ts=+pr.storeT;const A
    :`<p class="note" style="margin:8px 0 0">Nenhum lote desta receita tem leituras de viscosímetro. Registre no lote, em "Viscosidade da calda", pares taxa:viscosidade (ex.: 10:850; 50:420; 100:300) e a temperatura da leitura. Com duas leituras o app ajusta a lei de potência; com quatro, Herschel–Bulkley (tensão de escoamento).</p>`}
   <p class="note" style="margin:8px 0 0">O motor não prevê comportamento não newtoniano nem tensão de escoamento: eles dependem de hidrocoloides e proteínas de um jeito que exige medição. Viscoelasticidade (reômetro oscilatório) e atrito na boca (tribômetro) estão fora do alcance do app; a cremosidade percebida é conferida no Painel cego (física × percepção). Medições entre 2 e 8 °C entram na validação da viscosidade (Ciência do motor).</p></div>`;
  return fases+cr+fa+rh;}
+/* ===================== LABORATÓRIO VISUAL (v18.17 · §36–39) =====================
+   Câmara térmica: mapa de calor e corte do pote calculados pelo modelo de condução (core/heat-transfer/camara.js).
+   Microscópio: volume de 400 µm de lado montado a partir das frações de volume (balanço) e da distribuição de
+   cristais (hipotética). Cada fase declara o tipo de representação (§36):
+     modelada     — geometria gerada a partir de hipóteses e parâmetros do motor;
+     ilustrativa  — geometria didática, sem tamanho estimado;
+     experimental — só quando houver medição (aqui: média e CV de cristais medidos ao microscópio num lote).
+   Tudo é calculado quando a página abre (sob demanda) e desenhado em SVG ou canvas 2D, sem biblioteca externa:
+   funciona offline e em qualquer navegador; não há animação, só o que o usuário pede. */
+const VIS_SEC=[['camara','Câmara térmica'],['microscopio','Microscópio virtual']];
+const VESSEL_OPTS=[['','Sem parede (modelo do app)'],...Object.entries(COOL_VESSEL).map(([k,v])=>[k,v.n])];
+function visState(){U.vis=U.vis||{};const v=U.vis;v.mode=v.mode||'hard';if(v.ml==null)v.ml=+(S.proc.poteMl||500);if(v.vessel==null)v.vessel='';if(v.ti==null)v.ti=-1;if(v.Tamb==null)v.Tamb='';return v;}
+function chamberCached(m){const v=visState();const key=JSON.stringify([S.tipo,S.vit,S.recipe,S.proc,v.mode,v.ml,v.vessel,v.Tamb,CAL.ver]);if(U.chamber&&U.chamber.key===key)return U.chamber.r;
+ const r=chamberRun(m,{mode:v.mode,ml:v.ml,vessel:v.vessel,Tamb:v.Tamb===''?null:+v.Tamb,proc:S.proc,min:v.mode==='temper'?40:Math.max(120,Math.min(720,Math.ceil(((hardenModel(m,S.proc,v.ml)||{}).tDone||240)*1.15)))});U.chamber={key,r};return r;}
+function heatMap(C){const W=560,H=200,L=40,R=8,T=8,B=24;const nt=C.times.length,nr=C.rad.length;const all=C.field.flat();const lo=Math.floor(Math.min(...all)),hi=Math.ceil(Math.max(...all));
+ const cw=(W-L-R)/nt,ch=(H-T-B)/nr;let g='';
+ for(let j=0;j<nt;j++)for(let i=0;i<nr;i++){/* linha de cima = superfície, de baixo = centro */const y=T+(nr-1-i)*ch;g+=`<rect x="${(L+j*cw).toFixed(1)}" y="${y.toFixed(1)}" width="${(cw+.4).toFixed(1)}" height="${(ch+.4).toFixed(1)}" fill="${tColor(C.field[j][i],lo,hi)}"/>`;}
+ const tm=C.times[nt-1];const tk=tm>180?60:tm>60?20:10;for(let t=0;t<=tm;t+=tk)g+=`<text x="${L+t/tm*(W-L-R)}" y="${H-8}" text-anchor="middle" font-size="9" fill="var(--t3)">${t>=60&&tk>=60?f0(t/60)+' h':f0(t)+' min'}</text>`;
+ g+=`<text x="${L-4}" y="${T+8}" text-anchor="end" font-size="9" fill="var(--t3)">borda</text><text x="${L-4}" y="${H-B}" text-anchor="end" font-size="9" fill="var(--t3)">centro</text>`;
+ const v=visState();if(v.ti>=0&&v.ti<nt){const x=L+(v.ti+.5)*cw;g+=`<line x1="${x}" x2="${x}" y1="${T}" y2="${H-B}" stroke="var(--t1)" stroke-width="1.5"/>`;}
+ return{svg:`<div style="overflow-x:auto"><svg viewBox="0 0 ${W} ${H}" style="width:100%;min-width:340px;height:auto;display:block" role="img" aria-label="Mapa de temperatura do pote: profundidade × tempo">${g}</svg></div>${tLegend(lo,hi,300)}`,lo,hi};}
+function crossSection(C,j,lo,hi){const S0=220,c=S0/2,R0=100;const f=C.field[j];let g='';
+ for(let i=f.length-1;i>=0;i--){const r=R0*(i+1)/f.length;g+=`<circle cx="${c}" cy="${c}" r="${r.toFixed(1)}" fill="${tColor(f[i],lo,hi)}"/>`;}
+ const rs=R0*(1-.015*1000/C.R);g+=`<circle cx="${c}" cy="${c}" r="${Math.max(0,rs).toFixed(1)}" fill="none" stroke="var(--t1)" stroke-dasharray="3 3"/>`;
+ return`<svg viewBox="0 0 ${S0} ${S0}" style="width:100%;max-width:240px;height:auto;display:block;margin:auto" role="img" aria-label="Corte do pote no instante escolhido">${g}</svg>`;}
+function pgVisual(m){const t=subOf('visual','camara');
+ if(m.empty)return`<div class="pg"><h1>Laboratório visual</h1><p class="lead">Monte uma receita na Bancada primeiro.</p></div>`;
+ const body=t==='microscopio'?microscopePage(m):chamberPage(m);
+ return`<div class="pg"><div class="pghead"><div><h1>Laboratório visual</h1><p class="lead">${t==='microscopio'?'A microestrutura que o motor supõe, com o tipo de representação de cada fase declarado.':'Temperatura dentro do pote, da borda ao centro, calculada pelo modelo de condução.'}</p></div>${segHTML('visual',VIS_SEC,t,'Instrumentos')}</div>${body}</div>`;}
+function chamberPage(m){const v=visState();const C=chamberCached(m);if(!C)return'';const H=heatMap(C);const nt=C.times.length;const j=v.ti>=0&&v.ti<nt?v.ti:nt-1;
+ const sel=(k,opts,val)=>`<select data-c="visSet" data-k="${k}">${opts.map(([a,b])=>`<option value="${a}"${String(a)===String(val)?' selected':''}>${esc(b)}</option>`).join('')}</select>`;
+ const meta={src:'Calculado agora pelo motor do app (não é medição)',vars:'temperatura (°C) por profundidade no pote (borda → centro) e tempo (min)',scale:`cor linear de ${fT(H.lo)} a ${fT(H.hi)} °C; ${C.rad.length} camadas de ${f1(C.R/C.rad.length)} mm`,
+  method:'Diferenças finitas explícitas, passo adaptativo pelo limite de estabilidade; capacidade aparente com o calor latente da curva de congelamento',
+  model:'Transferência de calor no pote (registro: heat-transfer) — esfera de mesmo raio do pote cilíndrico com altura = diâmetro',
+  cond:`${esc(C.lab)}; pote de ${f0(C.ml)} mL${C.vessel?', parede '+esc(COOL_VESSEL[C.vessel].n):''}; troca de calor ${f1(C.h)} W/m²K${C.vessel?' (efetiva '+f1(C.hEff)+')':''}`,
+  unc:'h do freezer estimado (calibrável pelo núcleo medido); sem tampa, sem contato com a prateleira'};
+ return`<div class="card" id="vis-camara"><div class="row" style="gap:10px;flex-wrap:wrap">
+   <label class="field" style="min-width:160px"><span class="lbl">Cenário</span>${sel('mode',[['hard','Endurecimento no freezer'],['temper','Temperagem na cozinha']],v.mode)}</label>
+   <label class="field" style="min-width:110px"><span class="lbl">Pote (mL)</span><input type="number" data-c="visSet" data-k="ml" value="${v.ml}" step="50" min="100" max="5000"></label>
+   <label class="field" style="min-width:170px"><span class="lbl">Recipiente</span>${sel('vessel',VESSEL_OPTS,v.vessel)}</label>
+   <label class="field" style="min-width:110px"><span class="lbl">${v.mode==='temper'?'Cozinha':'Freezer'} (°C)</span><input type="number" data-c="visSet" data-k="Tamb" value="${v.Tamb}" placeholder="${v.mode==='temper'?S.proc.ambT:S.proc.storeT}" step="1"></label></div>
+  ${sciFig(H.svg,meta,'camara')}
+  <div class="g2" style="margin-top:12px;gap:16px;align-items:center"><div>${crossSection(C,j,H.lo,H.hi)}<p class="muted" style="text-align:center;font-size:11.5px;margin:4px 0 0">Corte em ${f0(C.times[j])} min · tracejado: camada de servir (1,5 cm)</p></div>
+   <div><label class="field"><span class="lbl">Instante</span><input type="range" data-c="visSet" data-k="ti" min="0" max="${nt-1}" value="${j}" aria-label="Instante do corte"></label>
+    <div class="kv"><span>Centro</span><span class="mono">${f1(C.core[j])} °C</span></div><div class="kv"><span>Camada de servir</span><span class="mono">${f1(C.scoop[j])} °C</span></div><div class="kv"><span>Borda</span><span class="mono">${f1(C.field[j][C.field[j].length-1])} °C</span></div>
+    <div class="kv"><span>Ponto ideal da receita</span><span class="mono">${f1(C.serveT)} °C</span></div></div></div>
+  <p class="note" style="margin:8px 0 0">Cada cor é um valor calculado, não uma animação. A parede do recipiente soma resistência à troca com o ar; "sem parede" é o que o resto do app usa.</p></div>`;}
+
+/* ---------- microscópio ---------- */
+const MIC_BOX=400;/* µm */
+const MIC_PH={ice:{n:'Gelo',col:'#7dd3fc'},air:{n:'Ar',col:'#e2e8f0'},fat:{n:'Gordura',col:'#facc15'}};
+function micParams(m){const v=U.mic=U.mic||{T:'serve',day:0,yaw:.6,pitch:.35,zoom:1,cut:.5,show:{ice:1,air:1,fat:1},view:'3d'};
+ const T=v.T==='store'?+S.proc.storeT:v.T==='draw'?+S.proc.drawT:+S.vit;const P=phaseAt(m,T);
+ const K=(m.kin&&m.kin.Kstore)||0;let mean=crystalAging(m,[v.day],K)[0].mean,cv=.45,iceRep='modelada',iceSrc='média do índice do motor, forma gama com CV 0,45 suposto';
+ const meas=LOTS.find(L=>L&&L.meas&&+L.meas.iceMean>0&&(L.name===S.name));if(meas&&v.day===0){mean=+meas.meas.iceMean;if(+meas.meas.iceCv>0)cv=+meas.meas.iceCv;iceRep='a partir de medição';iceSrc='média'+(+meas.meas.iceCv>0?' e CV':'')+' medidos no lote '+meas.code+' (posições e formas continuam geradas)';}
+ return{v,T,P,mean,cv,iceRep,iceSrc,key:JSON.stringify([S.tipo,S.recipe,S.proc,v.T,v.day,mean,cv])};}
+function micScene(p){const rnd=mulberry32(11);const nrm=()=>{let u=0;while(!u)u=rnd();return Math.sqrt(-2*Math.log(u))*Math.cos(2*Math.PI*rnd());};const V=MIC_BOX**3,out=[];
+ /* gelo: diâmetros de uma gama (Marsaglia–Tsang para k ≥ 1) até completar a fração de volume */
+ const k=1/(p.cv*p.cv),th=p.mean*p.cv*p.cv;const gam=()=>{const d=k-1/3,c=1/Math.sqrt(9*d);for(;;){let x,v;do{x=nrm();v=1+c*x;}while(v<=0);v=v*v*v;const u=rnd();if(u<1-.0331*x*x*x*x||Math.log(u)<.5*x*x+d*(1-v+Math.log(v)))return d*v*th;}};
+ const fill=(ph,frac,dia,max)=>{let vol=0;const tgt=frac*V;let n=0;while(vol<tgt&&n<max){const d=Math.max(2,dia());vol+=Math.PI/6*d*d*d;out.push({ph,x:rnd()*MIC_BOX,y:rnd()*MIC_BOX,z:rnd()*MIC_BOX,r:d/2});n++;}return n;};
+ const nI=fill('ice',p.P.vol.ice,gam,3000),nA=fill('air',p.P.vol.air,()=>45,600),nF=fill('fat',Math.min(p.P.vol.fat,.02),()=>4,500);
+ return{parts:out,nI,nA,nF};}
+class MicroScope{constructor(){this.cv=document.createElement('canvas');this.cv.style.cssText='width:100%;max-width:640px;height:auto;display:block;margin:0 auto;touch-action:none;border-radius:10px;background:#0b1220';this.cv.width=640;this.cv.height=480;this.cv.setAttribute('role','img');this.cx=this.cv.getContext('2d');
+  let drag=null;this.cv.addEventListener('pointerdown',e=>{drag=[e.clientX,e.clientY];this.cv.setPointerCapture&&this.cv.setPointerCapture(e.pointerId);});
+  this.cv.addEventListener('pointermove',e=>{if(!drag||!U.mic)return;U.mic.yaw+=(e.clientX-drag[0])*.01;U.mic.pitch=clamp(U.mic.pitch+(e.clientY-drag[1])*.01,-1.4,1.4);drag=[e.clientX,e.clientY];this.draw();});
+  this.cv.addEventListener('pointerup',()=>{drag=null;});this.cv.addEventListener('wheel',e=>{if(!U.mic)return;e.preventDefault();U.mic.zoom=clamp(U.mic.zoom*(e.deltaY<0?1.1:1/1.1),.5,4);this.draw();},{passive:false});}
+ mount(h){if(this.cv.parentNode!==h){h.innerHTML='';h.appendChild(this.cv);}}
+ set(scene,v,label){this.scene=scene;this.v=v;this.cv.setAttribute('aria-label',label);this.draw();}
+ draw(){const c=this.cx,W=this.cv.width,H=this.cv.height,v=this.v,S0=this.scene;if(!S0||!v)return;c.clearRect(0,0,W,H);c.fillStyle='#0b1220';c.fillRect(0,0,W,H);
+  const cy=Math.cos(v.yaw),sy=Math.sin(v.yaw),cp=Math.cos(v.pitch),sp=Math.sin(v.pitch),sc=v.zoom*Math.min(W,H)/(MIC_BOX*1.9),h=MIC_BOX/2,cut=v.cut*MIC_BOX;
+  if(v.view==='slice'){/* corte: plano z = cut, seção de cada esfera que o atravessa (como uma lâmina ao microscópio) */
+   const s2=Math.min(W,H)*.92*v.zoom/MIC_BOX;const ox=W/2-h*s2,oy=H/2-h*s2;c.fillStyle='#1e293b';c.fillRect(ox,oy,MIC_BOX*s2,MIC_BOX*s2);
+   S0.parts.forEach(p=>{if(!v.show[p.ph])return;const dz=p.z-cut;if(Math.abs(dz)>=p.r)return;const rr=Math.sqrt(p.r*p.r-dz*dz)*s2;c.beginPath();c.arc(ox+p.x*s2,oy+p.y*s2,rr,0,2*Math.PI);c.fillStyle=MIC_PH[p.ph].col;c.globalAlpha=p.ph==='air'?.85:.9;c.fill();});
+   c.globalAlpha=1;c.strokeStyle='#94a3b8';c.strokeRect(ox,oy,MIC_BOX*s2,MIC_BOX*s2);this.scaleBar(c,ox,oy+MIC_BOX*s2+14,s2);return;}
+  const pr=(x,y,z)=>{x-=h;y-=h;z-=h;const x1=cy*x+sy*z,z1=-sy*x+cy*z;const y1=cp*y-sp*z1,z2=sp*y+cp*z1;const f=900/(900+z2);return[W/2+x1*sc*f,H/2+y1*sc*f,z2,f];};
+  const vis=S0.parts.filter(p=>v.show[p.ph]&&p.z<=cut).map(p=>{const q=pr(p.x,p.y,p.z);return{p,q};}).sort((a,b)=>b.q[2]-a.q[2]);
+  vis.forEach(({p,q})=>{const rr=Math.max(.6,p.r*sc*q[3]);const g=c.createRadialGradient(q[0]-rr*.35,q[1]-rr*.35,rr*.1,q[0],q[1],rr);g.addColorStop(0,MIC_PH[p.ph].col);g.addColorStop(1,'#334155');c.fillStyle=g;c.globalAlpha=p.ph==='air'?.55:.92;c.beginPath();c.arc(q[0],q[1],rr,0,2*Math.PI);c.fill();});
+  c.globalAlpha=1;c.strokeStyle='rgba(148,163,184,.6)';c.lineWidth=1;const E=[[0,0,0],[MIC_BOX,0,0],[MIC_BOX,MIC_BOX,0],[0,MIC_BOX,0],[0,0,MIC_BOX],[MIC_BOX,0,MIC_BOX],[MIC_BOX,MIC_BOX,MIC_BOX],[0,MIC_BOX,MIC_BOX]];
+  [[0,1],[1,2],[2,3],[3,0],[4,5],[5,6],[6,7],[7,4],[0,4],[1,5],[2,6],[3,7]].forEach(([a,b])=>{const A=pr(...E[a]),B=pr(...E[b]);c.beginPath();c.moveTo(A[0],A[1]);c.lineTo(B[0],B[1]);c.stroke();});
+  this.scaleBar(c,20,H-20,sc);}
+ scaleBar(c,x,y,s){const L=100*s;c.strokeStyle='#e2e8f0';c.lineWidth=2;c.beginPath();c.moveTo(x,y);c.lineTo(x+L,y);c.stroke();c.fillStyle='#e2e8f0';c.font='12px system-ui,sans-serif';c.fillText('100 µm',x+L+6,y+4);}}
+let MSCOPE=null;
+function microscopePage(m){const p=micParams(m);const v=p.v;if(!U.micScene||U.micScene.key!==p.key)U.micScene={key:p.key,scene:micScene(p)};const sc=U.micScene.scene;
+ const chip=(a,val,lab,on)=>`<button data-a="${a}" data-v="${val}" aria-pressed="${on}">${lab}</button>`;
+ const rep=[['Gelo',p.iceRep,p.iceSrc,`${sc.nI} cristais, ${f0(p.P.vol.ice*100)}% do volume`],['Ar','ilustrativa','fração de volume pelo overrun (balanço); diâmetro de 45 µm só para desenhar: o tamanho das bolhas não é estimado',`${sc.nA} bolhas, ${f0(p.P.vol.air*100)}% do volume`],
+  ['Gordura','ilustrativa','fora de escala: glóbulos reais têm ~1 µm (invisíveis a esta escala) e aglomerados 3–100 µm; aqui pontos de 4 µm só marcam onde a gordura está',`${sc.nF} pontos (amostra), gordura = ${f0(p.P.vol.fat*100)}% do volume`],
+  ['Matriz não congelada','modelada','o espaço escuro; solutos a '+f0(p.P.conc)+'% e viscosidade ~10^'+f1(p.P.logEtaMat)+' Pa·s (WLF)',`${f0(p.P.vol.mat*100)}% do volume`]];
+ const meta={src:'Gerado pelo app a partir do motor; '+(p.iceRep==='a partir de medição'?'média de cristais medida':'nenhuma imagem real'),vars:'posição e diâmetro (µm) de cristais, bolhas e gordura num cubo de '+MIC_BOX+' µm',scale:'barra de 100 µm; perspectiva no 3D, escala real no corte',
+  method:'Frações de volume por balanço (phaseAt); diâmetros dos cristais sorteados de uma gama (semente fixa); posições aleatórias uniformes, sobreposição permitida',model:'Fases e cristais (registro: microstructure-phases); envelhecimento pelo amadurecimento de Ostwald do motor',
+  cond:`${v.T==='store'?'freezer':v.T==='draw'?'saída da produtora':'serviço'} a ${fT(p.T)} °C; ${v.day?v.day+' dias no freezer':'hoje'}`,unc:'Forma, dispersão e posição dos cristais são hipóteses; bolhas e gordura são ilustrativas. Não é imagem de microscópio.'};
+ return`<div class="card" id="vis-micro"><div class="row" style="gap:8px;flex-wrap:wrap">
+   <div class="chips" role="group" aria-label="Temperatura">${chip('micT','draw','Saída da produtora',v.T==='draw')}${chip('micT','serve','Serviço',v.T==='serve')}${chip('micT','store','Freezer',v.T==='store')}</div>
+   <div class="chips" role="group" aria-label="Tempo">${[0,7,30].map(d=>chip('micDay',d,d?d+' dias':'Hoje',v.day===d)).join('')}</div></div>
+  <div class="row" style="gap:8px;flex-wrap:wrap;margin-top:8px"><div class="chips" role="group" aria-label="Vista">${chip('micView','3d','Volume 3D',v.view==='3d')}${chip('micView','slice','Corte (lâmina)',v.view==='slice')}</div>
+   <div class="chips" role="group" aria-label="Fases">${Object.entries(MIC_PH).map(([k,x])=>chip('micShow',k,x.n,!!v.show[k])).join('')}</div>
+   <span class="sp"></span><button class="btn ghost sm" data-a="micZoom" data-v="-1" aria-label="Afastar">−</button><button class="btn ghost sm" data-a="micZoom" data-v="1" aria-label="Aproximar">+</button></div>
+  <label class="field" style="margin-top:8px"><span class="lbl">${v.view==='slice'?'Profundidade do corte':'Cortar o cubo na profundidade'}: ${f0(v.cut*MIC_BOX)} µm</span><input type="range" data-c="micCut" min="0" max="100" value="${Math.round(v.cut*100)}" aria-label="Profundidade do corte"></label>
+  ${sciFig('<div id="micHost" style="margin-top:8px"></div><p class="muted" style="font-size:11.5px;margin:4px 0 0">Arraste para girar · role ou use + e − para aproximar.</p>',meta,'micro')}
+  <div class="tw" style="margin-top:10px"><table class="tbl"><thead><tr><th>Fase</th><th>Representação</th><th class="r">No cubo</th></tr></thead><tbody>${rep.map(([n,r,s,q])=>`<tr><td>${n}</td><td><span class="chip ${r==='ilustrativa'?'warn':r==='a partir de medição'?'ok':'info'}">${r}</span><div class="muted" style="font-size:11.5px">${esc(s)}</div></td><td class="r mono" style="font-size:12px">${q}</td></tr>`).join('')}</tbody></table></div>
+  <p class="note" style="margin:8px 0 0">Esferas são geometria didática: cristais reais são irregulares e bolhas ficam envoltas por gordura e gelo. O que vale aqui são as proporções e a ordem de grandeza dos tamanhos, não a forma. Reconstrução a partir de imagens reais exigiria fotos de microscópio, que o app ainda não importa.</p></div>`;}
+function visualAfterRender(){const h=document.getElementById('micHost');if(!h||!U.micScene||!U.mic)return;if(!MSCOPE)MSCOPE=new MicroScope();MSCOPE.mount(h);MSCOPE.set(U.micScene.scene,U.mic,'Microscópio virtual: volume modelado de '+MIC_BOX+' µm');}
+const VIS_ACT={micT:v=>{if(U.mic){U.mic.T=v;render();}},micDay:v=>{if(U.mic){U.mic.day=+v;render();}},micView:v=>{if(U.mic){U.mic.view=v;render();}},
+ micShow:v=>{if(U.mic){U.mic.show[v]=U.mic.show[v]?0:1;render();}},micZoom:v=>{if(U.mic){U.mic.zoom=clamp(U.mic.zoom*(+v>0?1.25:.8),.5,4);if(MSCOPE)MSCOPE.draw();}}};
+const VIS_CHG={visSet:t=>{const v=visState();const k=t.dataset.k;if(k==='ti'){v.ti=+t.value;return;}if(k==='ml'){const x=+t.value;if(!(x>=100&&x<=5000))return false;v.ml=x;}else if(k==='Tamb'){v.Tamb=t.value===''?'':+t.value;}else v[k]=t.value;v.ti=-1;},
+ micCut:t=>{if(U.mic){U.mic.cut=clamp(+t.value/100,0,1);}}};
 /* ==== 59-linha.js ==== */
 /* ===================== PRODUÇÃO AO VIVO =====================
    Cada calda em produção é um lote (coleção "lots", já sincronizada com a equipe e com regras de acesso no banco)
@@ -6833,7 +7013,7 @@ APPEV.on('session',d=>{d=d||{};if(d.reset)S=fromPreset(PRESETS[0]);if(d.logout){
 const VIEW={execucao:pgExecucao,equipe:pgEquipe,bancada:pgBancada,creator:pgCreator,laudo:pgLaudo,congelamento:pgCongel,quimica:pgQuimica,vitrine:pgVitrine,
  lotes:pgLotesQual,planejamento:pgPlanEst,estoque:pgEstoque,processo:pgProcesso,brix:pgBrix,defeitos:pgDefeitos,producao:pgProducao,
  ingredientes:pgIngredientes,rotulo:pgRotulo,custos:pgCustos,biblioteca:pgBiblioteca,dados:pgDados,
- componentes:pgComponentes,ciencia:pgCiencia,linha:pgProducaoViva,degustacao:pgDegustacao,sazonal:pgSazonal};
+ componentes:pgComponentes,ciencia:pgCiencia,visual:pgVisual,linha:pgProducaoViva,degustacao:pgDegustacao,sazonal:pgSazonal};
 
 
 /* ---------- v17.7 · páginas-eixo: cada tarefa num lugar só ---------- */
@@ -6865,7 +7045,7 @@ function renderNow(){
  const gh=document.getElementById('gsimHost'),nh=document.getElementById('nsimHost');
  if(gh){if(!GSIM)GSIM=new GelSim();GSIM.mount(gh);GSIM.set(U.gp);}
  if(nh&&U.np){if(!NSIM)NSIM=new NeuSim();NSIM.mount(nh);NSIM.set(U.np);}
- setsAfterRender();const js=JSON.stringify(S);if(js!==renderNow.saved){renderNow.saved=js;LS.setRaw(KEY,js);}
+ setsAfterRender();visualAfterRender();figAfterRender();const js=JSON.stringify(S);if(js!==renderNow.saved){renderNow.saved=js;LS.setRaw(KEY,js);}
 }
 let _rq=false;
 function render(){if(typeof requestAnimationFrame!=='function'){renderNow();return;}if(_rq)return;_rq=true;requestAnimationFrame(()=>{_rq=false;renderNow();});}
@@ -7020,6 +7200,7 @@ const ACT={
  ...TEAM_ACT,
  ...V13_ACT,
  ...SENS_ACT,
+ ...VIS_ACT,
  ...AT_ACT,
  ...MAT_ACT,
  ...FLOW_ACT,
@@ -7101,6 +7282,7 @@ const CHG={
  ...TEAM_CHG,
  ...V13_CHG,
  ...SENS_CHG,
+ ...VIS_CHG,
  ...MAT_CHG
 };
 /* importar = ler, planejar e mostrar o plano; nada é gravado antes de "Restaurar" */
@@ -7123,7 +7305,7 @@ function importCard(){const I=U.imp;if(!I)return'';const P=I.plan,t=P.total;
 /* toda ação passa pela checagem do perfil (o servidor também recusa o que o perfil não pode) */
 const denied=()=>toast('Seu perfil não tem acesso a esta função.');
 /* ações que não mexem na receita não entram no desfazer */
-const NO_UNDO=new Set(['uncMCStop','benchRun','benchStop','benchCopy','twinBOn','twinBOff','uncMC','snapNow','snapRestore','sciOpen','offDiag','offRepair','doeGen','doeCancel','doeLots','impNo','impDel','rejDrop','rejDropNo','rejExport','appReload','go','sub','defMode','defSym','defClr','defOpen','defCat','fam','palOpen','palClose','palRun','undo','copy','chk','unchk','libTab','libAuthor','libMore','libTipo','libVitF','simOpen','simClose','cmpToggle','cmpClear','histOpen','lotOpen','crTab','crSub','atGoal','setSw','navTog','toTop','flowOpen','flowView','flowNotify','flowNext','flowBack','flowDisc','flowColor','flowStart','flowLot','procGo','procPlay','atSel','atPick','atCard','atExplore','nxGoal','sazM','del','delNo','meltTimer','panelSet','panelStart','panelNext','panelCancel','panelReveal','panelReset','testRun','syncNow','age','pick']);
+const NO_UNDO=new Set(['micT','micDay','micView','micShow','micZoom','uncMCStop','benchRun','benchStop','benchCopy','twinBOn','twinBOff','uncMC','snapNow','snapRestore','sciOpen','offDiag','offRepair','doeGen','doeCancel','doeLots','impNo','impDel','rejDrop','rejDropNo','rejExport','appReload','go','sub','defMode','defSym','defClr','defOpen','defCat','fam','palOpen','palClose','palRun','undo','copy','chk','unchk','libTab','libAuthor','libMore','libTipo','libVitF','simOpen','simClose','cmpToggle','cmpClear','histOpen','lotOpen','crTab','crSub','atGoal','setSw','navTog','toTop','flowOpen','flowView','flowNotify','flowNext','flowBack','flowDisc','flowColor','flowStart','flowLot','procGo','procPlay','atSel','atPick','atCard','atExplore','nxGoal','sazM','del','delNo','meltTimer','panelSet','panelStart','panelNext','panelCancel','panelReveal','panelReset','testRun','syncNow','age','pick']);
 function runAct(k,v,t){if(NO_UNDO.has(k))return ACT[k](v,t);const before=undoSnap();undoMark();const r=ACT[k](v,t);
  if(r&&typeof r.then==='function')return r;if(undoSnap()===before)undoSettle();else if(UNDO_TOAST.has(k))toastUndo();return r;}
 document.addEventListener('toggle',e=>{const d=e.target;if(d&&d.tagName==='DETAILS'&&d.id){U.dopen=U.dopen||{};U.dopen[d.id]=d.open;}},true);
