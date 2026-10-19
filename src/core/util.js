@@ -13,4 +13,5 @@ const hi=(v,a,b)=>v<=a?0:v>=b?1:(v-a)/(b-a),lo=(v,a,b)=>v>=a?0:v<=b?1:(a-v)/(a-b
 const gq=x=>x<1?'menos de 1':f0(x);
 /* temperatura em texto corrido: −14,5 / −13 (sem ',0') */
 const fT=v=>f1(v).replace(/,0$/,'');
-
+/* gerador pseudoaleatório com semente (mulberry32): mesma sequência no Node, na página e no Web Worker */
+function mulberry32(a){return()=>{a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;};}

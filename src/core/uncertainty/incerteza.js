@@ -53,7 +53,7 @@ function uncertaintyMC(st,o){o=o||{};const N=Math.max(30,Math.min(2000,o.n||300)
    else{const t=uncClone(i,p.kind,p.cv*z);t.id='~m'+p.id;tmp.push(t);ids[p.id]=t.id;}});
   tmp.forEach(t=>{ING_BY[t.id]=t;});
   let m;try{m=analyzeRaw(Object.assign({},st,{brix:br,recipe:st.recipe.map(r=>ids[r.id]?Object.assign({},r,{id:ids[r.id]}):r)}));}finally{tmp.forEach(t=>{delete ING_BY[t.id];});}
-  const e=.4*nrm();ys.push(m.serveT+e);fz.push(m.fzVit);}
+  const e=.4*nrm();ys.push(m.serveT+e);fz.push(m.fzVit);if(o.onProgress&&s%25===24)o.onProgress((s+1)/N);}
  const srt=[...ys].sort((a,b)=>a-b),q=p=>srt[Math.min(N-1,Math.max(0,Math.round(p*(N-1))))];
  const mean=ys.reduce((a,b)=>a+b,0)/N,sd=Math.sqrt(ys.reduce((a,b)=>a+(b-mean)*(b-mean),0)/(N-1));
  const corr=(a,b)=>{const ma=a.reduce((x,y)=>x+y,0)/a.length,mb=b.reduce((x,y)=>x+y,0)/b.length;let sab=0,sa=0,sb=0;for(let k=0;k<a.length;k++){const da=a[k]-ma,db=b[k]-mb;sab+=da*db;sa+=da*da;sb+=db*db;}return sa&&sb?sab/Math.sqrt(sa*sb):0;};

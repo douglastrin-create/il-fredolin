@@ -21,6 +21,10 @@ O `sw.js` da raiz também é **gerado**: `src/sw/sw.js` é o modelo, e o build p
 
 O script do app fica guardado como texto (`<script type="text/x-fredolin-app">`). Um carregador pequeno (`data/local/kv-boot.js`) abre o IndexedDB, concilia cada chave com o localStorage (vale a cópia mais nova) e só então executa o app, que continua lendo de forma síncrona. Sem IndexedDB, ou se ele não responder em 2,5 s, o app abre só com o localStorage, como antes.
 
+## Computação (v18.14)
+
+Decisão registrada em [`ARQUITETURA-COMPUTACAO.md`](ARQUITETURA-COMPUTACAO.md): motor em JavaScript, tarefas pesadas num Web Worker com progresso e cancelamento (`ui/tarefas.js`). WebAssembly foi medido com um protótipo (`tools/wasm-proto/`) e não entra no app; o documento lista os gatilhos que reabrem a decisão. A bateria de desempenho é a mesma no Node (`node tools/bench.mjs`), nos navegadores (`node tests/e2e/bench.mjs`) e no aparelho (Ciência do motor).
+
 ## Como editar
 
 1. Edite o módulo em `src/`. Não edite o `index.html`.
@@ -141,7 +145,7 @@ Principais campos de `PROC0`:
 
 | Formato | Versão | Onde |
 |---|---|---|
-| App | `VERSION = 'v18.13'` | `ui/shell.js` (mostrado no rodapé) |
+| App | `VERSION = 'v18.14'` | `ui/shell.js` (mostrado no rodapé) |
 | Backup (JSON) | `{app: 'Il Fredolin', schema: 2, …coleções, tomb}` | `data/local/backup.js` |
 | Registro na nuvem | linha `records {workspace_id, col, id, data, deleted, updated_at, ver, base_ver, force}` | `supabase/migrations/*`, `data/sync/supabase.js` |
 | Registro de modelos | `il-fredolin/model-registry@2` (campos do §46; embutido no app pelo build) | `docs/model-registry.json` |

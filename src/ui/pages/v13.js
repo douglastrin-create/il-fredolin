@@ -201,13 +201,18 @@ function uncCard(m){const u=uncertainty(S);if(!u)return'';const pv=recipeProv(S)
  <p class="note" style="margin:6px 0 0">Composição: <b>${f0(pv.known)}%</b> da massa vem de ingredientes com fonte, definição ou cadastro seu${pv.sem.length?'; sem fonte (estimados, ±10% nos sólidos): '+pv.sem.map(s=>esc(ING_BY[s.id]?ING_BY[s.id].n:s.id)).join(', '):''}.</p>${uncMCBlock()}`;}
 /* v18.12 · Monte Carlo sob demanda: percentis sem supor linearidade e quanto cada ingrediente explica */
 function uncMCBlock(){const k=JSON.stringify([S.tipo,S.vit,S.recipe,S.brix,S.proc]);const R=U.uncMC&&U.uncMC.k===k?U.uncMC:null;
- if(!R)return`<div class="row" style="margin-top:8px"><button class="btn sm" data-a="uncMC">Detalhar com Monte Carlo (300 sorteios)</button></div>`;
- if(R.busy)return`<p class="muted" style="margin:8px 0 0">Sorteando 300 composições…</p>`;const r=R.r;if(!r)return'';
- const top=r.contrib.filter(c=>c.r2>=.02).slice(0,4);
+ const btn=`<button class="btn sm" data-a="uncMC" data-v="300">Detalhar com Monte Carlo (300 sorteios)</button>`;
+ if(!R)return`<div class="row" style="margin-top:8px">${btn}</div>`;
+ if(R.busy)return`<div style="margin:8px 0 0"><div class="row" style="gap:8px;align-items:center"><span class="muted" style="font-size:12.5px">Sorteando ${R.n} composições… ${f0((R.p||0)*100)}%</span><span class="sp"></span><button class="btn ghost sm" data-a="uncMCStop">Cancelar</button></div>
+  <div style="height:5px;background:var(--line);border-radius:3px;overflow:hidden;margin-top:4px"><div style="height:100%;width:${f0((R.p||0)*100)}%;background:var(--ice)"></div></div></div>`;
+ if(R.err)return`<div class="row" style="margin-top:8px"><span class="muted">${esc(R.err)}</span>${btn}</div>`;
+ const r=R.r;if(!r)return'';const top=r.contrib.filter(c=>c.r2>=.02).slice(0,4);
+ const est=R.ms&&r.n===300?R.ms*2000/300:null;
  return`<div class="card flat" id="unc-mc" style="margin-top:10px"><div class="kv"><span>Monte Carlo · 5% a 95%</span><span class="mono">${f1(r.p95)} a ${f1(r.p05)} °C</span></div>
   <div class="kv"><span>Mediana</span><span class="mono">${f1(r.p50)} °C</span></div>
   <div class="kv" style="display:block"><span>De onde vem a incerteza</span><div class="note" style="margin:4px 0 0">${top.length?top.map(c=>esc(c.name)+' <b>'+f0(c.r2*100)+'%</b>').join(' · ')+' · ':''}erro do próprio modelo <b>${f0(Math.min(100,r.modelShare*100))}%</b></div></div>
-  <p class="note" style="margin:6px 0 0">${r.n} sorteios com cada ingrediente variando por conta própria (no cálculo linear acima, os do mesmo grupo variam juntos). Faixas parecidas indicam que a curva de congelamento é quase linear aqui. Semente fixa: o resultado se repete.</p></div>`;}
+  <p class="note" style="margin:6px 0 0">${r.n} sorteios com cada ingrediente variando por conta própria (no cálculo linear acima, os do mesmo grupo variam juntos). Faixas parecidas indicam que a curva de congelamento é quase linear aqui. Semente fixa: o resultado se repete.${R.ms?` Calculado em ${f1(R.ms/1000)} s${R.worker?' fora da tela':''}.`:''}</p>
+  ${r.n===300?`<div class="row" style="margin-top:6px"><button class="btn ghost sm" data-a="uncMC" data-v="2000">Alta resolução (2000 sorteios${est?', ≈ '+f0(Math.max(1,est/1000))+' s neste aparelho':''})</button></div>`:''}</div>`;}
 
 /* ---------- PROTOCOLO DE MEDIÇÃO DO LOTE ---------- */
 const MELT_MS=600000;let meltTick=null;

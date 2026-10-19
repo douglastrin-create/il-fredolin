@@ -35,6 +35,9 @@ jobs:
         run: node tests/e2e/pwa.mjs chromium && node tests/e2e/pwa.mjs webkit
       - name: Armazenamento local — IndexedDB principal, espelho, migração, cota cheia, sem IndexedDB, cópias automáticas
         run: node tests/e2e/storage.mjs chromium && node tests/e2e/storage.mjs webkit
+      - name: Desempenho do motor (informativo, não reprova) — Chromium, Chromium com CPU lenta e WebKit
+        continue-on-error: true
+        run: node tests/e2e/bench.mjs
   banco:
     runs-on: ubuntu-latest
     services:

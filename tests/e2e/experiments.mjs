@@ -157,5 +157,23 @@ check(/Cenário B/.test(twcmp) && /De 60 a 10 °C\s+25\s+min\s+\d{3}\s+\+\d{3}/.
 await pg.locator('select[data-c="proc"][data-k="coolVessel"]').selectOption('plastico');
 check(await pg.evaluate(() => S.proc.coolVessel === 'plastico'), 'recipiente do processo atual muda pela tela');
 check(await pg.evaluate(() => document.documentElement.scrollWidth <= 390), 'ciclo completo sem rolagem horizontal a 390 px');
+// Tarefas no Web Worker (v18.14): Monte Carlo cancelável e medição do aparelho
+await pg.evaluate(() => { S = fromPreset(PRESETS.find(p => /fragola/i.test(p.name))); S.page = 'laudo'; U.sub = { laudo: 'congelamento' }; U.uncMC = null; renderNow(); });
+await pg.locator('button[data-a="uncMC"]').click();
+await pg.waitForSelector('#unc-mc', { timeout: 20000 });
+const mcW = await pg.evaluate(() => ({ worker: U.uncMC.worker, n: U.uncMC.r.n, top: U.uncMC.r.contrib[0].id, p05: U.uncMC.r.p05 }));
+const mcLocal = await pg.evaluate(() => { const r = uncertaintyMC(S, { n: 300 }); return { top: r.contrib[0].id, p05: r.p05 }; });
+check(mcW.worker === true && mcW.n === 300 && mcW.top === 'morango', 'Monte Carlo roda no Web Worker e acha o morango como fonte dominante');
+check(Math.abs(mcW.p05 - mcLocal.p05) < 1e-9, 'resultado do worker idêntico ao da página (mesma semente)');
+const busyBefore = await pg.evaluate(() => { document.querySelector('button[data-a="uncMC"][data-v="2000"]').click(); renderNow(); const b = !!(U.uncMC && U.uncMC.busy && document.querySelector('button[data-a="uncMCStop"]')); document.querySelector('button[data-a="uncMCStop"]').click(); return b; });
+await pg.waitForTimeout(300);
+check(busyBefore, 'alta resolução mostra progresso e o botão Cancelar');
+check(/Cancelado/.test(await pg.locator('#main').innerText()) && await pg.evaluate(() => !U.uncMC.busy), 'alta resolução pode ser cancelada no meio');
+await pg.evaluate(() => { S.page = 'ciencia'; renderNow(); });
+await pg.locator('button[data-a="benchRun"]').click();
+await pg.waitForSelector('#bench-tbl', { timeout: 90000 });
+const bt = await pg.locator('#bench-card').innerText();
+check((await pg.locator('#bench-tbl tbody tr').count()) === 12 && /Web Worker aberto em/.test(bt), 'medição do aparelho: 12 operações, rodando no Web Worker');
+check(await pg.evaluate(() => JSON.parse(localStorage.getItem('fredolin_bench_v1'))[0].ops.length === 12), 'resultado guardado no aparelho');
 check(!errs.length, 'sem erros de página ' + errs.join(' | '));
 await b.close(); srv.close(); process.exit(fails.length ? 1 : 0);

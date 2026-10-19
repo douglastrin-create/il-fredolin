@@ -270,7 +270,7 @@
     "M",
     "C"
    ],
-   "method": "Diferenças finitas explícitas, passo 0,45·C/G, malha radial",
+   "method": "Diferenças finitas explícitas, passo 0,45·C/G, malha radial; v18.14: vetores tipados, sem objetos por passo (resultado idêntico ao da v18.13)",
    "parameters": [
     {
      "n": "h freezer",
@@ -287,10 +287,12 @@
    ],
    "verification": {
     "software": [
-     "calib-thermal.test.mjs › recupera o h verdadeiro"
+     "calib-thermal.test.mjs › recupera o h verdadeiro",
+     "perf.test.mjs › heatSim otimizado dá exatamente o mesmo resultado"
     ],
     "math": [
-     "engine.test.mjs › endurecimento (heatSim): converge com a malha"
+     "engine.test.mjs › endurecimento (heatSim): converge com a malha",
+     "perf.test.mjs › protótipo WebAssembly (tools/wasm-proto) calcula a mesma curva"
     ]
    },
    "limits": "h do freezer calibrável; h da cozinha (10) não; sem parede/tampa/contato; potes com H≠D",

@@ -1,0 +1,547 @@
+{
+ "quando": "2026-10-19T01:33:52.957Z",
+ "app": {
+  "bytes": 972348,
+  "gzipBytes": 344858,
+  "brotliBytes": 273718
+ },
+ "motores": [
+  {
+   "nome": "Chromium",
+   "abrirMs": 494,
+   "bench": {
+    "ops": [
+     {
+      "id": "analise",
+      "n": "Análise da receita (composição, congelamento, overrun…)",
+      "cls": "diario",
+      "reps": 40,
+      "med": 0.2000000000698492,
+      "min": 0.09999999997671694,
+      "max": 2.299999999930151,
+      "budget": 50
+     },
+     {
+      "id": "laudo",
+      "n": "Análise + laudo (diagnóstico)",
+      "cls": "diario",
+      "reps": 30,
+      "med": 0.2000000000698492,
+      "min": 0.09999999997671694,
+      "max": 1.1999999999534339,
+      "budget": 50
+     },
+     {
+      "id": "incerteza",
+      "n": "Faixa de incerteza (linear)",
+      "cls": "diario",
+      "reps": 20,
+      "med": 0.5,
+      "min": 0.2999999999301508,
+      "max": 3,
+      "budget": 50
+     },
+     {
+      "id": "quenelle",
+      "n": "Textura e quenelle",
+      "cls": "diario",
+      "reps": 30,
+      "med": 1.3000000000465661,
+      "min": 0.7999999999301508,
+      "max": 5,
+      "budget": 50
+     },
+     {
+      "id": "pote",
+      "n": "Pote saindo do freezer (condução 1-D)",
+      "cls": "diario",
+      "reps": 15,
+      "med": 1.7999999999301508,
+      "min": 0.9000000000232831,
+      "max": 7.600000000093132,
+      "budget": 50
+     },
+     {
+      "id": "balancear",
+      "n": "Balancear açúcares",
+      "cls": "diario",
+      "reps": 10,
+      "med": 0.5999999999767169,
+      "min": 0.40000000002328306,
+      "max": 1.599999999976717,
+      "budget": 50
+     },
+     {
+      "id": "gerar",
+      "n": "Gerar receita por alvo",
+      "cls": "diario",
+      "reps": 10,
+      "med": 0.9000000000232831,
+      "min": 0.5999999999767169,
+      "max": 2.199999999953434,
+      "budget": 50
+     },
+     {
+      "id": "endurecimento",
+      "n": "Endurecimento até o centro pronto",
+      "cls": "pesado",
+      "reps": 5,
+      "med": 1.3000000000465661,
+      "min": 1.1999999999534339,
+      "max": 2.300000000046566,
+      "budget": 2000
+     },
+     {
+      "id": "ciclo",
+      "n": "Ciclo completo (gêmeo do processo)",
+      "cls": "pesado",
+      "reps": 5,
+      "med": 2.800000000046566,
+      "min": 1.7999999999301508,
+      "max": 3.400000000023283,
+      "budget": 2000
+     },
+     {
+      "id": "oscilacao",
+      "n": "Oscilação do freezer, simulação completa (3 h)",
+      "cls": "pesado",
+      "reps": 3,
+      "med": 6.199999999953434,
+      "min": 5.800000000046566,
+      "max": 7.199999999953434,
+      "budget": 2000
+     },
+     {
+      "id": "montecarlo",
+      "n": "Monte Carlo da incerteza (300 sorteios)",
+      "cls": "pesado",
+      "reps": 3,
+      "med": 34.5,
+      "min": 30,
+      "max": 46.5,
+      "budget": 2000
+     },
+     {
+      "id": "alternativas",
+      "n": "Alternativas e compromissos (60 metas)",
+      "cls": "pesado",
+      "reps": 3,
+      "med": 73.30000000004657,
+      "min": 65.20000000006985,
+      "max": 75.59999999997672,
+      "budget": 2000
+     }
+    ],
+    "totalMs": 718.2000000000698,
+    "at": 1792373636564
+   },
+   "wasm": {
+    "wasmBytes": 3158,
+    "casos": [
+     {
+      "id": "pote",
+      "n": "Pote de 500 mL saindo do freezer (40 min)",
+      "js": 0.40000000002328306,
+      "jsOtim": 0.5,
+      "wasm": 0.40000000002328306,
+      "ganho": 1,
+      "ganhoOtim": 1.2499999999272404,
+      "difOtim": 3.552713678800501e-15,
+      "pontos": 161,
+      "pontosJS": 161,
+      "pontosWasm": 161,
+      "difMax": 3.552713678800501e-15
+     },
+     {
+      "id": "endurecimento",
+      "n": "Endurecimento, 500 mL (12 h)",
+      "js": 2.099999999976717,
+      "jsOtim": 3.599999999976717,
+      "wasm": 2,
+      "ganho": 1.0499999999883585,
+      "ganhoOtim": 1.7999999999883585,
+      "difOtim": 7.105427357601002e-15,
+      "pontos": 721,
+      "pontosJS": 721,
+      "pontosWasm": 721,
+      "difMax": 7.105427357601002e-15
+     },
+     {
+      "id": "malha40",
+      "n": "Pote, malha fina N = 40 (40 min)",
+      "js": 5.300000000046566,
+      "jsOtim": 9.599999999976717,
+      "wasm": 5.900000000023283,
+      "ganho": 0.8983050847501103,
+      "ganhoOtim": 1.6271186440574292,
+      "difOtim": 5.329070518200751e-15,
+      "pontos": 161,
+      "pontosJS": 161,
+      "pontosWasm": 161,
+      "difMax": 5.329070518200751e-15
+     }
+    ]
+   },
+   "heapMB": 20.5,
+   "ua": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/141.0.7390.37 Safari/537.36"
+  },
+  {
+   "nome": "Chromium · CPU 4× mais lenta",
+   "abrirMs": 1169,
+   "bench": {
+    "ops": [
+     {
+      "id": "analise",
+      "n": "Análise da receita (composição, congelamento, overrun…)",
+      "cls": "diario",
+      "reps": 40,
+      "med": 1.1000000000931323,
+      "min": 0.09999999997671694,
+      "max": 8.20000000006985,
+      "budget": 50
+     },
+     {
+      "id": "laudo",
+      "n": "Análise + laudo (diagnóstico)",
+      "cls": "diario",
+      "reps": 30,
+      "med": 1.3999999999068677,
+      "min": 0.09999999997671694,
+      "max": 4.699999999953434,
+      "budget": 50
+     },
+     {
+      "id": "incerteza",
+      "n": "Faixa de incerteza (linear)",
+      "cls": "diario",
+      "reps": 20,
+      "med": 2,
+      "min": 0.2999999999301508,
+      "max": 7.599999999976717,
+      "budget": 50
+     },
+     {
+      "id": "quenelle",
+      "n": "Textura e quenelle",
+      "cls": "diario",
+      "reps": 30,
+      "med": 5.400000000023283,
+      "min": 1.5,
+      "max": 17.599999999976717,
+      "budget": 50
+     },
+     {
+      "id": "pote",
+      "n": "Pote saindo do freezer (condução 1-D)",
+      "cls": "diario",
+      "reps": 15,
+      "med": 4.699999999953434,
+      "min": 1.099999999976717,
+      "max": 15.699999999953434,
+      "budget": 50
+     },
+     {
+      "id": "balancear",
+      "n": "Balancear açúcares",
+      "cls": "diario",
+      "reps": 10,
+      "med": 2.900000000023283,
+      "min": 2.400000000023283,
+      "max": 7.699999999953434,
+      "budget": 50
+     },
+     {
+      "id": "gerar",
+      "n": "Gerar receita por alvo",
+      "cls": "diario",
+      "reps": 10,
+      "med": 3,
+      "min": 0.7000000000698492,
+      "max": 11.699999999953434,
+      "budget": 50
+     },
+     {
+      "id": "endurecimento",
+      "n": "Endurecimento até o centro pronto",
+      "cls": "pesado",
+      "reps": 5,
+      "med": 2.099999999976717,
+      "min": 1.2000000000698492,
+      "max": 7.900000000023283,
+      "budget": 2000
+     },
+     {
+      "id": "ciclo",
+      "n": "Ciclo completo (gêmeo do processo)",
+      "cls": "pesado",
+      "reps": 5,
+      "med": 9.79999999993015,
+      "min": 8.400000000023283,
+      "max": 14.20000000006985,
+      "budget": 2000
+     },
+     {
+      "id": "oscilacao",
+      "n": "Oscilação do freezer, simulação completa (3 h)",
+      "cls": "pesado",
+      "reps": 3,
+      "med": 22.199999999953434,
+      "min": 18.600000000093132,
+      "max": 29.199999999953434,
+      "budget": 2000
+     },
+     {
+      "id": "montecarlo",
+      "n": "Monte Carlo da incerteza (300 sorteios)",
+      "cls": "pesado",
+      "reps": 3,
+      "med": 196.19999999995343,
+      "min": 134.09999999997672,
+      "max": 204.09999999997672,
+      "budget": 2000
+     },
+     {
+      "id": "alternativas",
+      "n": "Alternativas e compromissos (60 metas)",
+      "cls": "pesado",
+      "reps": 3,
+      "med": 192.69999999995343,
+      "min": 191.09999999997672,
+      "max": 202.10000000009313,
+      "budget": 2000
+     }
+    ],
+    "totalMs": 2387.4000000000233,
+    "at": 1792373641070
+   },
+   "wasm": {
+    "wasmBytes": 3158,
+    "casos": [
+     {
+      "id": "pote",
+      "n": "Pote de 500 mL saindo do freezer (40 min)",
+      "js": 0.40000000002328306,
+      "jsOtim": 0.5,
+      "wasm": 0.30000000004656613,
+      "ganho": 1.333333333203983,
+      "ganhoOtim": 1.666666666407966,
+      "difOtim": 3.552713678800501e-15,
+      "pontos": 161,
+      "pontosJS": 161,
+      "pontosWasm": 161,
+      "difMax": 3.552713678800501e-15
+     },
+     {
+      "id": "endurecimento",
+      "n": "Endurecimento, 500 mL (12 h)",
+      "js": 5.900000000023283,
+      "jsOtim": 13.599999999976717,
+      "wasm": 7.400000000023283,
+      "ganho": 0.7972972972979351,
+      "ganhoOtim": 1.837837837828909,
+      "difOtim": 7.105427357601002e-15,
+      "pontos": 721,
+      "pontosJS": 721,
+      "pontosWasm": 721,
+      "difMax": 7.105427357601002e-15
+     },
+     {
+      "id": "malha40",
+      "n": "Pote, malha fina N = 40 (40 min)",
+      "js": 17.5,
+      "jsOtim": 35.70000000006985,
+      "wasm": 24.600000000093132,
+      "ganho": 0.711382113818445,
+      "ganhoOtim": 1.4512195121924671,
+      "difOtim": 5.329070518200751e-15,
+      "pontos": 161,
+      "pontosJS": 161,
+      "pontosWasm": 161,
+      "difMax": 5.329070518200751e-15
+     }
+    ]
+   },
+   "heapMB": 11.2,
+   "ua": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/141.0.7390.37 Safari/537.36"
+  },
+  {
+   "nome": "Chromium · CPU 6× mais lenta",
+   "abrirMs": 1475,
+   "bench": {
+    "ops": [
+     {
+      "id": "analise",
+      "n": "Análise da receita (composição, congelamento, overrun…)",
+      "cls": "diario",
+      "reps": 40,
+      "med": 1.400000000023283,
+      "min": 0.09999999997671694,
+      "max": 11.699999999953434,
+      "budget": 50
+     },
+     {
+      "id": "laudo",
+      "n": "Análise + laudo (diagnóstico)",
+      "cls": "diario",
+      "reps": 30,
+      "med": 2,
+      "min": 0.09999999997671694,
+      "max": 10.79999999993015,
+      "budget": 50
+     },
+     {
+      "id": "incerteza",
+      "n": "Faixa de incerteza (linear)",
+      "cls": "diario",
+      "reps": 20,
+      "med": 2.900000000023283,
+      "min": 0.30000000004656613,
+      "max": 13.599999999976717,
+      "budget": 50
+     },
+     {
+      "id": "quenelle",
+      "n": "Textura e quenelle",
+      "cls": "diario",
+      "reps": 30,
+      "med": 7.900000000023283,
+      "min": 1.099999999976717,
+      "max": 13.599999999976717,
+      "budget": 50
+     },
+     {
+      "id": "pote",
+      "n": "Pote saindo do freezer (condução 1-D)",
+      "cls": "diario",
+      "reps": 15,
+      "med": 7.800000000046566,
+      "min": 1,
+      "max": 28.699999999953434,
+      "budget": 50
+     },
+     {
+      "id": "balancear",
+      "n": "Balancear açúcares",
+      "cls": "diario",
+      "reps": 10,
+      "med": 4.599999999976717,
+      "min": 2.400000000023283,
+      "max": 13.699999999953434,
+      "budget": 50
+     },
+     {
+      "id": "gerar",
+      "n": "Gerar receita por alvo",
+      "cls": "diario",
+      "reps": 10,
+      "med": 7.700000000069849,
+      "min": 5.5,
+      "max": 15.599999999976717,
+      "budget": 50
+     },
+     {
+      "id": "endurecimento",
+      "n": "Endurecimento até o centro pronto",
+      "cls": "pesado",
+      "reps": 5,
+      "med": 8.699999999953434,
+      "min": 1.2999999999301508,
+      "max": 19.5,
+      "budget": 2000
+     },
+     {
+      "id": "ciclo",
+      "n": "Ciclo completo (gêmeo do processo)",
+      "cls": "pesado",
+      "reps": 5,
+      "med": 16.199999999953434,
+      "min": 2.200000000069849,
+      "max": 20.899999999906868,
+      "budget": 2000
+     },
+     {
+      "id": "oscilacao",
+      "n": "Oscilação do freezer, simulação completa (3 h)",
+      "cls": "pesado",
+      "reps": 3,
+      "med": 31.199999999953434,
+      "min": 21.79999999993015,
+      "max": 33.90000000002328,
+      "budget": 2000
+     },
+     {
+      "id": "montecarlo",
+      "n": "Monte Carlo da incerteza (300 sorteios)",
+      "cls": "pesado",
+      "reps": 3,
+      "med": 245.09999999997672,
+      "min": 187.10000000009313,
+      "max": 311.79999999993015,
+      "budget": 2000
+     },
+     {
+      "id": "alternativas",
+      "n": "Alternativas e compromissos (60 metas)",
+      "cls": "pesado",
+      "reps": 3,
+      "med": 284.9000000000233,
+      "min": 257.70000000006985,
+      "max": 314.29999999993015,
+      "budget": 2000
+     }
+    ],
+    "totalMs": 3667.8000000000466,
+    "at": 1792373648861
+   },
+   "wasm": {
+    "wasmBytes": 3158,
+    "casos": [
+     {
+      "id": "pote",
+      "n": "Pote de 500 mL saindo do freezer (40 min)",
+      "js": 0.9000000000232831,
+      "jsOtim": 2.700000000069849,
+      "wasm": 2,
+      "ganho": 0.45000000001164153,
+      "ganhoOtim": 1.3500000000349246,
+      "difOtim": 3.552713678800501e-15,
+      "pontos": 161,
+      "pontosJS": 161,
+      "pontosWasm": 161,
+      "difMax": 3.552713678800501e-15
+     },
+     {
+      "id": "endurecimento",
+      "n": "Endurecimento, 500 mL (12 h)",
+      "js": 9.399999999906868,
+      "jsOtim": 15.599999999976717,
+      "wasm": 11.099999999976717,
+      "ganho": 0.8468468468402329,
+      "ganhoOtim": 1.4054054054062557,
+      "difOtim": 7.105427357601002e-15,
+      "pontos": 721,
+      "pontosJS": 721,
+      "pontosWasm": 721,
+      "difMax": 7.105427357601002e-15
+     },
+     {
+      "id": "malha40",
+      "n": "Pote, malha fina N = 40 (40 min)",
+      "js": 26.800000000046566,
+      "jsOtim": 52.29999999993015,
+      "wasm": 37.800000000046566,
+      "ganho": 0.7089947089950674,
+      "ganhoOtim": 1.3835978835943312,
+      "difOtim": 5.329070518200751e-15,
+      "pontos": 161,
+      "pontosJS": 161,
+      "pontosWasm": 161,
+      "difMax": 5.329070518200751e-15
+     }
+    ]
+   },
+   "heapMB": 26,
+   "ua": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/141.0.7390.37 Safari/537.36"
+  }
+ ]
+}

@@ -6,7 +6,7 @@
    A análise (doeAnalyze) ajusta efeitos principais e interações por mínimos quadrados nos níveis codificados;
    com graus de liberdade (réplicas/centros) dá erro-padrão e p bilateral (t de Student); pontos centrais testam
    curvatura. Correlação não é causalidade: só vale para os fatores e a faixa testados. */
-function mulberry32(a){return()=>{a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;};}
+/* mulberry32 (gerador com semente) foi para core/util.js na v18.14: o Web Worker também usa (Monte Carlo) */
 function doeDesign(spec){const F=(spec.factors||[]).slice(0,3);const k=F.length;if(!k)throw new Error('escolha de 1 a 3 fatores');
  F.forEach(f=>{if(!(isFinite(+f.lo)&&isFinite(+f.hi))||+f.lo===+f.hi)throw new Error('faixa inválida em '+(f.label||f.id));});
  const reps=clamp(Math.round(+spec.reps||1),1,3),centers=clamp(Math.round(+spec.centers||0),0,4);

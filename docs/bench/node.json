@@ -1,0 +1,128 @@
+{
+ "env": "Node v22.22.0 · Intel(R) Xeon(R) Processor @ 2.80GHz · 2 núcleos",
+ "heapMB": 25.2,
+ "ops": [
+  {
+   "id": "analise",
+   "n": "Análise da receita (composição, congelamento, overrun…)",
+   "cls": "diario",
+   "reps": 40,
+   "med": 0.3522580000000062,
+   "min": 0.2930410000000023,
+   "max": 1.689471999999995,
+   "budget": 50
+  },
+  {
+   "id": "laudo",
+   "n": "Análise + laudo (diagnóstico)",
+   "cls": "diario",
+   "reps": 30,
+   "med": 0.5158700000000067,
+   "min": 0.3818990000000042,
+   "max": 1.6349069999999983,
+   "budget": 50
+  },
+  {
+   "id": "incerteza",
+   "n": "Faixa de incerteza (linear)",
+   "cls": "diario",
+   "reps": 20,
+   "med": 0.8272790000000043,
+   "min": 0.6736449999999934,
+   "max": 3.4813489999999945,
+   "budget": 50
+  },
+  {
+   "id": "quenelle",
+   "n": "Textura e quenelle",
+   "cls": "diario",
+   "reps": 30,
+   "med": 5.061389999999989,
+   "min": 4.649861999999985,
+   "max": 5.798829000000012,
+   "budget": 50
+  },
+  {
+   "id": "pote",
+   "n": "Pote saindo do freezer (condução 1-D)",
+   "cls": "diario",
+   "reps": 15,
+   "med": 5.725328999999988,
+   "min": 4.884183999999948,
+   "max": 15.086545000000001,
+   "budget": 50
+  },
+  {
+   "id": "balancear",
+   "n": "Balancear açúcares",
+   "cls": "diario",
+   "reps": 10,
+   "med": 1.622682999999995,
+   "min": 1.2018609999999512,
+   "max": 2.6358999999999924,
+   "budget": 50
+  },
+  {
+   "id": "gerar",
+   "n": "Gerar receita por alvo",
+   "cls": "diario",
+   "reps": 10,
+   "med": 2.063128000000006,
+   "min": 1.605007999999998,
+   "max": 3.919794999999965,
+   "budget": 50
+  },
+  {
+   "id": "endurecimento",
+   "n": "Endurecimento até o centro pronto",
+   "cls": "pesado",
+   "reps": 5,
+   "med": 9.736612999999977,
+   "min": 6.178377999999952,
+   "max": 14.37387799999999,
+   "budget": 2000
+  },
+  {
+   "id": "ciclo",
+   "n": "Ciclo completo (gêmeo do processo)",
+   "cls": "pesado",
+   "reps": 5,
+   "med": 9.34513000000004,
+   "min": 9.044115000000033,
+   "max": 11.895488999999998,
+   "budget": 2000
+  },
+  {
+   "id": "oscilacao",
+   "n": "Oscilação do freezer, simulação completa (3 h)",
+   "cls": "pesado",
+   "reps": 3,
+   "med": 24.304198000000042,
+   "min": 21.159356000000002,
+   "max": 34.44908399999997,
+   "budget": 2000
+  },
+  {
+   "id": "montecarlo",
+   "n": "Monte Carlo da incerteza (300 sorteios)",
+   "cls": "pesado",
+   "reps": 3,
+   "med": 91.30750499999999,
+   "min": 81.06865100000016,
+   "max": 123.112483,
+   "budget": 2000
+  },
+  {
+   "id": "alternativas",
+   "n": "Alternativas e compromissos (60 metas)",
+   "cls": "pesado",
+   "reps": 3,
+   "med": 114.06887400000005,
+   "min": 90.0041470000001,
+   "max": 153.12755500000003,
+   "budget": 2000
+  }
+ ],
+ "totalMs": 1484.093601,
+ "at": 1792373676737
+}

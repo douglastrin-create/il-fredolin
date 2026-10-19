@@ -48,6 +48,7 @@ function pgCiencia(){const R=MODEL_REGISTRY;if(!R)return`<div class="pg"><h1>Ci�
   </tbody></table></div>
   ${(()=>{const C=uncCoverage(LOTS);return`<div class="kv" style="margin-top:10px"><span>Cobertura da faixa de 90% <span class="muted">(lotes com textura "ideal" numa temperatura medida)</span></span><span>${C.n?C.k+' de '+C.n+' dentro ('+f0(C.pct)+'%)':'—'} <span class="chip ${C.status==='coerente com 90%'?'ok':C.status==='faixa estreita demais'?'crit':C.n?'warn':''}">${esc(C.status)}</span></span></div>`;})()}
   ${nMeas?'':`<p class="note" style="margin:10px 0 0">Ainda não há lotes medidos. Registre em Lotes e qualidade: overrun pelo copo, derretido em 10 min, °Brix e pH da mistura, núcleo do pote no freezer e textura na vitrine. O laudo mostra "O que medir" em ordem de prioridade.</p>`}</div>
+ ${benchCard()}
  <h2 style="margin:18px 0 8px">Modelos (${ms.length})</h2>
  ${ms.map(m=>sciModelCard(m,V)).join('')}
  <p class="muted" style="font-size:11.5px">Registro <span class="mono">${esc(R.schema)}</span> · auditado em ${esc(R.auditedCommit||'?')}. ${esc(R.validationNote||'')}</p></div>`;}

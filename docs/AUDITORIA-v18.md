@@ -634,6 +634,46 @@ O ciclo do compressor (minutos) quase não passa da superfície. Degelo, porta a
 - A oscilação real do freezer não é senoidal; a tabela mostra a resposta por período.
 - **Duas fontes de entrada na geladeira:** a página Maturação continua usando a "temperatura de entrada" que você informa; o ciclo calcula a sua própria a partir do resfriamento. Unificar fica para quando houver uma medição da calda para conferir.
 
+## 5-R. v18.14 — arquitetura computacional decidida por medição (§11–13)
+
+O registro completo da decisão está em `docs/ARQUITETURA-COMPUTACAO.md`.
+
+**Decisão: Alternativa A** (JavaScript modular com Web Workers). WebAssembly não entra no app agora, e o documento lista os gatilhos medidos que reabrem a decisão.
+
+**Como foi decidido:**
+- **Bateria única de 12 operações** (`product/desempenho.js`), com orçamento de 50 ms para as diárias e 2 s para as sob demanda. Roda no Node (`tools/bench.mjs`), nos navegadores (`tests/e2e/bench.mjs`, também no CI, sem reprovar) e **no aparelho**: Ciência do motor → "Desempenho deste aparelho", dentro do Web Worker, com resultado guardado e botão para copiar.
+- **Protótipo real da Alternativa B:** o laço do `heatSim` em C, compilado para WebAssembly pelo clang 18 (LLVM, o mesmo backend do Rust; baixar o alvo Rust para WebAssembly estava bloqueado na rede). Calcula a mesma curva até 10⁻¹⁴ °C.
+
+**O que as medições mostraram:**
+1. **A lentidão do núcleo térmico era do JavaScript mal escrito, não da linguagem.** Reescrito com vetores tipados e sem objetos por passo, o `heatSim` ficou 3 a 20× mais rápido, com resultado **idêntico byte a byte** à v18.13. Um teste compara com a versão antiga, guardada como referência fixa.
+   - pote: 19 → 1,9 ms;
+   - endurecimento: 118 → 7 ms;
+   - oscilação simulada: 279 → 24 ms.
+2. Depois disso, o WebAssembly ganha 4× no Node, mas **nada no Chromium** (0,7–1,3×). No navegador ele não paga duas linguagens, um compilador no CI e um binário no cache offline.
+3. Com a CPU 6× mais lenta, a operação diária mais pesada leva 8 ms (orçamento de 50 ms) e a mais pesada sob demanda, 0,3 s (orçamento de 2 s).
+4. **Abrir o app custa 100 vezes mais que qualquer cálculo:** 0,5 a 1,5 s, com o arquivo crescendo de 766 KB (v17.12) para 972 KB. É ali que está o próximo ganho perceptível.
+
+**Execução adaptativa (§13):**
+- Executor genérico de tarefas (`ui/tarefas.js`): Web Worker com o mesmo motor, progresso e cancelamento.
+- O **Monte Carlo** passou a rodar fora da tela, com barra de progresso, botão "Cancelar" e a opção de **alta resolução** (2000 sorteios), mostrando o tempo estimado neste aparelho. O resultado no worker é idêntico ao da página (teste ponta a ponta).
+
+**Bug achado pelo teste ponta a ponta:** o gerador aleatório com semente estava fora do trecho que vai para o Web Worker, e o Monte Carlo no worker falhava. Ele foi para `core/util.js`, e um teste agora confere que tudo de que as tarefas do worker precisam está dentro desse trecho.
+
+**Métodos numéricos (§12):** tabela no documento de decisão, com o método, a tolerância ou o critério de convergência e o teste de cada um. Também lista o que foi avaliado e não adotado (solucionadores implícitos, ODE e DAE gerais, bibliotecas externas, MCMC) e por quê.
+
+**Correção de uma afirmação minha:** nas versões anteriores eu disse que o armazenamento e a PWA "passam em WebKit" com base em execuções locais. Aqui o WebKit não está instalado, e essas execuções foram **puladas** sem falhar. A verificação em WebKit sempre veio do CI, que o instala e passou em todas as versões.
+
+**Testes:**
+- `perf.test.mjs` (4):
+  - `heatSim` idêntico ao da v18.13 em 9 simulações e na parada antecipada;
+  - WebAssembly igual ao JavaScript;
+  - bateria completa, com as diárias abaixo de 50 ms no Node;
+  - trecho do worker completo.
+- E2E com 6 verificações novas: Monte Carlo no worker, resultado igual ao da página, progresso, cancelamento, medição do aparelho e resultado guardado.
+- Node 99/99.
+
+**Falta:** os números do iPhone, do iPad e do Mac. É só abrir Ciência do motor → "Medir este aparelho" e me mandar o resultado ("Copiar resultado").
+
 ## 6. Para publicar (requer sua autorização)
 1. Conferir a execução do workflow *Testes* na branch (inclui WebKit e o job *banco*).
 1b. Aplicar a migração 001 seguindo `supabase/README.md` (ensaio num projeto de teste primeiro). A ordem entre banco e app é indiferente.
