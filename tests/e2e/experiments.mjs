@@ -126,6 +126,7 @@ const val = await pg.locator('#sci-val').innerText();
 const vt = val.replace(/\n/g, ' '); const nOv = +(vt.match(/Overrun\s+(\d+)/) || [])[1];
 check(nOv >= 6 && /°Brix da mistura\s+6\b/.test(vt) && /pH\s+0\s+—/.test(vt), `validação conta os lotes medidos por grandeza (overrun ${nOv}, °Brix 6, pH 0 = sem dados)`);
 check(/avaliado|dentro da tolerância/.test(val), 'com 6 lotes o status passa de "evidência inicial"');
+check(/Cobertura da faixa de 90%/.test(val), 'linha de cobertura da faixa de 90% na validação');
 const ficha = await pg.locator('#sci-overrun').innerText();
 check(/Equação/.test(ficha) && /Tolerância para validação/.test(ficha) && /5 pontos percentuais/.test(ficha) && /Validação com os seus lotes/.test(ficha), 'ficha do overrun com equação, tolerância e validação');
 check(await pg.evaluate(() => document.documentElement.scrollWidth <= 390), 'Ciência do motor sem rolagem horizontal a 390 px');
@@ -137,5 +138,11 @@ check(/sem fonte \(\d+\)/.test(ingTxt) && /Procedência/.test(ingTxt) && (await 
 await pg.evaluate(() => { U.ingProv = ''; S = fromPreset(PRESETS.find(p => /Cioccolato/.test(p.name))); S.page = 'laudo'; U.sub = { laudo: 'congelamento' }; renderNow(); });
 const lau = await pg.locator('#main').innerText();
 check(/Composição: \d+% da massa vem de ingredientes com fonte/.test(lau) && /Sem fonte \(sólidos\)/.test(lau), 'laudo mostra a parte da receita sem fonte e o efeito dela na faixa');
+// Monte Carlo sob demanda (v18.12)
+await pg.locator('button[data-a="uncMC"]').click();
+await pg.waitForSelector('#unc-mc', { timeout: 15000 });
+const mc = await pg.locator('#unc-mc').innerText();
+check(/Monte Carlo · 5% a 95%/.test(mc) && /erro do próprio modelo/i.test(mc), 'Monte Carlo mostra faixa 5–95% e a parte do erro do modelo');
+check(await pg.evaluate(() => !Object.keys(ING_BY).some(k => k.startsWith('~'))), 'Monte Carlo não deixa ingrediente temporário no banco');
 check(!errs.length, 'sem erros de página ' + errs.join(' | '));
 await b.close(); srv.close(); process.exit(fails.length ? 1 : 0);

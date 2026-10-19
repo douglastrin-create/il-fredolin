@@ -24,3 +24,14 @@ function validateLOO(res){const out={};
   const F={};for(const t in fams)F[t]=st(fams[t]);
   out[q]={...Q,all:st(rows),fam:F,rows};}
  return out;}
+/* ---------- COBERTURA DA FAIXA DE 90% (v18.12) ----------
+   Lote com textura "ideal" (0) numa temperatura medida é uma observação da temperatura de serviço real. Se a faixa
+   mostrada é honesta, ~90% dessas observações caem dentro dela. Usa a faixa linear (a que o app mostra) e, sem
+   calibração, para não usar o lote que se quer conferir. Poucos lotes: o número é informativo, não conclusivo. */
+function uncCoverage(lots){const prev=CAL.on;CAL.on=false;const rows=[];
+ try{(lots||[]).forEach(L=>{const me=L.meas||{};if(!(me.tex!==''&&me.tex!=null&&+me.tex===0&&me.texTemp!==''&&me.texTemp!=null&&isFinite(+me.texTemp)))return;
+  if(!Array.isArray(L.recipe)||!L.recipe.length)return;const st={tipo:L.tipo,vit:+me.texTemp,recipe:L.recipe,proc:L.proc||{},brix:L.brix||{},costs:{}};
+  const u=uncertainty(st);if(!u)return;const T=+me.texTemp;rows.push({id:L.id,code:L.code,tipo:L.tipo,T,lo:u.lo,hi:u.hi,inside:T>=Math.min(u.lo,u.hi)&&T<=Math.max(u.lo,u.hi)});});}
+ finally{CAL.on=prev;}
+ const n=rows.length,k=rows.filter(r=>r.inside).length;
+ return{n,k,pct:n?k/n*100:null,rows,status:!n?'sem dados':n<10?'evidência inicial':k/n>=.8?'coerente com 90%':'faixa estreita demais'};}

@@ -502,6 +502,57 @@ Efeito nas receitas de referência (faixa de 90%):
 
 **Fica para depois:** 183 ingredientes sem fonte. Os de maior uso são candidatos à ficha do fornecedor ou à TACO: morango, cacau, chocolate 70%, pasta de pistache, avelã, gema pasteurizada, creme de coco, invertido e limão.
 
+## 5-P. v18.12 — Monte Carlo e cobertura da faixa (§10, §12)
+
+**Problema:** a faixa de 90% era só linear. Ela soma os efeitos de cada grupo em quadratura e supõe todos os ingredientes do mesmo grupo variando juntos. Não dizia **qual ingrediente** pesa mais, não conferia se a curva de congelamento é linear o bastante para isso valer, e nada verificava se a faixa acerta na prática.
+
+**Monte Carlo sob demanda.** Laudo → Congelamento → "Detalhar com Monte Carlo (300 sorteios)":
+- cada ingrediente da receita varia por conta própria, com o mesmo coeficiente da v18.11 (Brix medido ±3%);
+- o erro do modelo entra como N(0; 0,4 °C);
+- a análise completa é refeita em cada sorteio;
+- a semente é fixa, então o resultado se repete;
+- a tela mostra os percentis 5/50/95 e a parte da variância de cada ingrediente (correlação²) e do erro do modelo.
+
+Roda na hora (100–170 ms) e o resultado fica guardado até a receita mudar. Linear e Monte Carlo ficam lado a lado porque supõem coisas opostas sobre a correlação entre ingredientes do mesmo grupo (total × nenhuma). A correlação real fica entre as duas.
+
+| Receita | Serviço (°C) | Linear 90% | Monte Carlo 5–95% (°C) | Maior fonte | Erro do modelo |
+|---|---|---|---|---|---|
+| Fior di latte | −12,9 | ±0,66 | −12,1 a −13,5 | — | ~100% |
+| Crema all'uovo | −12,0 | ±0,67 | −11,4 a −12,7 | gema 2% | ~100% |
+| Cioccolato fondente | −12,6 | ±0,92 | −11,8 a −13,4 | **invertido 31%** | 69% |
+| Pistacchio | −12,2 | ±0,67 | −11,4 a −12,9 | pasta de pistache 11% | 80% |
+| Nocciola | −12,2 | ±0,66 | −11,4 a −12,8 | pasta de avelã 10% | 93% |
+| Sorbetto al limone | −13,6 | ±0,85 | −12,7 a −14,4 | limão 22%, invertido 16% | 59% |
+| Sorbetto di fragola | −13,3 | ±1,03 | −12,2 a −14,2 | **morango 59%** | 38% |
+| Cocco vegano | −12,6 | ±0,79 | −11,9 a −13,4 | creme de coco 21% | 80% |
+
+O que a tabela mostra:
+- As duas faixas concordam em todas as bases. A curva é quase linear na faixa de interesse, então a faixa linear já mostrada era adequada.
+- **O que se ganha é a decomposição.** No sorbetto de morango, medir o Brix da fruta é o que mais estreita a faixa (o teste confirma). No cioccolato, a ficha técnica do açúcar invertido vem antes da do chocolate.
+- Nas bases lácteas, o erro do próprio modelo domina. Ali, só os seus lotes medidos estreitam a faixa: a composição já é conhecida.
+- A soma das parcelas pode passar de 100% por flutuação de amostragem com 300 sorteios; a tela limita em 100%.
+
+**Cobertura da faixa** (Ciência do motor → Validação). Cada lote com textura "ideal" numa temperatura medida é uma conferência: essa temperatura deveria cair dentro da faixa de 90% prevista para a receita do lote. Status:
+- sem dados;
+- evidência inicial (menos de 10 lotes);
+- coerente com 90% (≥ 80% dentro);
+- faixa estreita demais.
+
+Hoje: **sem dados**. Nenhum lote registrado tem textura ideal com temperatura. Não declaro que a faixa está certa.
+
+**Testes:**
+- `uncertainty.test.mjs` (3):
+  - o Monte Carlo concorda com o linear nas 8 bases (largura dentro de ±35%, mediana a < 0,15 °C do valor central, percentis ordenados);
+  - é reproduzível pela semente, sem cópias temporárias, com o morango como fonte dominante, e medir o Brix estreita a faixa;
+  - cobertura: só conta lotes válidos, e os 4 status aparecem com lotes sintéticos de teste (não são medições).
+- E2E com 3 verificações novas.
+- Node 89/89. E2E (fumaça, experimentos, PWA e armazenamento em Chromium e WebKit) passa. Camadas: 0.
+
+**Limites:**
+- Os coeficientes por grupo continuam estimativas do app.
+- A correlação entre ingredientes diferentes não é conhecida: Monte Carlo e linear são os dois extremos.
+- O Monte Carlo cobre só a temperatura de serviço. Overrun, derretimento e textura não têm incerteza propagada.
+
 ## 6. Para publicar (requer sua autorização)
 1. Conferir a execução do workflow *Testes* na branch (inclui WebKit e o job *banco*).
 1b. Aplicar a migração 001 seguindo `supabase/README.md` (ensaio num projeto de teste primeiro). A ordem entre banco e app é indiferente.

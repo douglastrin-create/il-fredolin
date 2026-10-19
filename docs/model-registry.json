@@ -825,10 +825,10 @@
    "class": [
     "H"
    ],
-   "method": "Diferenças finitas",
-   "limits": "Cobertura de 90% nunca conferida com medições; até a v18.10 os grupos lácteos/cacau/açúcares perturbavam a massa pesada, não a composição",
+   "method": "Linear (mostrado sempre): perturbação por grupo, grupos totalmente correlacionados por dentro, soma em quadratura. Monte Carlo (sob demanda, 300 sorteios, semente fixa): cada ingrediente N(0, cv) independente, mesmo ingrediente igual no lote, erro do modelo N(0; 0,4 °C), análise completa por amostra; percentis 5/50/95 e contribuição por correlação².",
+   "limits": "Coeficientes por grupo são estimativas do app; a correlação entre ingredientes diferentes é suposta nula no Monte Carlo e total no linear (os dois são mostrados). Cobertura sem dados até haver lotes com textura medida.",
    "name": "Orçamento de incerteza",
-   "version": "v18.11",
+   "version": "v18.12",
    "equation": "σ² = Σ_g (Δy_g)² + 0,4²; Δy_g = efeito na temperatura de serviço de perturbar a COMPOSIÇÃO do grupo g (°Brix, gordura ou sólidos; a água compensa); banda ±1,65σ",
    "parameters": [
     {
@@ -858,13 +858,16 @@
    "validity": null,
    "dataOrigin": "Perturbação um-a-um",
    "tolerance": null,
-   "uncertainty": "Cobertura nunca verificada",
+   "uncertainty": "Cobertura da faixa conferida com lotes de textura ideal (uncCoverage): exige ≥ 10 lotes para status além de \"evidência inicial\".",
    "calibration": null,
    "verification": {
     "software": [
-     "composition.test.mjs › incerteza perturba a composição"
+     "composition.test.mjs › incerteza perturba a composição",
+     "uncertainty.test.mjs › cobertura"
     ],
-    "math": []
+    "math": [
+     "uncertainty.test.mjs › Monte Carlo concorda com o linear"
+    ]
    },
    "validation": {
     "status": "sem validação independente",
