@@ -46,7 +46,7 @@ test('bateria de desempenho: as 12 operações rodam, e as diárias ficam abaixo
 test('trecho do Web Worker tem tudo de que as tarefas precisam (Monte Carlo e bateria)', () => {
   const html = fs.readFileSync(new URL('../../index.html', import.meta.url), 'utf8');
   const a = html.indexOf('/* ==== 01-util.js ==== */'), b = html.indexOf('/* ==== 33-golden.js ==== */'); const w = html.slice(a, b);
-  for (const f of ['function mulberry32', 'function uncertaintyMC', 'function benchRun', 'function cycleTwin', 'function storeResponse', 'function fitCalibration', 'function registerNeutro', 'var DEX_PREF'])
+  for (const f of ['function mulberry32', 'function uncertaintyMC', 'function benchRun', 'function cycleTwin', 'function storeResponse', 'function fitCalibration', 'function registerNeutro', 'var DEX_PREF', 'function rheoMeasured', 'function parseRheo'])
     assert.ok(w.includes(f), f + ' fora do trecho do worker');
 });
 

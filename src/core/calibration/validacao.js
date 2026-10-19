@@ -10,7 +10,9 @@ const VAL_Q={
  brix:{n:'°Brix da mistura',u:'°Bx',model:'composition',tol:1,cal:false},
  ph:{n:'pH',u:'pH',model:'ph',tol:.2,cal:false},
  core:{n:'Núcleo do pote no freezer',u:'°C',model:'heat-transfer',tol:2,cal:false},
- tex:{n:'Textura na vitrine',u:'pontos (−2…+2)',model:'frozen-fraction',tol:1,cal:false}};
+ tex:{n:'Textura na vitrine',u:'pontos (−2…+2)',model:'frozen-fraction',tol:1,cal:false},
+ ice:{n:'Cristal de gelo (média ao microscópio)',u:'µm',model:'ice-crystal-size',tol:10,cal:false},
+ visc:{n:'Viscosidade da calda a 4 °C (log₁₀)',u:'log₁₀ mPa·s',model:'viscosity',tol:.15,cal:false}};
 const VAL_MIN=5;
 function valStats(e){const n=e.length;if(!n)return null;const b=e.reduce((a,x)=>a+x,0)/n;return{n,bias:b,mae:e.reduce((a,x)=>a+Math.abs(x),0)/n,rmse:Math.sqrt(e.reduce((a,x)=>a+x*x,0)/n)};}
 /* res = CAL.res (pares [previsto sem calibração, medido] por lote). Erro = medido − previsto. */

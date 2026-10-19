@@ -36,7 +36,7 @@ function pgBancada(m,F,sc){
 
 /* ---------- LAUDO ---------- */
 /* Laudo único (v17.7): resumo com problemas primeiro e riscos de defeito; congelamento, química/vida útil e parâmetros como seções */
-const LAUDO_SEC=[['resumo','Resumo'],['congelamento','Congelamento'],['textura','Textura e quenelle'],['quimica','Química e estabilidade da textura'],['ciclo','Ciclo completo'],['medir','O que medir'],['parametros','Parâmetros']];
+const LAUDO_SEC=[['resumo','Resumo'],['congelamento','Congelamento'],['textura','Textura e quenelle'],['quimica','Química e estabilidade da textura'],['micro','Microestrutura e reologia'],['ciclo','Ciclo completo'],['medir','O que medir'],['parametros','Parâmetros']];
 function pgLaudo(m,F,sc){
  if(m.empty)return`<div class="pg"><h1>Laudo técnico</h1><p class="lead">Monte uma receita na Bancada para gerar o laudo.</p></div>`;
  const P=m.P,groups=['crit','warn','info','ok'];const t=subOf('laudo','resumo');
@@ -50,6 +50,7 @@ function pgLaudo(m,F,sc){
  if(t==='congelamento'){const E=embedPg(pgCongel(m));lead=E.lead;body=E.body;}
  else if(t==='textura'){lead='Dureza na colher pelo volume de gelo e ponto de quenelle para empratar.';body=quenelleCard(m)+textureCard(m);}
  else if(t==='quimica'){const E=embedPg(pgQuimica(m));lead=E.lead;body=E.body+brixMixCards(m);}
+ else if(t==='micro'){lead='Como gelo, ar, gordura e a matriz não congelada se dividem em cada temperatura, o que é balanço e o que é hipótese, e a reologia medida da calda.';body=microCard(m);}
  else if(t==='ciclo'){lead='Preparação, tratamento térmico, resfriamento, maturação, mantecação, endurecimento, armazenamento, temperagem e serviço encadeados, com o modelo e a fidelidade de cada etapa.';body=twinCard(m);}
  else if(t==='medir'){lead='As medições que mais aumentariam a confiança nas previsões desta receita, das mais úteis às menos úteis. Nenhuma é obrigatória para usar o app.';body=measureCard(m);}
  else if(t==='parametros'){lead='Cada parâmetro da receita contra a faixa de '+esc(P.n.toLowerCase())+'.';body=`<div class="card"><h2>Parâmetros</h2><div class="tw"><table class="tbl"><thead><tr><th>Parâmetro</th><th class="r">Valor</th><th class="r">Alvo</th><th style="width:30%">Posição</th></tr></thead><tbody>
@@ -581,7 +582,9 @@ function lotEditor(L){const me=L.meas||{},se=L.sens||{};const ov=measuredOverrun
   <label class="field"><span class="lbl">Textura na vitrine</span><select id="lot-tex" data-c="lot" data-k="meas.tex"><option value=""${me.tex==null||me.tex===''?' selected':''}>não avaliada</option>${[[-2,'muito mole'],[-1,'mole'],[0,'ideal'],[1,'duro'],[2,'muito duro']].map(([v,n])=>`<option value="${v}"${String(me.tex)===String(v)?' selected':''}>${v>0?'+':''}${v} · ${n}</option>`).join('')}</select></label>
   ${num('meas.texTemp','Temperatura avaliada (°C)',.5)}${num('meas.icyDay','Dia em que percebeu gelo',1,'vazio = não percebeu')}
   ${num('meas.qT','Quenelle: temperatura do gelato (°C)',.5,'termômetro de espeto no centro')}
-  <label class="field"><span class="lbl">Quenelle: resultado</span><select id="lot-qres" data-c="lot" data-k="meas.qRes"><option value=""${me.qRes==null||me.qRes===''?' selected':''}>não testada</option>${[[-1,'rachou / duro demais'],[0,'lisa, no ponto'],[1,'mole / desabou']].map(([v,n])=>`<option value="${v}"${String(me.qRes)===String(v)?' selected':''}>${n}</option>`).join('')}</select></label></div>
+  <label class="field"><span class="lbl">Quenelle: resultado</span><select id="lot-qres" data-c="lot" data-k="meas.qRes"><option value=""${me.qRes==null||me.qRes===''?' selected':''}>não testada</option>${[[-1,'rachou / duro demais'],[0,'lisa, no ponto'],[1,'mole / desabou']].map(([v,n])=>`<option value="${v}"${String(me.qRes)===String(v)?' selected':''}>${n}</option>`).join('')}</select></label>
+  ${num('meas.iceMean','Cristal de gelo medido: média (µm)',1,'microscópio a −15 °C, ≥ 300 cristais')}${num('meas.iceCv','Cristal: coeficiente de variação',.01,'desvio-padrão ÷ média')}
+  <label class="field"><span class="lbl">Viscosidade da calda (taxa : mPa·s)</span><input type="text" id="lot-meas-rheo" data-i="lot" data-k="meas.rheo" value="${esc((L.meas||{}).rheo||'')}" placeholder="10:850; 50:420; 100:300"><span class="hint">viscosímetro: taxa em s⁻¹ e viscosidade em mPa·s</span></label>${num('meas.rheoT','Temperatura da leitura (°C)',.5,'compara com o motor entre 2 e 8 °C')}</div>
  <div class="g2" style="margin-top:16px;gap:16px"><div><h3 style="margin:0 0 8px">Ficha sensorial (1–5)</h3><div class="form" style="grid-template-columns:repeat(auto-fill,minmax(120px,1fr))">${[['doce','Doçura'],['cremoso','Cremosidade'],['gelo','Sem gelo'],['corpo','Corpo'],['sabor','Intensidade'],['derr','Derretimento'],['visual','Aparência']].map(([k,n])=>`<label class="field"><span class="lbl">${n}</span><input type="number" id="lot-s-${k}" data-i="lot" data-k="sens.${k}" value="${se[k]!=null?se[k]:''}" min="1" max="5" step="1"></label>`).join('')}</div>
   <label class="field" style="margin-top:10px"><span class="lbl">Observações</span><textarea id="lot-notes" data-i="lotTxt" rows="3">${esc(L.notes||'')}</textarea></label></div>
   <div>${Object.keys(se).length?radar([...(prev?[{v:prev.sens,col:'var(--t3)'}]:[]),{v:se,col:'var(--ice)'}]):'<p class="note">Preencha a ficha para ver o perfil.</p>'}${prev?`<p class="note">Cinza: lote anterior ${esc(prev.code)}.</p>`:''}</div></div>

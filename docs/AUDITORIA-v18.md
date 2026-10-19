@@ -743,6 +743,63 @@ Um teste novo simula o relógio de 1 ms. Detalhes em `docs/ARQUITETURA-COMPUTACA
 - O perfil por escala pede provadores treinados com referências combinadas. Sem isso, as comparações valem só dentro da mesma sessão (a tela orienta).
 - A ordenação usa uma diferença mínima aproximada, sem correção para comparações múltiplas.
 
+## 5-T. v18.16 — microestrutura e reologia (§17, §18)
+
+**Auditoria do que existia:**
+- Índice de cristal mostrado em µm (heurístico, já etiquetado);
+- recristalização por amadurecimento de Ostwald com WLF;
+- curva de gordura sólida por tipo de gordura;
+- índice de desestabilização da gordura (heurístico);
+- viscosidade da calda a 4 °C por Krieger–Dougherty;
+- quenelle.
+
+Não havia:
+- frações de volume das fases;
+- concentração da matriz não congelada;
+- distribuição de tamanhos de cristal;
+- nenhuma forma de registrar ou ajustar reologia medida.
+
+**Literatura consultada** (só para comparação; nenhum número dela entra no cálculo):
+- cristais de 20–35 µm na saída da produtora e 35–45 µm depois do endurecimento; textura lisa abaixo de ~50 µm (Hartel, AIChE CEP 2019; Marshall et al., 2003; Drewett e Hartel, 2007);
+- glóbulos de gordura ≈ 1 µm, aglomerados parcialmente coalescidos de 3–100 µm, micelas de caseína de 0,3–0,4 µm (Goff e Hartel, 2013; Bolliger et al., 2000);
+- métodos: cristais ao microscópio a −15 °C com ≥ 300 cristais (Donhowe et al., 1991); bolhas por microscopia (Chang e Hartel, 2002).
+
+**Não encontrei** parâmetros publicados para a forma da distribuição de cristais nem para o tamanho das bolhas. Por isso a distribuição aparece como hipótese em dois extremos, e o tamanho das bolhas não é estimado.
+
+**Laudo → "Microestrutura e reologia":**
+- **Fases**, com o selo da natureza de cada linha:
+  - frações de volume de gelo, ar, gordura e matriz por temperatura (−30 a −4 °C), por balanço de massa; somam 100% e um teste confere;
+  - solutos na matriz e fator de crioconcentração (balanço);
+  - distância de Tg′ e viscosidade da matriz por WLF com constantes universais (semiempírico, ordem de grandeza);
+  - gordura sólida (semiempírico).
+- **Cristais (distribuição hipotética):**
+  - curva gama com a média do índice do motor e o coeficiente de variação em dois extremos (0,35 e 0,6), hoje e após 30 dias no freezer pela cinética do motor;
+  - fração acima de 50 µm em faixa;
+  - aviso "Não é medição" e como medir.
+- **Gordura, proteínas e ar:** tamanhos da literatura marcados como tal, índice de desestabilização (heurístico), fração de ar pelo overrun e "tamanho das bolhas: não estimado".
+- **Reologia da calda:**
+  - viscosidade prevista (heurístico);
+  - para os lotes da receita com leituras de viscosímetro: ajuste da lei de potência (n, K, R², classificação) e, com 4 leituras ou mais, de Herschel–Bulkley (tensão de escoamento);
+  - viscoelasticidade e tribologia declaradas fora do alcance (exigem reômetro oscilatório e tribômetro); a cremosidade percebida é conferida pelo painel (ponte física × percepção).
+
+**Validação:** duas grandezas novas na validação deixa-um-fora:
+- cristal médio medido ao microscópio (tolerância 10 µm);
+- viscosidade da calda entre 2 e 8 °C, a 50 s⁻¹, em log₁₀ (tolerância 0,15 ≈ ±40%).
+
+As tolerâncias são escolhas do app e estão declaradas no registro.
+
+**Comparação com a literatura (achado, sem correção):** a −5 °C o motor prevê cristais crescendo ~30 µm no primeiro dia; Donhowe e Hartel (1996), citados por fonte secundária, relatam 42 µm/dia. É a mesma ordem de grandeza, mas o fator de temperatura do motor tem um teto que limita a taxa no calor. Um ponto só, de fonte secundária, não justifica mudar o modelo. A comparação está registrada nos limites do modelo.
+
+**Testes:**
+- `micro.test.mjs` (5):
+  - volumes somam 1 em 4 bases de −30 a −2 °C; sem gelo acima do ponto de congelamento; matriz mais concentrada e mais viscosa no frio; ar igual ao overrun;
+  - WLF: 10¹² Pa·s em Tg′;
+  - distribuição: área 1, média certa e fração acima de 50 µm conferidas por integração independente;
+  - reologia recupera lei de potência e Herschel–Bulkley plantados;
+  - cristal e viscosidade entram na validação, e leitura fora de 2–8 °C não é comparada.
+- E2E com 3 verificações novas.
+- Node 112/112. Registro com 25 modelos.
+
 ## 6. Para publicar (requer sua autorização)
 1. Conferir a execução do workflow *Testes* na branch (inclui WebKit e o job *banco*).
 1b. Aplicar a migração 001 seguindo `supabase/README.md` (ensaio num projeto de teste primeiro). A ordem entre banco e app é indiferente.

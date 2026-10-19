@@ -1306,6 +1306,168 @@
     "status": "métodos estatísticos conferidos contra scipy; nada a validar experimentalmente",
     "live": "ponte física × percepção calculada dos lotes avaliados"
    }
+  },
+  {
+   "id": "microstructure-phases",
+   "fn": [
+    "phaseAt",
+    "phaseProfile",
+    "crystalDist",
+    "crystalAging"
+   ],
+   "class": [
+    "D",
+    "SE"
+   ],
+   "name": "Fases, matriz não congelada e cristais (hipotéticos)",
+   "version": "v18.16",
+   "equation": "Volumes: gelo = W·f(T)/0,917; gordura = F/0,93; matriz = (W − gelo) + S/1,59; ar = V_mistura·ov. Crioconcentração = S/(S + W_líquida). Matriz: log₁₀η = 12 − 17,44(T − Tg′)/(51,6 + T − Tg′) (WLF universal). Cristais: gama com média do motor e CV suposto; d³ = d0³ + K·t",
+   "parameters": [
+    {
+     "n": "densidade do gelo",
+     "v": 0.917,
+     "unit": "g/cm³",
+     "src": "tabela"
+    },
+    {
+     "n": "densidade da gordura",
+     "v": 0.93,
+     "unit": "g/cm³",
+     "src": "tabela (mesma do motor)"
+    },
+    {
+     "n": "η em Tg′",
+     "v": "10¹²",
+     "unit": "Pa·s",
+     "src": "WLF (Williams, Landel e Ferry, 1955)"
+    },
+    {
+     "n": "CV dos cristais",
+     "v": "0,35 e 0,6",
+     "unit": "",
+     "src": "sem fonte (suposição, mostrada em dois extremos)"
+    }
+   ],
+   "outputs": [
+    {
+     "k": "frações de volume",
+     "unit": "%"
+    },
+    {
+     "k": "solutos na matriz",
+     "unit": "% m/m"
+    },
+    {
+     "k": "viscosidade da matriz",
+     "unit": "Pa·s (ordem de grandeza)"
+    },
+    {
+     "k": "fração de cristais > 50 µm",
+     "unit": "% (hipotética)"
+    }
+   ],
+   "hypotheses": [
+    "Volumes aditivos",
+    "Ar pelo overrun medido ou previsto",
+    "Forma gama e autossimilar dos cristais (hipótese)",
+    "Tamanho de bolhas não estimado"
+   ],
+   "validity": "−30 a −4 °C; misturas da base do app",
+   "dataOrigin": "Curva de congelamento, composição e overrun do motor; referências de tamanho da literatura só para comparação",
+   "method": "Fórmulas fechadas; gama incompleta para a fração acima de 50 µm",
+   "tolerance": {
+    "cristal (média)": [
+     10,
+     "µm"
+    ]
+   },
+   "uncertainty": "Volumes herdam a incerteza da curva de congelamento; a distribuição de cristais não tem incerteza própria por ser hipotética",
+   "calibration": "Média medida ao microscópio entra na validação (Ciência do motor)",
+   "limits": "Taxa de recristalização do motor a −5 °C: +30 µm no primeiro dia, contra 42 µm/dia relatados por Donhowe e Hartel (1996, via fonte secundária); o fator de temperatura tem teto. Bolhas e rede de gordura não modeladas.",
+   "verification": {
+    "software": [
+     "micro.test.mjs › validação: cristal medido e viscosidade"
+    ],
+    "math": [
+     "micro.test.mjs › fases: volumes somam 1",
+     "micro.test.mjs › WLF: 10¹² Pa·s em Tg′",
+     "micro.test.mjs › distribuição de cristais hipotética"
+    ]
+   },
+   "validation": {
+    "status": "sem validação independente",
+    "live": "cristal medido nos lotes (validação deixa-um-fora)"
+   }
+  },
+  {
+   "id": "rheology-fit",
+   "fn": [
+    "parseRheo",
+    "rheoFit",
+    "rheoMeasured"
+   ],
+   "class": [
+    "D"
+   ],
+   "name": "Ajuste reológico das leituras de viscosímetro",
+   "version": "v18.16",
+   "equation": "Lei de potência η = K·γ̇^(n−1) (regressão log-log); Herschel–Bulkley τ = τ0 + K·γ̇ⁿ (varredura de τ0 + regressão log-log, mínimo da soma dos quadrados em τ)",
+   "parameters": [
+    {
+     "n": "taxa de referência para comparar com o motor",
+     "v": 50,
+     "unit": "s⁻¹",
+     "src": "escolha do app"
+    },
+    {
+     "n": "faixa de temperatura comparável",
+     "v": "2–8",
+     "unit": "°C",
+     "src": "o motor prevê a 4 °C"
+    }
+   ],
+   "outputs": [
+    {
+     "k": "n, K",
+     "unit": "—, mPa·sⁿ"
+    },
+    {
+     "k": "τ0",
+     "unit": "Pa"
+    },
+    {
+     "k": "R²",
+     "unit": ""
+    }
+   ],
+   "hypotheses": [
+    "Leituras em regime permanente",
+    "Mesma temperatura em todas as leituras do lote"
+   ],
+   "validity": "De 2 a 20 leituras com taxa e viscosidade positivas",
+   "dataOrigin": "Suas leituras de viscosímetro registradas no lote",
+   "method": "Mínimos quadrados",
+   "tolerance": {
+    "viscosidade (log₁₀)": [
+     0.15,
+     "log₁₀ mPa·s"
+    ]
+   },
+   "uncertainty": "R² do ajuste",
+   "calibration": null,
+   "limits": "Não prevê reologia a partir da receita; viscoelasticidade e tribologia exigem instrumentos que o app não usa",
+   "verification": {
+    "software": [
+     "micro.test.mjs › reologia: lei de potência e Herschel–Bulkley"
+    ],
+    "math": [
+     "micro.test.mjs › reologia: lei de potência e Herschel–Bulkley"
+    ]
+   },
+   "validation": {
+    "status": "método conferido com dados sintéticos",
+    "live": "viscosidade da calda a 4 °C × motor (validação deixa-um-fora)"
+   }
   }
  ],
  "fieldsNote": "Campos por modelo (§46): name, version, equation, parameters[{n,v,unit,src}], outputs[{k,unit}], hypotheses, validity, dataOrigin, method, tolerance{grandeza:[valor,unidade]} (critério de aceite na validação), uncertainty, calibration, validation, verification{software,math}. null = não estabelecido (não inventar). verification cita \"arquivo.test.mjs › trecho do título\" ou \"runTests › trecho\".",

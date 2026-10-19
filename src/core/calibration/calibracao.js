@@ -10,6 +10,9 @@ function fitCalibration(lots){
   if(me.icyDay!=null&&me.icyDay!==''&&+me.icyDay>0){const K=kinetics(m,st).Kvit;const implied=(Math.pow(50,3)-Math.pow(m.crystal,3))/(+me.icyDay);if(implied>0)kR.push(Math.log(implied/K));r.icy=+me.icyDay;}
   if(me.brix!=null&&me.brix!=='')r.brix=[m.brixMix,+me.brix];
   if(me.ph!=null&&me.ph!==''&&isFinite(+me.ph)){r.ph=[Math.round(m.ph*100)/100,+me.ph];phN++;}
+  /* v18.16: cristal medido ao microscópio (média, µm) e viscosidade da calda (viscosímetro, 2–8 °C, a 50 s⁻¹) */
+  if(me.iceMean!=null&&me.iceMean!==''&&+me.iceMean>0)r.ice=[m.crystal,+me.iceMean];
+  {const rm=rheoMeasured(me);if(rm&&rm.T!=null&&rm.T>=2&&rm.T<=8&&rm.eta50>0&&m.visc>0)r.visc=[Math.round(Math.log10(m.visc)*1000)/1000,Math.round(Math.log10(rm.eta50)*1000)/1000];}
   /* v18.2 · núcleo medido após N minutos no freezer → coeficiente de troca de calor */
   if(me.coreT!=null&&me.coreT!==''&&isFinite(+me.coreT)&&me.coreMin!=null&&me.coreMin!==''&&isFinite(+me.coreMin)){
    const pr=Object.assign({},PROC0,L.proc||{});if(me.drawT!=null&&me.drawT!==''&&isFinite(+me.drawT))pr.drawT=+me.drawT;const ml=+pr.poteMl||500;
