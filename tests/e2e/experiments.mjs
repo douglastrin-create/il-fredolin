@@ -205,7 +205,10 @@ check((await pg.locator('#panel-bridge').innerText()).match(/Cremosidade[\s\S]*d
 // TDS: um provador, uma amostra
 await clickA('panelReset'); await clickA('panelMethod', 'tds'); await lot('sx1');
 await taster('Ana'); await clickA('panelStart'); await clickA('panelTdsGo'); await clickA('panelTdsTap', 'doce'); await pg.waitForTimeout(250); await clickA('panelTdsTap', 'crem'); await pg.waitForTimeout(250); await clickA('panelTdsEnd'); await clickA('panelNext');
-check(await pg.evaluate(() => { const e = LOTS.find(l => l.id === 'sx1').panel.find(x => x.m === 'tds'); return e && e.seq.length === 2 && e.end > e.seq[0][0]; }) && (await pg.locator('#panel-res svg').count()) === 1, 'TDS grava a sequência no tempo e desenha as curvas');
+const tdsE = await pg.evaluate(() => { const e = LOTS.find(l => l.id === 'sx1').panel.find(x => x.m === 'tds'); return e ? JSON.stringify({ seq: e.seq, end: e.end }) : 'nada gravado'; });
+check(/"seq":\[\[[\d.]+,"doce"\],\[[\d.]+,"crem"\]\]/.test(tdsE) && JSON.parse(tdsE).end > JSON.parse(tdsE).seq[0][0], 'TDS grava a sequência no tempo: ' + tdsE);
+await pg.waitForSelector('#panel-res svg', { timeout: 5000 }).catch(() => {});
+check((await pg.locator('#panel-res svg').count()) === 1, 'TDS desenha as curvas de dominância');
 // ordenação
 await clickA('panelReset'); await clickA('panelMethod', 'rank'); for (const id of ['sx1', 'sx2', 'sx3']) await lot(id);
 for (const nome of ['Ana', 'Bia', 'Caio']) { await taster(nome); await clickA('panelStart'); for (const id of ['sx3', 'sx2', 'sx1']) await clickA('panelRank', id); await clickA('panelNext'); }
