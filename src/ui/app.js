@@ -194,6 +194,7 @@ const ACT={
  ...DOE_ACT,
  ...TEAM_ACT,
  ...V13_ACT,
+ ...SENS_ACT,
  ...AT_ACT,
  ...MAT_ACT,
  ...FLOW_ACT,
@@ -238,6 +239,7 @@ const INP={
  ...DOE_INP,
  ...TEAM_INP,
  ...V13_INP,
+ ...SENS_INP,
  ...AT_INP,
  ...MAT_INP,
  ...FLOW_INP,
@@ -273,6 +275,7 @@ const CHG={
  ...DOE_CHG,
  ...TEAM_CHG,
  ...V13_CHG,
+ ...SENS_CHG,
  ...MAT_CHG
 };
 /* importar = ler, planejar e mostrar o plano; nada é gravado antes de "Restaurar" */

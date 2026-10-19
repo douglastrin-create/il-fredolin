@@ -713,7 +713,7 @@
    "method": "Fórmula fechada",
    "tolerance": null,
    "uncertainty": null,
-   "calibration": "Painel cego (escala do ponto ideal) vira preferência da casa",
+   "calibration": "Painel cego (escala do ponto ideal) vira preferência da casa Conferível com o painel: Ciência → Painel cego → Física × percepção (doçura no ponto ideal × doçura prevista).",
    "verification": {
     "software": [],
     "math": []
@@ -1222,6 +1222,89 @@
    "validation": {
     "status": "sem validação independente",
     "live": "calibração pela calda medida (Maturação) e pelo núcleo do pote (lotes)"
+   }
+  },
+  {
+   "id": "sensory-panel",
+   "fn": [
+    "triAnalyze",
+    "anova2",
+    "friedman",
+    "penalty",
+    "tdsCurves",
+    "sensBridge"
+   ],
+   "class": [
+    "D"
+   ],
+   "name": "Análise sensorial e ponte física × percepção",
+   "version": "v18.15",
+   "equation": "Triângulo: P(X ≥ k | n, 1/3) binomial exata. Perfil: ANOVA de dois fatores sem interação (amostra × avaliador), IC da média com o QME, LSD protegido. Ordenação: χ² de Friedman = 12/(nk(k+1))·ΣR² − 3n(k+1). Penalidade: queda média da aceitação dos grupos fora do ideal. TDS: taxa de dominância por instante padronizado; chance 1/k e significância P0 + 1,645·√(P0(1−P0)/n). Ponte: Pearson com IC de 95% por z de Fisher",
+   "parameters": [
+    {
+     "n": "alfa",
+     "v": 0.05,
+     "unit": "",
+     "src": "convenção"
+    },
+    {
+     "n": "lotes mínimos para concluir a ponte",
+     "v": 5,
+     "unit": "lotes",
+     "src": "escolha do app (com menos, o IC de r é largo demais)"
+    },
+    {
+     "n": "grupo relevante na penalidade",
+     "v": "20%",
+     "unit": "das respostas",
+     "src": "prática comum na análise de penalidade"
+    }
+   ],
+   "outputs": [
+    {
+     "k": "p do triângulo",
+     "unit": ""
+    },
+    {
+     "k": "médias com IC por atributo",
+     "unit": "escala 0–10"
+    },
+    {
+     "k": "parte da variação entre avaliadores",
+     "unit": "%"
+    },
+    {
+     "k": "r entre percepção e grandeza física",
+     "unit": ""
+    }
+   ],
+   "hypotheses": [
+    "Provadores independentes, amostras codificadas e ordem balanceada",
+    "Escala tratada como intervalar (prática do perfil descritivo)",
+    "Na ponte, a relação é linear dentro da faixa provada"
+   ],
+   "validity": "Só para o painel, as receitas e a faixa provadas; preferência não é propriedade universal",
+   "dataOrigin": "Avaliações humanas gravadas nos lotes; grandezas físicas medidas no lote ou previstas pelo motor",
+   "method": "Fórmulas fechadas; distribuições F, t, χ² e binomial pela função beta e gama incompletas",
+   "tolerance": null,
+   "uncertainty": "Intervalos de 95% em todas as médias e correlações; variação entre avaliadores reportada",
+   "calibration": "Não calibra nada sozinho; o ponto ideal continua alimentando a preferência da casa (CAL.pref)",
+   "limits": "Sem correção para comparações múltiplas na ordenação; TDS com tempo padronizado perde a duração absoluta (mostrada à parte); correlação não é causa",
+   "verification": {
+    "software": [
+     "sensory.test.mjs › triângulo: decide pela binomial",
+     "sensory.test.mjs › ponte: precisa de 5 lotes"
+    ],
+    "math": [
+     "sensory.test.mjs › distribuições: F, qui-quadrado",
+     "sensory.test.mjs › perfil por escala: ANOVA",
+     "sensory.test.mjs › ordenação: Friedman",
+     "sensory.test.mjs › correlação física × percepção"
+    ]
+   },
+   "validation": {
+    "status": "métodos estatísticos conferidos contra scipy; nada a validar experimentalmente",
+    "live": "ponte física × percepção calculada dos lotes avaliados"
    }
   }
  ],

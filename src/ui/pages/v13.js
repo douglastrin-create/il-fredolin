@@ -230,33 +230,7 @@ function protocolCard(L){const P=protocol(L);const ok=P.filter(p=>p[1]).length;c
 const has0=v=>v!=null&&v!==''?esc(v):'';
 
 /* ---------- PAINEL CEGO ---------- */
-const PANELKEY='fredolin_v13_panel';
-const JAR=[[-2,'muito pouco'],[-1,'pouco'],[0,'ideal'],[1,'muito'],[2,'demais']];
-const PANEL_Q=[['jDoce','Doçura','jar'],['jDuro','Dureza na colher','jar'],['jCrem','Cremosidade','jar'],['hed','Gostei (1–9)','hed'],['int','Intensidade do sabor (1–5)','s5'],['pers','Persistência (1–5)','s5']];
-function panelState(){if(!U.panel)U.panel=LS.get(PANELKEY)||{lots:[],codes:{},order:[],taster:'',i:-1,cur:{},reveal:false};return U.panel;}
-const savePanel=()=>LS.set(PANELKEY,U.panel);
-function shuffle(a,seed){const r=[...a];let s=seed||1;for(let i=r.length-1;i>0;i--){s=(s*9301+49297)%233280;const j=Math.floor(s/233280*(i+1));[r[i],r[j]]=[r[j],r[i]];}return r;}
-function panelStats(L){const pn=(L.panel||[]);const st={};PANEL_Q.forEach(([k])=>{const v=pn.map(x=>x[k]).filter(v=>v!==''&&v!=null).map(Number);st[k]=v.length?{m:v.reduce((a,b)=>a+b,0)/v.length,sd:v.length>1?Math.sqrt(v.reduce((a,b)=>a+b*b,0)/v.length-Math.pow(v.reduce((a,b)=>a+b,0)/v.length,2)):0,n:v.length}:null;});return st;}
-function pgDegustacao(){const P=panelState();const lots=P.lots.map(id=>LOTS.find(l=>l.id===id)).filter(Boolean);
- const pick=`<div class="card"><h2>1 · Amostras da sessão</h2><p class="note" style="margin-top:0">Escolha de 2 a 6 lotes. Cada um recebe um código de 3 dígitos e a ordem muda a cada provador, para que nome e posição não influenciem.</p>
-  ${LOTS.length?`<div style="display:flex;flex-direction:column;gap:6px">${LOTS.slice(0,24).map(L=>`<label class="row" style="gap:8px;font-size:13.5px"><input type="checkbox" data-c="panelLot" data-k="${L.id}" id="pl-${L.id}"${P.lots.includes(L.id)?' checked':''}${P.i>=0?' disabled':''}> <span class="mono">${esc(L.code)}</span> ${esc(L.name)} <span class="muted">${esc(L.date)}</span></label>`).join('')}</div>`:'<p class="muted">Registre lotes em "Lotes e calibração" primeiro.</p>'}</div>`;
- if(P.i<0)return`<div class="pg"><div><h1>Painel cego</h1><p class="lead">Degustação às cegas por atributo, presa ao lote e à receita. As notas de doçura e dureza na escala do ponto ideal ensinam ao motor o gosto da casa.</p></div>${pick}
-  <div class="card"><h2>2 · Provador</h2><div class="row"><input type="text" id="panelTaster" data-i="panelTaster" value="${esc(P.taster)}" placeholder="Nome ou iniciais" style="max-width:240px" aria-label="Provador"><button class="btn pri" data-a="panelStart"${lots.length>=2?'':' disabled'}>Começar a provar</button></div><p class="note">Sirva todas as amostras na mesma temperatura (a da vitrine), 30 g por copo, com água entre elas.</p></div>
-  ${lots.length?panelResults(lots,P):''}</div>`;
- const order=P.order;const L=LOTS.find(l=>l.id===order[P.i]);const code=P.codes[order[P.i]];const cur=P.cur;
- const q=([k,n,t])=>`<div class="field"><span class="lbl">${n}</span><div class="chips" role="group" aria-label="${n}">${(t==='jar'?JAR:t==='hed'?[1,2,3,4,5,6,7,8,9].map(v=>[v,String(v)]):[1,2,3,4,5].map(v=>[v,String(v)])).map(([v,l])=>`<button data-a="panelSet" data-v="${k}|${v}" aria-pressed="${String(cur[k])===String(v)}">${t==='jar'?(v>0?'+':'')+v+' '+l:l}</button>`).join('')}</div></div>`;
- return`<div class="pg"><div><h1>Painel cego</h1><p class="lead">Provador: <b>${esc(P.taster||'sem nome')}</b> · amostra ${P.i+1} de ${order.length}</p></div>
-  <div class="card"><div class="row"><h2 style="margin:0">Amostra <span class="mono c-ice" style="font-size:22px">${esc(code)}</span></h2><span class="sp"></span><button class="btn sm" data-a="panelCancel">Cancelar provador</button></div>
-  <div style="display:flex;flex-direction:column;gap:14px;margin-top:12px">${PANEL_Q.map(q).join('')}
-   <label class="field"><span class="lbl">Comentário</span><input type="text" id="panelNote" data-i="panelNote" value="${esc(cur.note||'')}" placeholder="gelado, arenoso, aroma fraco…"></label></div>
-  <div class="row" style="margin-top:14px"><span class="sp"></span><button class="btn pri" data-a="panelNext"${cur.hed?'':' disabled'}>${P.i+1<order.length?'Próxima amostra':'Concluir provador'}</button></div></div>
-  ${L?'':'<p class="c-warn">Lote não encontrado.</p>'}</div>`;}
-function panelResults(lots,P){const rows=lots.map(L=>({L,st:panelStats(L)}));const any=rows.some(r=>r.st.hed);if(!any)return'';
- const fmt=s=>s?f1(s.m)+'<small class="muted"> ±'+f1(s.sd)+'</small>':'—';const best=rows.filter(r=>r.st.hed).sort((a,b)=>b.st.hed.m-a.st.hed.m)[0];
- return`<div class="card"><div class="row"><h2 style="margin:0">Resultados</h2><span class="sp"></span><button class="btn sm" data-a="panelReveal">${P.reveal?'Ocultar nomes':'Revelar amostras'}</button><button class="btn sm" data-a="panelReset">Nova sessão</button></div>
-  <div class="tw" style="margin-top:10px"><table class="tbl"><thead><tr><th>Amostra</th><th class="r">Provadores</th><th class="r">Gostei (1–9)</th><th class="r">Doçura</th><th class="r">Dureza</th><th class="r">Cremosidade</th><th class="r">Intensidade</th><th class="r">Persistência</th></tr></thead><tbody>
-  ${rows.map(({L,st})=>`<tr${best&&best.L===L?' style="background:var(--ok-a)"':''}><td><span class="mono c-ice">${esc(P.codes[L.id]||'')}</span>${P.reveal?' · '+esc(L.name)+' <span class="muted">'+esc(L.code)+'</span>':''}</td><td class="r mono">${(L.panel||[]).length}</td>${['hed','jDoce','jDuro','jCrem','int','pers'].map(k=>`<td class="r mono">${fmt(st[k])}</td>`).join('')}</tr>`).join('')}</tbody></table></div>
-  <p class="note">Doçura, dureza e cremosidade: 0 é o ponto ideal; positivo = sobra, negativo = falta. ${CAL.pref&&CAL.pref.n?'Preferência da casa aprendida ('+CAL.pref.n+' lote(s)): doçura '+(CAL.pref.pod>0?'+':'')+f1(CAL.pref.pod)+' pp de POD, água congelada '+(CAL.pref.fz>0?'+':'')+f0(CAL.pref.fz)+' pp. Aplicada nas faixas do laudo com "Aplicar calibração" ligado.':'Com 3+ provadores por lote o motor começa a ajustar as faixas de doçura e dureza para o gosto da casa.'}</p></div>`;}
+/* painel sensorial: ui/pages/sensorial.js (v18.15) */
 
 /* ---------- BIBLIOTECA: índice dos mestres (Web Worker), busca por ingrediente, parecidas, comparação, versões ---------- */
 const MIDX={key:null,list:null,busy:false,worker:null,failed:false};
@@ -346,14 +320,6 @@ const V13_ACT={
  infToggle:v=>{const r=S.recipe.find(x=>x.id===v);if(!r)return;if(r.inf)delete r.inf;else r.inf=1;U.bal=null;render();toast(r.inf?'Infusionado e coado: só o que ele solta entra na mistura':'Volta a entrar inteiro na mistura');},
  meltTimer:v=>{if(U.melt&&U.melt.lot===v){U.melt=null;clearInterval(meltTick);render();return;}U.melt={lot:v,end:Date.now()+MELT_MS};clearInterval(meltTick);
   meltTick=setInterval(()=>{if(!U.melt){clearInterval(meltTick);return;}if(Date.now()>=U.melt.end){clearInterval(meltTick);U.melt=null;toast('10 minutos: pese o derretido');try{navigator.vibrate&&navigator.vibrate([300,150,300]);}catch(e){}}render();},1000);render();},
- panelStart:()=>{const P=panelState();if(P.lots.length<2)return;if(!Object.keys(P.codes).length||P.lots.some(id=>!P.codes[id])){const used=new Set();P.lots.forEach(id=>{let c;do{c=String(100+Math.floor(Math.random()*900));}while(used.has(c));used.add(c);P.codes[id]=c;});}
-  P.order=shuffle(P.lots,Date.now()%233280);P.i=0;P.cur={};savePanel();render();},
- panelSet:v=>{const[k,x]=v.split('|');const P=panelState();P.cur[k]=+x;savePanel();render();},
- panelNext:()=>{const P=panelState();const L=LOTS.find(l=>l.id===P.order[P.i]);if(L){(L.panel=L.panel||[]).push(Object.assign({t:P.taster||'',code:P.codes[L.id],date:today()},P.cur));saveLot(L);}
-  P.i++;P.cur={};if(P.i>=P.order.length){P.i=-1;P.taster='';toast('Avaliações salvas nos lotes');}savePanel();render();},
- panelCancel:()=>{const P=panelState();P.i=-1;P.cur={};savePanel();render();},
- panelReveal:()=>{const P=panelState();P.reveal=!P.reveal;savePanel();render();},
- panelReset:()=>{U.panel={lots:[],codes:{},order:[],taster:'',i:-1,cur:{},reveal:false};savePanel();render();},
  libTipo:v=>{U.libTipo=v;U.libN=0;render();},libVitF:v=>{U.libVitF=+v;U.libN=0;render();},
  simOpen:v=>{U.simOf=v;masterIndex();render();},simClose:()=>{U.simOf=null;render();},
  cmpToggle:v=>{const c=U.cmp=U.cmp||[];const i=c.indexOf(v);if(i>=0)c.splice(i,1);else{c.push(v);if(c.length>2)c.shift();}render();if(c.length===2)scrollTopAll();},
@@ -366,15 +332,12 @@ const V13_ACT={
 const V13_INP={
  comp:(v,t)=>{const c=S.comps[+t.dataset.k];if(!c)return;const f=t.dataset.f;c[f]=f==='name'?v:num(v,0,60,0);render();},
  compG:(v,t)=>{const c=S.comps[+t.dataset.k];if(c&&c.recipe[+t.dataset.j]){c.recipe[+t.dataset.j].g=num(v,0,1e5,0);render();}},
- panelTaster:v=>{panelState().taster=v;savePanel();},
- panelNote:v=>{panelState().cur.note=v;savePanel();},
  saveNote:v=>{U.saveNote=v;}
 };
 const V13_CHG={
  equipSel:t=>{const E=EQUIP[t.value];if(E){Object.assign(S.proc,E.proc);U.bal=null;toast('Conjunto aplicado: '+E.n);}else S.proc.equip='';},
  comp:t=>{const c=S.comps[+t.dataset.k];if(c)c[t.dataset.f]=t.value;},
  compIng:t=>{const c=S.comps[+t.dataset.k];if(c&&c.recipe[+t.dataset.j])c.recipe[+t.dataset.j].id=t.value;},
- panelLot:t=>{const P=panelState();const id=t.dataset.k;P.lots=P.lots.filter(x=>x!==id);if(t.checked&&P.lots.length<6)P.lots.push(id);P.codes={};savePanel();},
  libTipoSel:t=>{U.libTipo=t.value;U.libN=0;}
 };
 

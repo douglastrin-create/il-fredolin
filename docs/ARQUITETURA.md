@@ -145,7 +145,7 @@ Principais campos de `PROC0`:
 
 | Formato | Versão | Onde |
 |---|---|---|
-| App | `VERSION = 'v18.14'` | `ui/shell.js` (mostrado no rodapé) |
+| App | `VERSION = 'v18.15'` | `ui/shell.js` (mostrado no rodapé) |
 | Backup (JSON) | `{app: 'Il Fredolin', schema: 2, …coleções, tomb}` | `data/local/backup.js` |
 | Registro na nuvem | linha `records {workspace_id, col, id, data, deleted, updated_at, ver, base_ver, force}` | `supabase/migrations/*`, `data/sync/supabase.js` |
 | Registro de modelos | `il-fredolin/model-registry@2` (campos do §46; embutido no app pelo build) | `docs/model-registry.json` |

@@ -120,7 +120,7 @@ else await pg.evaluate(() => { ACT.sciOpen('overrun'); });
 check(await pg.evaluate(() => S.page === 'ciencia' && U.sciOpen === 'overrun'), 'etiqueta de natureza abre a ficha do modelo na página Ciência do motor');
 await pg.waitForSelector('#sci-val', { timeout: 10000 }); await pg.waitForTimeout(200);
 const sci = await pg.locator('#main').innerText();
-check((await pg.locator('#main details.card').count()) === 22, 'página lista as 22 fichas de modelo');
+check((await pg.locator('#main details.card').count()) === 23, 'página lista as 23 fichas de modelo');
 check(/Três níveis de avaliação/.test(sci) && /Verificação matemática/.test(sci) && /Nenhum modelo do app é classificado como validado/.test(sci), 'três níveis explicados, sem modelo "validado"');
 const val = await pg.locator('#sci-val').innerText();
 const vt = val.replace(/\n/g, ' '); const nOv = +(vt.match(/Overrun\s+(\d+)/) || [])[1];
@@ -175,5 +175,43 @@ await pg.waitForSelector('#bench-tbl', { timeout: 90000 });
 const bt = await pg.locator('#bench-card').innerText();
 check((await pg.locator('#bench-tbl tbody tr').count()) === 12 && /Web Worker aberto em/.test(bt), 'medição do aparelho: 12 operações, rodando no Web Worker');
 check(await pg.evaluate(() => JSON.parse(localStorage.getItem('fredolin_bench_v1'))[0].ops.length === 12), 'resultado guardado no aparelho');
+// Painel sensorial (v18.15): método pelo objetivo, triângulo, perfil por escala, TDS, ordenação e física × percepção
+await pg.evaluate(() => { const p = PRESETS.find(x => x.name === 'Fiordilatte');
+  for (let i = 1; i <= 3; i++) LOTS.unshift({ id: 'sx' + i, code: 'SX' + i, name: 'Sensorial ' + i, date: '2026-10-18', tipo: 'crema', vit: -12, recipe: p.recipe.map(([id, g]) => ({ id, g: id === 'creme35' ? g + i * 30 : g })), proc: {}, meas: {}, panel: [] });
+  U.panel = null; localStorage.removeItem('fredolin_v13_panel'); S.page = 'lotes'; U.sub = { lotes: 'painel' }; renderNow(); });
+const clickA = async (a, v) => { await pg.locator(`button[data-a="${a}"]${v != null ? `[data-v="${v}"]` : ''}`).first().click(); };
+const lot = async id => { await pg.locator(`input[data-c="panelLot"][data-k="${id}"]`).check(); };
+const taster = async n => { await pg.locator('#panelTaster').fill(n); await pg.locator('#panelTaster').dispatchEvent('input'); };
+check(/O que você quer saber/.test(await pg.locator('#main').innerText()), 'painel começa pela pergunta do experimento');
+// triângulo com 3 provadores: dois acertam, um erra
+await clickA('panelMethod', 'tri'); await lot('sx1'); await lot('sx2');
+for (const [nome, acerta] of [['Ana', true], ['Bia', true], ['Caio', false]]) {
+  await taster(nome); await clickA('panelStart');
+  const T = await pg.evaluate(() => U.panel.tri); const odd = T.lay.split('').filter(c => c === 'A').length === 1 ? 'A' : 'B';
+  const idx = acerta ? T.lay.indexOf(odd) : T.lay.split('').findIndex(c => c !== odd);
+  await clickA('panelTri', idx); await clickA('panelNext'); }
+let pres = await pg.locator('#panel-res').innerText();
+check(/Provadores\s+3/.test(pres) && /Acertaram o copo diferente\s+2/.test(pres) && /diferença não detectada/.test(pres) && /não prova que as versões são iguais/.test(pres), 'triângulo: 2 de 3, sem diferença detectada e sem concluir igualdade');
+check(await pg.evaluate(() => LOTS.find(l => l.id === 'sx1').panel.filter(e => e.m === 'tri').length === 3 && new Set(LOTS.find(l => l.id === 'sx2').panel.map(e => e.lay)).size === 3), 'cada provador recebeu um arranjo de copos diferente, gravado nos dois lotes');
+// perfil por escala com 2 provadores
+await clickA('panelReset'); await clickA('panelMethod', 'qda'); await lot('sx1'); await lot('sx2'); await lot('sx3');
+for (const [nome, base] of [['Ana', 3], ['Bia', 4]]) { await taster(nome); await clickA('panelStart');
+  for (let k = 0; k < 3; k++) { const id = await pg.evaluate(() => U.panel.order[U.panel.i]); const n = +id.slice(2);
+    for (const a of ['doce', 'crem', 'corpo', 'gran']) await clickA('panelSet', `${a}|${Math.min(10, base + (a === 'crem' ? 2 * n : 1))}`);
+    await clickA('panelNext'); } }
+pres = await pg.locator('#panel-res').innerText();
+check(/Cremosidade/.test(pres) && /sim/.test(pres) && /da variação/.test(pres), 'perfil: ANOVA detecta a diferença de cremosidade e mostra a variação entre avaliadores');
+check((await pg.locator('#panel-bridge').innerText()).match(/Cremosidade[\s\S]*dados insuficientes/) != null, 'física × percepção: com 3 lotes, sem conclusão');
+// TDS: um provador, uma amostra
+await clickA('panelReset'); await clickA('panelMethod', 'tds'); await lot('sx1');
+await taster('Ana'); await clickA('panelStart'); await clickA('panelTdsGo'); await clickA('panelTdsTap', 'doce'); await pg.waitForTimeout(250); await clickA('panelTdsTap', 'crem'); await pg.waitForTimeout(250); await clickA('panelTdsEnd'); await clickA('panelNext');
+check(await pg.evaluate(() => { const e = LOTS.find(l => l.id === 'sx1').panel.find(x => x.m === 'tds'); return e && e.seq.length === 2 && e.end > e.seq[0][0]; }) && (await pg.locator('#panel-res svg').count()) === 1, 'TDS grava a sequência no tempo e desenha as curvas');
+// ordenação
+await clickA('panelReset'); await clickA('panelMethod', 'rank'); for (const id of ['sx1', 'sx2', 'sx3']) await lot(id);
+for (const nome of ['Ana', 'Bia', 'Caio']) { await taster(nome); await clickA('panelStart'); for (const id of ['sx3', 'sx2', 'sx1']) await clickA('panelRank', id); await clickA('panelNext'); }
+pres = await pg.locator('#panel-res').innerText();
+check(/Friedman/.test(pres) && /Soma dos postos/.test(pres), 'ordenação com teste de Friedman');
+check(await pg.evaluate(() => document.documentElement.scrollWidth <= 390), 'painel sem rolagem horizontal a 390 px');
+await pg.evaluate(() => { LOTS = LOTS.filter(L => !String(L.id).startsWith('sx')); U.panel = null; });
 check(!errs.length, 'sem erros de página ' + errs.join(' | '));
 await b.close(); srv.close(); process.exit(fails.length ? 1 : 0);

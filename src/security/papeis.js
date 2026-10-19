@@ -15,8 +15,8 @@ const PAGE_ROLES={ciencia:'mc',bancada:'mc',creator:'mc',laudo:'mc',congelamento
  componentes:'mc',degustacao:'mcs',sazonal:'mc'};
 /* o Sous Chef só pode estas ações; o Chef pode tudo menos estas */
 const SOUS_ACT=new Set(['go','sub','defMode','defSym','defClr','defOpen','defOpenB','defCat','navTog','toTop','flowStart','flowNext','flowBack','flowDisc','flowOpen','flowColor','flowView','flowLot','flowNotify','chk','unchk','copy','lotNew','lotOpen','lotSave','lotConsume','defect','execRun','logout','logoutYes','logoutNo','syncNow','testRun','delNo','authMode','authGo',
- 'meltTimer','fam','palOpen','palClose','palRun','panelStart','panelSet','panelNext','panelCancel','panelReveal','panelReset']);
-const SOUS_INP=new Set(['flowLabel','flowMeas','prodG','lot','lotTxt','auth','panelTaster','panelNote','palQ']),SOUS_CHG=new Set(['defChk','lot','panelLot']);
+ 'meltTimer','fam','palOpen','palClose','palRun','panelStart','panelSet','panelNext','panelCancel','panelReveal','panelReset','panelMethod','panelAttr','panelTri','panelRank','panelRankReset','panelTdsGo','panelTdsTap','panelTdsEnd']);
+const SOUS_INP=new Set(['flowLabel','flowMeas','prodG','lot','lotTxt','auth','panelTaster','panelNote','panelCrit','palQ']),SOUS_CHG=new Set(['defChk','lot','panelLot']);
 const CHEF_DENY_ACT=new Set(['snapRestore','expJson','expCsv','impGo','impDel','memInvite','memDel','memDelYes','teamReload']),CHEF_DENY_INP=new Set(['cost','costCap']),CHEF_DENY_CHG=new Set(['memRole']);
 /* telas de entrada e saída funcionam para qualquer perfil (inclusive antes de saber o perfil) */
 const ALWAYS_ACT=new Set(['uncMC','uncMCStop','benchRun','benchStop','benchCopy','snapNow','sciOpen','offDiag','offRepair','appReload','authGo','authMode','authRetry','logout','logoutYes','logoutNo','syncNow','rejRetry','rejExport','rejDrop','rejDropYes','rejDropNo']);

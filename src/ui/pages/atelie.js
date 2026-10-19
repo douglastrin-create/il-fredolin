@@ -292,7 +292,7 @@ function sensRadar(a,b){const S0=230,c=S0/2,r0=80,n=SENS_AX.length;const pt=(k,v
  SENS_AX.forEach(([k,n2],i)=>{const[x,y]=pt(i,1.2);g+=`<text x="${x}" y="${y+3}" text-anchor="middle" font-size="9" fill="var(--t2)">${n2}</text>`;});
  const poly=(p,st)=>`<polygon points="${SENS_AX.map(([k],i)=>pt(i,Math.max(.02,p[k]/100)).map(x=>x.toFixed(1)).join(',')).join(' ')}" ${st}/>`;
  if(a)g+=poly(a,'fill="rgba(125,211,252,.2)" stroke="var(--ice)" stroke-width="1.6"');if(b)g+=poly(b,'fill="rgba(251,146,60,.12)" stroke="#fb923c" stroke-width="1.6" stroke-dasharray="4 3"');
- return`<svg viewBox="-24 -8 ${S0+48} ${S0+16}" style="width:100%;max-width:300px;height:auto;display:block;margin:auto" role="img" aria-label="Perfil sensorial previsto">${g}</svg>`;}
+ return`<svg viewBox="-24 -8 ${S0+48} ${S0+16}" style="width:100%;max-width:300px;height:auto;display:block;margin:auto" role="img" aria-label="Índices do motor ligados à percepção">${g}</svg>`;}
 
 /* ---------- 4. EXPLORADOR DE VARIAÇÕES ----------
    Gera variações por operadores de criação (troca de açúcares, gordura, proteína, laticínio fermentado,
@@ -436,8 +436,8 @@ function labAtelie(m,F,sc){
     <div class="atlist">${E.list.slice(0,8).map((x,i)=>`<button data-a="atPick" data-v="${i}" aria-pressed="${+U.atPick===i}"><span class="mono ${x.q>=93?'c-ok':x.q>=80?'c-warn':'c-crit'}">${f1(x.q)}</span> ${esc(x.labs.join(' · '))}</button>`).join('')}</div>`
    :'<p class="muted" style="font-size:12.5px">Toque em Explorar para gerar as variações da receita atual.</p>'}</div></div>
  ${(()=>{const sA=sensProfile(analyze(stReal(S)));const sB=pk&&pk.sens;if(!sA)return'';
-  return`<div class="card"><h2>Perfil sensorial previsto</h2><div class="atwheel">${sensRadar(sA,sB)}<div>${SENS_AX.map(([k,n0,n])=>`<div class="kv"><span>${n}</span><span class="mono">${f0(sA[k])}${sB?` <span style="color:#fb923c">→ ${f0(sB[k])}</span>`:''}</span></div>`).join('')}
-   <p class="note" style="margin:8px 0 0">Azul: receita atual a ${fT(S.proc.serveFrom==='pote'?poteServeTemp(S):S.vit)} °C${sB?'. Laranja: variação selecionada no explorador':''}. Previsão a partir do motor (doçura corrigida pela temperatura, firmeza pela água congelada, cremosidade por gordura, sólidos e cristal, aroma pela volatilidade no frio). Confirme no Painel cego.</p></div></div></div>`;})()}
+  return`<div class="card"><h2>Índices do motor ligados à percepção</h2><div class="atwheel">${sensRadar(sA,sB)}<div>${SENS_AX.map(([k,n0,n])=>`<div class="kv"><span>${n}</span><span class="mono">${f0(sA[k])}${sB?` <span style="color:#fb923c">→ ${f0(sB[k])}</span>`:''}</span></div>`).join('')}
+   <p class="note" style="margin:8px 0 0">Azul: receita atual a ${fT(S.proc.serveFrom==='pote'?poteServeTemp(S):S.vit)} °C${sB?'. Laranja: variação selecionada no explorador':''}. Previsão a partir do motor (doçura corrigida pela temperatura, firmeza pela água congelada, cremosidade por gordura, sólidos e cristal, aroma pela volatilidade no frio). <b>Não é avaliação sensorial</b>: são índices físicos do motor, em escala 0–100, que só apontam para onde a percepção pode ir. Quem diz como o gelato é percebido é o Painel cego.</p></div></div></div>`;})()}
  <div class="card atcard"><div class="row"><span class="lbl" style="margin:0">Carta de método · ${esc(card[2])}</span><span class="sp"></span><button class="btn sm" data-a="atCard">Tirar outra carta</button></div><h3>${esc(card[0])}</h3><p>${esc(card[1])}</p></div>`;}
 function hydCard(E,pr){const keys={};const sh=blendShares(E.parts);for(const k in sh)if(NCOMP[k]&&NCOMP[k].dose)keys[k]=sh[k];if(!Object.keys(keys).length)return'';
  const hy=hydRun(keys,pr);const W=600,H=170,L=32,R=8,T=14,B=34;const n=4,sw=(W-L-R)/n;const sx=(i,f)=>L+(i+f)*sw,sy=v=>T+(1-v)*(H-T-B);

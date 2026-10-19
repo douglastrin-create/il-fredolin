@@ -686,6 +686,63 @@ Os próprios números expuseram um **defeito do meu método de medição**. Os t
 
 Um teste novo simula o relógio de 1 ms. Detalhes em `docs/ARQUITETURA-COMPUTACAO.md` §6. Node 100/100.
 
+## 5-S. v18.15 — sistema sensorial e ponte física × percepção (§24, §25)
+
+**Auditoria do que existia:**
+
+| # | Achado | Consequência |
+|---|---|---|
+| 1 | Um método só: ponto ideal (doçura, dureza, cremosidade) + aceitação 1–9 + intensidade e persistência | Não respondia "são diferentes?", não media intensidade de atributos, não via o sabor no tempo |
+| 2 | Resultados com média e desvio populacional, sem intervalo nem teste | A melhor amostra era destacada mesmo sem diferença estatística |
+| 3 | Ordem sorteada por provador, sem balanceamento | Posição e efeito residual não se compensavam |
+| 4 | 6 dos 14 atributos do §24 cobertos | Faltavam acidez, amargor, salinidade, corpo, frio, elasticidade, granulosidade, derretimento na boca, residual de gordura e o tempo |
+| 5 | Ateliê mostrava um "Perfil sensorial previsto" (0–100) calculado da receita | Parecia uma prova sensorial, o que o §24 proíbe |
+| 6 | Nenhuma ligação entre o que se mede e o que se percebe | Não havia como conferir os modelos de doçura × temperatura e dureza com o painel |
+
+**O que mudou:**
+- **O objetivo escolhe o método** (Painel cego):
+  - triângulo ("são diferentes?");
+  - perfil por escala 0–10 com âncoras ("quanto de cada atributo?");
+  - ponto ideal + aceitação, como antes ("gostam? o que ajustar?");
+  - ordenação ("em que ordem?");
+  - dominância temporal, TDS ("como o sabor evolui na boca?").
+- **Léxico dos 14 atributos do §24**, com definição, âncoras e a grandeza física ligada a cada um quando ela existe. Amargor, persistência e liberação temporal não têm grandeza no app, e o léxico diz isso em vez de inventar uma.
+- **Cegueira e balanceamento:**
+  - código de 3 dígitos por amostra;
+  - ordem por rotação de quadrado latino, invertida nos provadores ímpares;
+  - no triângulo, os 6 arranjos de copos se alternam entre os provadores.
+- **Estatística** (`core/sensory/painel.js`), conferida contra o scipy 1.18:
+  - triângulo: binomial exata e mínimo de acertos para 5%. Quando não detecta diferença, a tela diz que isso **não prova que as versões são iguais**;
+  - perfil: ANOVA amostra × avaliador, médias com intervalo de 95%, LSD protegido e a **parte da variação que vem dos avaliadores**;
+  - aceitação: ANOVA e **análise de penalidade** (quanto cada desvio do ideal custa na nota);
+  - ordenação: Friedman;
+  - TDS: curvas de dominância com as linhas de acaso e de significância (Pineau et al., 2009).
+- **Física × percepção** (`core/sensory/ponte.js`): lote a lote, média do painel × grandeza física do mesmo lote (medida quando registrada, senão prevista), com r, intervalo de 95% e a variação entre avaliadores.
+  - Conclusão só com 5 lotes ou mais.
+  - Também confere duas hipóteses do próprio motor contra o painel: doçura prevista na temperatura × ponto ideal de doçura, e água congelada × ponto ideal de dureza.
+  - A tela avisa que correlação não é causa e que o resultado vale para este painel e estas receitas.
+- **Ateliê:** o perfil calculado passou a se chamar "Índices do motor ligados à percepção", com o aviso de que **não é avaliação sensorial**.
+- **Preferência da casa:** a aceitação e o ponto ideal aparecem como "preferência deste painel", não como verdade universal.
+
+**Dados:** cada avaliação é gravada no lote, com método e sessão, e sincroniza com a equipe sem mudança no banco. As avaliações antigas continuam valendo como "ponto ideal + aceitação". O Sous Chef pode conduzir todos os métodos.
+
+**Testes:**
+- `sensory.test.mjs` (7):
+  - F, χ², t e binomial contra o scipy;
+  - mínimo de acertos do triângulo para 6 a 36 provadores;
+  - ANOVA com F, p e QME iguais aos do scipy e avaliador incompleto excluído;
+  - Friedman;
+  - Pearson com intervalo de 95%;
+  - penalidade e TDS;
+  - ponte (mínimo de 5 lotes, relação plantada encontrada, valor medido no lugar do previsto, atributo sem grandeza sem nada inventado).
+- E2E com 8 verificações novas pela interface: triângulo com 3 provadores (2 acertos, sem concluir igualdade, arranjos diferentes gravados nos dois lotes), perfil com ANOVA e variação entre avaliadores, física × percepção sem conclusão com 3 lotes, TDS gravando a sequência no tempo, ordenação com Friedman, 390 px sem rolagem horizontal.
+- Node 107/107. Registro com 23 modelos.
+
+**Limites:**
+- Os métodos estão prontos, mas **ainda não há avaliação real com eles**. A ponte só conclui algo depois de 5 lotes avaliados.
+- O perfil por escala pede provadores treinados com referências combinadas. Sem isso, as comparações valem só dentro da mesma sessão (a tela orienta).
+- A ordenação usa uma diferença mínima aproximada, sem correção para comparações múltiplas.
+
 ## 6. Para publicar (requer sua autorização)
 1. Conferir a execução do workflow *Testes* na branch (inclui WebKit e o job *banco*).
 1b. Aplicar a migração 001 seguindo `supabase/README.md` (ensaio num projeto de teste primeiro). A ordem entre banco e app é indiferente.
