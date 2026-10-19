@@ -1,0 +1,192 @@
+{
+ "intent": [
+  {
+   "what": "Faixa de incerteza (±°C, 90%)",
+   "base": "Fiordilatte",
+   "old": 0.7988051341365985,
+   "new": 0.6639480561645924,
+   "why": "v18.11: a perturbação passou a ser na composição, não no peso"
+  },
+  {
+   "what": "Faixa de incerteza (±°C, 90%)",
+   "base": "Crema all'uovo",
+   "old": 0.7998371294068272,
+   "new": 0.6735438369208813,
+   "why": "v18.11: a perturbação passou a ser na composição, não no peso"
+  },
+  {
+   "what": "Faixa de incerteza (±°C, 90%)",
+   "base": "Cioccolato fondente",
+   "old": 0.8392429791179659,
+   "new": 0.9239908420657201,
+   "why": "v18.11: a perturbação passou a ser na composição, não no peso"
+  },
+  {
+   "what": "Faixa de incerteza (±°C, 90%)",
+   "base": "Pistacchio",
+   "old": 0.8301982304979686,
+   "new": 0.669544028857782,
+   "why": "v18.11: a perturbação passou a ser na composição, não no peso"
+  },
+  {
+   "what": "Faixa de incerteza (±°C, 90%)",
+   "base": "Nocciola",
+   "old": 0.8388439995589666,
+   "new": 0.6633376089720193,
+   "why": "v18.11: a perturbação passou a ser na composição, não no peso"
+  },
+  {
+   "what": "Faixa de incerteza (±°C, 90%)",
+   "base": "Sorbetto al limone",
+   "old": 0.8064487832453616,
+   "new": 0.8523474507592922,
+   "why": "v18.11: a perturbação passou a ser na composição, não no peso"
+  },
+  {
+   "what": "Faixa de incerteza (±°C, 90%)",
+   "base": "Sorbetto di fragola",
+   "old": 1.043586979666696,
+   "new": 1.0315877096298736,
+   "why": "v18.11: a perturbação passou a ser na composição, não no peso"
+  },
+  {
+   "what": "Faixa de incerteza (±°C, 90%)",
+   "base": "Cocco vegano",
+   "old": 0.6930311767969801,
+   "new": 0.7857888689513787,
+   "why": "v18.11: a perturbação passou a ser na composição, não no peso"
+  },
+  {
+   "what": "Gerador por alvo (mesmas metas)",
+   "base": "crema",
+   "old": "nx_fredolin 25, leite 591, creme35 169, lpd 35, sacarose 153, dextrosem 27",
+   "new": "nx_fredolin 25, leite 591, creme35 169, lpd 35, sacarose 153, dextrosem 27",
+   "why": "idêntico"
+  },
+  {
+   "what": "Gerador por alvo (mesmas metas)",
+   "base": "sorbetto",
+   "old": "nx_fredolin 25, agua 682, sacarose 210, dextrosem 53, malto 30",
+   "new": "nx_fredolin 25, agua 682, sacarose 210, dextrosem 53, malto 30",
+   "why": "idêntico"
+  },
+  {
+   "what": "Gerador por alvo (mesmas metas)",
+   "base": "semacucar",
+   "old": "nx_fredolin 25, leite 701, creme35 168, lpd 7, eritritol 91, inulina 8",
+   "new": "nx_fredolin 25, eritritol 45, leite 615, creme35 195, lpd 26, alulose 51, fibramilho 43, sucralose 0",
+   "why": "v18.5: sem açúcar com eritritol fixo, alulose e fibra; sólidos como meta"
+  }
+ ],
+ "old": "52f99f0",
+ "testsOld": "24/24",
+ "testsNew": "24/24",
+ "compared": 208,
+ "changed": 0,
+ "byField": [
+  {
+   "k": "sol",
+   "n": "Sólidos",
+   "u": "%",
+   "changed": 0,
+   "maxAbs": 0,
+   "cases": []
+  },
+  {
+   "k": "fat",
+   "n": "Gordura",
+   "u": "%",
+   "changed": 0,
+   "maxAbs": 0,
+   "cases": []
+  },
+  {
+   "k": "msnf",
+   "n": "MSNF",
+   "u": "%",
+   "changed": 0,
+   "maxAbs": 0,
+   "cases": []
+  },
+  {
+   "k": "pod",
+   "n": "POD",
+   "u": "%",
+   "changed": 0,
+   "maxAbs": 0,
+   "cases": []
+  },
+  {
+   "k": "pacKg",
+   "n": "PAC",
+   "u": "g/kg",
+   "changed": 0,
+   "maxAbs": 0,
+   "cases": []
+  },
+  {
+   "k": "fzVit",
+   "n": "Água congelada",
+   "u": "%",
+   "changed": 0,
+   "maxAbs": 0,
+   "cases": []
+  },
+  {
+   "k": "serveT",
+   "n": "Ponto de serviço",
+   "u": "°C",
+   "changed": 0,
+   "maxAbs": 0,
+   "cases": []
+  },
+  {
+   "k": "ov",
+   "n": "Overrun",
+   "u": "%",
+   "changed": 0,
+   "maxAbs": 0,
+   "cases": []
+  },
+  {
+   "k": "melt10",
+   "n": "Derretido 10 min",
+   "u": "%",
+   "changed": 0,
+   "maxAbs": 0,
+   "cases": []
+  },
+  {
+   "k": "visc",
+   "n": "Viscosidade",
+   "u": "mPa·s",
+   "changed": 0,
+   "maxAbs": 0,
+   "cases": []
+  },
+  {
+   "k": "crystal",
+   "n": "Cristal (índice)",
+   "u": "µm",
+   "changed": 0,
+   "maxAbs": 0,
+   "cases": []
+  },
+  {
+   "k": "ph",
+   "n": "pH",
+   "u": "",
+   "changed": 0,
+   "maxAbs": 0,
+   "cases": []
+  },
+  {
+   "k": "shelfVit",
+   "n": "Estabilidade da textura",
+   "u": "dias",
+   "changed": 0,
+   "maxAbs": 0,
+   "cases": []
+  }
+ ]
+}

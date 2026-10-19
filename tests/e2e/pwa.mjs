@@ -44,9 +44,12 @@ await ctx.route('**/*supabase.co/**', r => r.abort()); await ctx.route('**/fonts
 const diag = pg => pg.evaluate(async () => { await navigator.serviceWorker.ready; for (let i = 0; i < 40 && !navigator.serviceWorker.controller; i++) await new Promise(r => setTimeout(r, 100)); return swAsk('diag'); });
 const caches_ = pg => pg.evaluate(async () => (await caches.keys()).filter(k => k.startsWith('il-fredolin-')).sort());
 
-/* 0. migração: aparelho com o service worker antigo (v18.6, publicado) recebe esta versão */
+/* 0. migração: aparelho com o service worker da última versão publicada (diferente desta) recebe esta versão */
 { const { execSync } = await import('node:child_process');
-  const old = { html: execSync('git show origin/main:index.html', { cwd: root, maxBuffer: 64e6 }).toString(), sw: execSync('git show origin/main:sw.js', { cwd: root }).toString() };
+  /* versão publicada mais recente que seja DIFERENTE desta (se a main já é esta versão, a anterior publicada) */
+  const show = (c, f) => execSync(`git show ${c}:${f}`, { cwd: root, maxBuffer: 64e6 }).toString();
+  const pubC = execSync('git log --format=%H origin/main -- index.html', { cwd: root }).toString().trim().split('\n').find(c => show(c, 'index.html') !== v1.html);
+  const old = { html: show(pubC, 'index.html'), sw: show(pubC, 'sw.js') };
   cur = old; const c0 = await b.newContext(); await c0.route('**/*supabase.co/**', r => r.abort()); await c0.route('**/fonts.g*/**', r => r.abort());
   const p0 = await c0.newPage(); await p0.goto(base); await p0.evaluate(async () => { await navigator.serviceWorker.ready; }); await p0.reload(); await p0.waitForTimeout(500);
   const k0 = await p0.evaluate(async () => (await caches.keys()).join(','));

@@ -842,23 +842,39 @@ As tolerâncias são escolhas do app e estão declaradas no registro.
 
 **O que não foi feito no §35:** uma reformulação visual completa do app. A linguagem atual (escura, mono para números, selos de natureza) foi mantida, e os instrumentos novos seguem o mesmo padrão sóbrio. Redesenhar todas as telas é um trabalho grande, que deve ser decidido com você, não feito por iniciativa minha.
 
-## 6. Para publicar (requer sua autorização)
-1. Conferir a execução do workflow *Testes* na branch (inclui WebKit e o job *banco*).
-1b. Aplicar a migração 001 seguindo `supabase/README.md` (ensaio num projeto de teste primeiro). A ordem entre banco e app é indiferente.
-2. Testar no iPhone pela URL da branch ou após merge: abrir, trabalhar offline, fechar e reabrir.
-3. Atualizar a versão no `sw.js` (`CACHE='il-fredolin-…'`) junto com o merge.
-4. Fazer o merge em `main`.
+## 5-V. Auditoria final (Fase 10)
 
-## 7. Próximas fases, em ordem de prioridade (seção 53 da especificação)
-1. ~~Banco: schema.sql e auditoria de RLS~~ — feito (§5-C).
-2. ~~Conflitos e estoque~~ — feito (§5-C); falta aplicar a migração 001 no Supabase.
-3. **Backup automático** periódico (o manual já está completo e a restauração é segura) antes de migrar `localStorage` → IndexedDB.
-4. ~~Rótulos de natureza do resultado~~ — feito para 6 grandezas; estender a textura/quenelle, derretimento e incerteza.
-5. **Medições de baixo custo** que mais reduzem incerteza: temperatura do centro do pote no endurecimento e na espera (calibra h), overrun por copo, temperatura de extração da Maestro.
-6. ~~Novas famílias, design inverso, DoE~~ — feitos (§5-E, §5-G, §5-H).
+Consolidada em **`docs/RELATORIO-FINAL.md`**:
+- testes completos;
+- comportamento antigo × novo: 208/208 valores idênticos à v17.12.1;
+- preservação: 0 perdas;
+- segurança;
+- benchmarks, incluindo o iPhone real;
+- migração e **reversão do app** (teste novo `tests/e2e/reversao.mjs`, no CI);
+- os 20 entregáveis do §XXI;
+- matriz de compatibilidade;
+- cobertura de cada seção da especificação;
+- o que está comprovado e o que não está.
+
+Operação e reversão: `docs/OPERACAO.md`. Validação experimental: `docs/validacao/PLANO.md`.
+
+Ferramentas novas:
+- `tools/comparar-versoes.mjs` (motor de duas versões lado a lado);
+- `tools/preservacao.mjs` (páginas, ações, campos e chaves; falha se algo se perder).
+
+Dois defeitos de **teste** corrigidos:
+- a migração do service worker comparava a `main` com ela mesma depois da publicação;
+- o teste de reversão não abria a sessão.
+
+## 6. Para publicar (requer sua autorização)
+Fluxo em `docs/OPERACAO.md` §1: CI verde nos 3 jobs → avanço rápido da `main` → conferir a implantação do GitHub Pages no mesmo commit. As migrações 001 e 002 do banco já estão aplicadas (§5-D).
+
+## 7. Próximas fases
+Ver `docs/RELATORIO-FINAL.md` §9. Em resumo: medições reais (plano de validação), fichas dos ingredientes sem fonte, política de conteúdo (CSP) e decisões de produto (jornadas e redesenho visual).
 
 ## 8. Limitações desta auditoria
-- RLS e funções do banco não auditadas (esquema ausente do repositório).
-- Nada foi testado em Safari/iOS real neste ambiente.
-- Receitas dos mestres não foram testadas (ficam só no Supabase).
-- A auditoria das 1.100 linhas do motor foi feita por leitura das funções listadas e por teste das propriedades físicas; os ~35 defeitos do diagnóstico e os geradores de receita não foram revisados um a um.
+- ~~RLS e funções do banco não auditadas~~: auditadas e corrigidas em §5-C e §5-D (31/31 no esquema migrado).
+- iPhone real: medido só o desempenho (§5-R e `docs/bench/iphone-v18.14.json`). O funcionamento offline foi verificado em Chromium; no WebKit, simulado online. No iPhone, o uso diário é a evidência.
+- Receitas dos mestres não testadas: ficam só no Supabase, e o código público carrega 0 mestres.
+- Os ~35 defeitos do diagnóstico e os textos do laudo não foram revisados um a um contra a literatura.
+- Nenhum modelo está validado com medição real (`docs/validacao/PLANO.md`).

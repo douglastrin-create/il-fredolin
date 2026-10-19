@@ -25,6 +25,14 @@ O script do app fica guardado como texto (`<script type="text/x-fredolin-app">`)
 
 Decisão registrada em [`ARQUITETURA-COMPUTACAO.md`](ARQUITETURA-COMPUTACAO.md): motor em JavaScript, tarefas pesadas num Web Worker com progresso e cancelamento (`ui/tarefas.js`). WebAssembly foi medido com um protótipo (`tools/wasm-proto/`) e não entra no app; o documento lista os gatilhos que reabrem a decisão. A bateria de desempenho é a mesma no Node (`node tools/bench.mjs`), nos navegadores (`node tests/e2e/bench.mjs`) e no aparelho (Ciência do motor).
 
+## Documentos
+
+- [`RELATORIO-FINAL.md`](RELATORIO-FINAL.md): entregáveis, cobertura da especificação, o que está comprovado.
+- [`OPERACAO.md`](OPERACAO.md): montar, testar, publicar, reverter.
+- [`ARQUITETURA-COMPUTACAO.md`](ARQUITETURA-COMPUTACAO.md): decisão de computação.
+- [`AUDITORIA-v18.md`](AUDITORIA-v18.md): auditoria e relatório de cada versão.
+- [`validacao/PLANO.md`](validacao/PLANO.md): validação experimental.
+
 ## Como editar
 
 1. Edite o módulo em `src/`. Não edite o `index.html`.

@@ -35,6 +35,8 @@ jobs:
         run: node tests/e2e/pwa.mjs chromium && node tests/e2e/pwa.mjs webkit
       - name: Armazenamento local — IndexedDB principal, espelho, migração, cota cheia, sem IndexedDB, cópias automáticas
         run: node tests/e2e/storage.mjs chromium && node tests/e2e/storage.mjs webkit
+      - name: Reversão — versão antiga (v18.8 e v17.12.1) abre com os dados gravados pela atual
+        run: node tests/e2e/reversao.mjs chromium && node tests/e2e/reversao.mjs webkit
       - name: Desempenho do motor (informativo, não reprova) — Chromium, Chromium com CPU lenta e WebKit
         continue-on-error: true
         run: node tests/e2e/bench.mjs
