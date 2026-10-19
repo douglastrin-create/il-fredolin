@@ -174,6 +174,7 @@ const ACT={
  offDiag:()=>{offlineDiag();},
  sciOpen:v=>{if(!can.page('ciencia'))return;U.sciOpen=v;S.page='ciencia';render();setTimeout(()=>{const e=document.getElementById('sci-'+v);if(e)e.scrollIntoView({block:'start'});},60);},
  offRepair:()=>{offlineRepair();},
+ twinBOn:()=>{U.twinB={};render();},twinBOff:()=>{U.twinB=null;render();},
  uncMC:()=>{const k=JSON.stringify([S.tipo,S.vit,S.recipe,S.brix,S.proc]);U.uncMC={k,busy:true};render();setTimeout(()=>{U.uncMC={k,r:uncertaintyMC(S,{n:300})};render();},30);},
  snapNow:async()=>{const r=await kvSnapTake({v:VERSION,date:today()});toast(r.ok?'Cópia automática de hoje guardada ('+r.n+' itens).':'Cópia não guardada: '+r.msg);offlineDiag();},
  snapRestore:async v=>{const s=await kvSnapGet(v);if(!s){toast('Cópia não encontrada.');return;}importBackupText('cópia automática de '+new Date(s.at).toLocaleString('pt-BR'),s.json);setTimeout(()=>{const e=document.getElementById('impFile');if(e)e.scrollIntoView({block:'center'});},80);},
@@ -256,6 +257,7 @@ const CHG={
   saveLotSoon(L);}},
  ingCat:t=>{U.ingCat=t.value;},
  ingProv:t=>{U.ingProv=t.value;},
+ twinB:t=>{const k=t.dataset.k;if(!U.twinB)return false;const num=!['coolMode','coolVessel'].includes(k);if(num&&(t.value===''||!isFinite(+t.value)))return false;U.twinB={...U.twinB,[k]:num?+t.value:t.value};},
  ingAl:t=>{if(!U.ingEdit)return false;const a=U.ingEdit.x.al=U.ingEdit.x.al||[];const k=t.dataset.k;if(t.checked&&!a.includes(k))a.push(k);if(!t.checked)U.ingEdit.x.al=a.filter(x=>x!==k);},
  ingFlag:t=>{if(!U.ingEdit)return false;U.ingEdit.x[t.dataset.k]=t.checked?1:0;},
  vitAdd:t=>{if(!t.value)return false;const s=srcByKey(t.value);if(s){S.vitrine.items.push({name:s.name.replace(/^Receita da bancada · /,''),tipo:s.tipo,recipe:JSON.parse(JSON.stringify(s.recipe))});saveVit();}},
@@ -286,7 +288,7 @@ function importCard(){const I=U.imp;if(!I)return'';const P=I.plan,t=P.total;
 /* toda ação passa pela checagem do perfil (o servidor também recusa o que o perfil não pode) */
 const denied=()=>toast('Seu perfil não tem acesso a esta função.');
 /* ações que não mexem na receita não entram no desfazer */
-const NO_UNDO=new Set(['uncMC','snapNow','snapRestore','sciOpen','offDiag','offRepair','doeGen','doeCancel','doeLots','impNo','impDel','rejDrop','rejDropNo','rejExport','appReload','go','sub','defMode','defSym','defClr','defOpen','defCat','fam','palOpen','palClose','palRun','undo','copy','chk','unchk','libTab','libAuthor','libMore','libTipo','libVitF','simOpen','simClose','cmpToggle','cmpClear','histOpen','lotOpen','crTab','crSub','atGoal','setSw','navTog','toTop','flowOpen','flowView','flowNotify','flowNext','flowBack','flowDisc','flowColor','flowStart','flowLot','procGo','procPlay','atSel','atPick','atCard','atExplore','nxGoal','sazM','del','delNo','meltTimer','panelSet','panelStart','panelNext','panelCancel','panelReveal','panelReset','testRun','syncNow','age','pick']);
+const NO_UNDO=new Set(['twinBOn','twinBOff','uncMC','snapNow','snapRestore','sciOpen','offDiag','offRepair','doeGen','doeCancel','doeLots','impNo','impDel','rejDrop','rejDropNo','rejExport','appReload','go','sub','defMode','defSym','defClr','defOpen','defCat','fam','palOpen','palClose','palRun','undo','copy','chk','unchk','libTab','libAuthor','libMore','libTipo','libVitF','simOpen','simClose','cmpToggle','cmpClear','histOpen','lotOpen','crTab','crSub','atGoal','setSw','navTog','toTop','flowOpen','flowView','flowNotify','flowNext','flowBack','flowDisc','flowColor','flowStart','flowLot','procGo','procPlay','atSel','atPick','atCard','atExplore','nxGoal','sazM','del','delNo','meltTimer','panelSet','panelStart','panelNext','panelCancel','panelReveal','panelReset','testRun','syncNow','age','pick']);
 function runAct(k,v,t){if(NO_UNDO.has(k))return ACT[k](v,t);const before=undoSnap();undoMark();const r=ACT[k](v,t);
  if(r&&typeof r.then==='function')return r;if(undoSnap()===before)undoSettle();else if(UNDO_TOAST.has(k))toastUndo();return r;}
 document.addEventListener('toggle',e=>{const d=e.target;if(d&&d.tagName==='DETAILS'&&d.id){U.dopen=U.dopen||{};U.dopen[d.id]=d.open;}},true);

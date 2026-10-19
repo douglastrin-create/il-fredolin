@@ -31,11 +31,7 @@ function fridgeT(ms){const r=parseReads(ms.reads);
  if(r.length){const mu=r.reduce((a,b)=>a+b,0)/r.length;const sd=r.length>1?Math.sqrt(r.reduce((a,b)=>a+(b-mu)*(b-mu),0)/(r.length-1)):.6;return{mu,sd:Math.max(.3,sd),src:'medida',n:r.length};}
  if(MAT_PRO[ms.fridge]){const sp=+((S&&S.proc&&S.proc.matT)||4);return{mu:sp+(ms.fridge==='maturador'?0:FRIDGE_POS[ms.pos].d),sd:MAT_PRO[ms.fridge].sd,src:'setpoint',n:0};}
  return{mu:FRIDGE[ms.fridge].T+FRIDGE_POS[ms.pos].d,sd:1,src:'estimada',n:0};}
-/* constante de tempo do pote (h): massa × cp / (h × área), convecção natural na geladeira */
-function potTau(m){const kg=Math.max(.05,(m.tot||1000)/1000),V=kg/((m.rhoMix||1.08)*1000);const A=6*Math.pow(V,2/3)*.85;return kg*3300/(9*A)/3600;}
-/* calibração pela medição da calda: "6,5@90" = 6,5 °C depois de 90 min na geladeira */
-function probeFit(ms,Tf){const p=String(ms.probe||'').split('@');if(p.length!==2)return null;const Tm=+p[0].replace(',','.'),min=+p[1].replace(',','.');
- if(!isFinite(Tm)||!isFinite(min)||min<=0)return null;const r=(Tm-Tf)/(ms.entryT-Tf);if(!(r>0&&r<1))return null;return-min/60/Math.log(r);}
+/* potTau e probeFit (resfriamento da calda) foram para core/heat-transfer/resfriamento.js na v18.13 */
 const MAT_FAT_T50={milk:1.3,egg:1.1,coco:.5,palm:1,cocoa:3,nut:.6,oil:.4};
 const MAT_INF={fava:8,especiaria:6,ervas:4,cocoralado:6,alfarroba:5,cacau:2,tamara:4,matcha:.5};
 const MAT_PROT={abacaxi:1,mamao:1,figo:.8};const MAT_OX={banana:1,maca:.8,macasuco:.8,pera:.8,abacate:1,pessego:.6,damasco:.5};

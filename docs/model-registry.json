@@ -1106,6 +1106,121 @@
     "status": "sem validação independente",
     "live": "grandeza sem medição prevista no lote"
    }
+  },
+  {
+   "id": "process-cycle",
+   "fn": [
+    "cycleTwin",
+    "coolStage",
+    "storeResponse",
+    "storeResponseSim",
+    "potTau"
+   ],
+   "class": [
+    "M",
+    "C"
+   ],
+   "name": "Ciclo produtivo encadeado (gêmeo do processo)",
+   "version": "v18.13",
+   "equation": "Resfriamento e maturação: T(t) = T_eq + (T0 − T_eq)·e^(−t/τ), τ = m·c_p/ΣU·A, 1/U = 1/h_fora + L/k_parede + 1/h_dentro. Mantecação: tempo = energia do ciclo (sensível + latente) ÷ potência deduzida do ciclo informado. Armazenamento: Θ(r) = B·senh(qr)/r, q = √(iω/α), com −k·Θ'(R) = h·(Θ(R) − A) (regime periódico na esfera equivalente)",
+   "parameters": [
+    {
+     "n": "h geladeira e bancada (ar parado)",
+     "v": 9,
+     "unit": "W/m²K",
+     "src": "Incropera, tabela 1.1 (convecção natural em gases 2–25); mesmo valor da Maturação desde a v17.2"
+    },
+    {
+     "n": "h banho de água com gelo",
+     "v": 250,
+     "unit": "W/m²K",
+     "src": "Incropera, tabela 1.1 (convecção natural em líquidos 50–1000); estimativa"
+    },
+    {
+     "n": "h dentro da calda",
+     "v": 150,
+     "unit": "W/m²K",
+     "src": "Incropera, tabela 1.1 (líquidos 50–1000); estimativa"
+    },
+    {
+     "n": "k inox / alumínio / PP / vidro",
+     "v": "14,9 / 237 / 0,2 / 1,4",
+     "unit": "W/m·K",
+     "src": "Incropera, apêndice A"
+    },
+    {
+     "n": "espessura da parede inox / alumínio / PP / vidro",
+     "v": "1 / 1 / 2 / 4",
+     "unit": "mm",
+     "src": "prática (espessura típica)"
+    },
+    {
+     "n": "c_p da calda",
+     "v": 3300,
+     "unit": "J/kg·K",
+     "src": "mesmo valor da Maturação e da Maestro"
+    }
+   ],
+   "outputs": [
+    {
+     "k": "temperatura da calda por etapa",
+     "unit": "°C"
+    },
+    {
+     "k": "tempo de 60 a 10 °C",
+     "unit": "min"
+    },
+    {
+     "k": "maturação efetiva",
+     "unit": "h"
+    },
+    {
+     "k": "mantecação prevista",
+     "unit": "min"
+    },
+    {
+     "k": "amplitude no pote por período",
+     "unit": "± °C"
+    }
+   ],
+   "hypotheses": [
+    "Calda homogênea no recipiente (convecção interna mistura o líquido)",
+    "Recipiente cilíndrico cheio, altura = diâmetro",
+    "Banho com gelo sobrando o tempo todo",
+    "Mantecação: potência constante, deduzida do ciclo informado",
+    "Armazenamento: oscilação pequena, propriedades na temperatura do freezer (linearização conferida contra a simulação completa)"
+   ],
+   "validity": "Calda de 0,2 a 10 kg; geladeira de 0 a 10 °C; freezer de −10 a −35 °C com oscilação de até ±3 °C",
+   "dataOrigin": "Composição da receita, processo informado, geladeira da página Maturação (medida ou estimada)",
+   "method": "Fórmulas fechadas (Newton e solução periódica em variáveis complexas); endurecimento e temperagem pela simulação de condução existente",
+   "tolerance": {
+    "calda": [
+     1.5,
+     "°C"
+    ],
+    "tempo até 10 °C": [
+     20,
+     "%"
+    ]
+   },
+   "uncertainty": "Sem banda; o maior desconhecido é h (convecção), calibrável pela calda medida",
+   "calibration": "Calda medida na geladeira ('6,5@90') calibra τ da maturação; núcleo medido calibra o endurecimento e o armazenamento",
+   "limits": "Aquecimento não simulado (depende do fogão); curva dentro da máquina não simulada; sem gradiente dentro da calda (sem mexer, o centro fica atrás); forma real da oscilação do freezer não é senoidal; nenhuma etapa sincronizada com medições contínuas",
+   "verification": {
+    "software": [
+     "cycle.test.mjs › ciclo: etapas encadeadas",
+     "cycle.test.mjs › potTau da maturação continua o mesmo"
+    ],
+    "math": [
+     "cycle.test.mjs › resfriamento: Newton exato",
+     "cycle.test.mjs › armazenamento: solução exata linearizada concorda",
+     "cycle.test.mjs › armazenamento: amplitude cai da superfície ao centro"
+    ]
+   },
+   "validation": {
+    "status": "sem validação independente",
+    "live": "calibração pela calda medida (Maturação) e pelo núcleo do pote (lotes)"
+   }
   }
  ],
  "fieldsNote": "Campos por modelo (§46): name, version, equation, parameters[{n,v,unit,src}], outputs[{k,unit}], hypotheses, validity, dataOrigin, method, tolerance{grandeza:[valor,unidade]} (critério de aceite na validação), uncertainty, calibration, validation, verification{software,math}. null = não estabelecido (não inventar). verification cita \"arquivo.test.mjs › trecho do título\" ou \"runTests › trecho\".",

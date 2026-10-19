@@ -553,6 +553,87 @@ Hoje: **sem dados**. Nenhum lote registrado tem textura ideal com temperatura. N
 - A correlação entre ingredientes diferentes não é conhecida: Monte Carlo e linear são os dois extremos.
 - O Monte Carlo cobre só a temperatura de serviço. Overrun, derretimento e textura não têm incerteza propagada.
 
+## 5-Q. v18.13 — gêmeo do ciclo produtivo (§16, §33, §34)
+
+**Auditoria do que já existia:**
+
+| Etapa | Antes da v18.13 |
+|---|---|
+| Aquecimento e pasteurização | Só regras no laudo (63/72/85 °C, tempo de patamar) |
+| Resfriamento | Nenhum modelo; a Maturação supunha a calda entrando na geladeira a 10 °C |
+| Maturação | Modelo completo na página Maturação (Newton, gordura, hidratação), mas **dentro da camada de interface** |
+| Mantecação | Balanço de energia da Maestro, com a calda sempre na temperatura nominal do processo |
+| Endurecimento e temperagem | Simulação de condução verificada (v18.2) |
+| Armazenamento | Só a oscilação informada entrando como regra de defeito, sem física |
+| Ligação entre etapas | Nenhuma: cada página partia de valores nominais |
+
+**O que mudou:**
+- **Laudo → "Ciclo completo"**, com as 8 etapas encadeadas: a saída de cada uma é a entrada da seguinte.
+  - A calda que sai do resfriamento entra na maturação.
+  - A temperatura real da calda no fim da maturação entra na mantecação.
+  - A mantecação entrega o gelato ao endurecimento, que segue para o armazenamento e a temperagem.
+- **Cada etapa declara a sua fidelidade (§34):**
+  - **não simulado:** aquecimento (depende do fogão; só o balanço de energia);
+  - **mecanístico:** resfriamento, maturação, mantecação, endurecimento, armazenamento e temperagem;
+  - **calibrado por dados:** maturação, quando há a calda medida ("6,5@90"); endurecimento e armazenamento, quando há núcleo medido nos lotes;
+  - **exploratório:** serviço e derretimento;
+  - **sincronizado com medições:** nenhuma etapa, e a tela diz por quê.
+- **Sem animação fingindo física (§33).** O gráfico desenha curva só onde há modelo do tempo. Aquecimento, mantecação e aclimatação na vitrine aparecem como início e fim tracejados. Cada etapa tem a sua própria escala de tempo, e o gráfico avisa.
+- **Comparar cenários.** Um cenário B ao lado do atual (modo de resfriar, recipiente, tempo, maturação, geladeira, pré-resfriamento, pote, Turbo, oscilação), com a diferença em cada grandeza.
+- **Offline (§34).** Tudo é função pura do estado: ao reabrir, o ciclo é recalculado. Nada roda em segundo plano.
+
+**Física nova** (`core/heat-transfer/resfriamento.js`):
+
+*Resfriamento da calda.* Capacitância concentrada (Newton), recipiente cilíndrico cheio com altura igual ao diâmetro, e 1/U = 1/h_fora + L/k_parede + 1/h_dentro. No banho de gelo, as laterais e o fundo ficam na água e o topo no ar da cozinha. Os valores de h estão dentro das faixas do Incropera (tabela 1.1); a condutividade das paredes vem do apêndice A. Os h são estimativas, declaradas no registro.
+
+*Oscilação do freezer.* É a resposta periódica exata da condução na esfera equivalente ao pote, com as propriedades tomadas na temperatura do freezer (a capacidade aparente inclui o gelo que derrete e recongela). Conferida contra a simulação completa, não linear, em 24 casos: 3 receitas, potes de 250 e 1000 mL, períodos de 30 min e 3 h, freezer a −20 e −14 °C. **Diferença máxima de 0,007 °C.** Roda em microssegundos; a simulação de 24 h levava 0,5 s.
+
+*Maturação.* `potTau` e `probeFit` saíram da interface para o núcleo **sem mudança de cálculo**. Um teste fixa a fórmula.
+
+**O que o ciclo mostra.** Fior di latte, set Casa (1,1 kg, 45 min de resfriamento, 12 h de maturação, geladeira a 4,5 °C estimada):
+
+| Resfriamento | Calda após 45 min (°C) | De 60 a 10 °C (min) | Maturação efetiva (h, calda ≤ 5,5 °C) | Calda na máquina (°C) |
+|---|---|---|---|---|
+| Banho de gelo, inox | 3,5 | 25 | 12,0 | 4,5 |
+| Banho de gelo, plástico | 15,3 | 128 | 6,6 | 4,6 |
+| Direto na geladeira, inox | 60,8 | 291 | 3,5 | 4,7 |
+| Direto na geladeira, plástico | 62,4 | 315 | 2,8 | 4,8 |
+| Bancada 45 min + geladeira, inox | 66,7 | 284 | 3,3 | 4,7 |
+
+Leituras (previsões, não medições):
+- Sem banho de gelo, a calda leva quase 5 h para ir de 60 a 10 °C. Das 12 h de maturação, só ~3 h acontecem com a calda fria.
+- O pote de plástico no banho perde metade do ganho: em 45 min a calda ainda está a 15 °C.
+- A RDC 216/2004 da Anvisa pede de 60 a 10 °C em até 2 h para alimentos preparados. O app mostra o tempo e cita a regra, mas não declara conformidade.
+
+**Armazenamento.** Pistacchio com o freezer a −18 ± 2 °C. Cada célula mostra a amplitude na camada de servir / no centro:
+
+| Pote | Período de 30 min | Período de 3 h | Período de 24 h |
+|---|---|---|---|
+| 250 mL | ±0,23 / ±0,15 | ±1,02 / ±1,01 | ±1,96 / ±1,96 |
+| 500 mL | ±0,21 / ±0,09 | ±0,85 / ±0,81 | ±1,93 / ±1,93 |
+| 1000 mL | ±0,19 / ±0,04 | ±0,71 / ±0,62 | ±1,88 / ±1,88 |
+| 2500 mL | ±0,18 / ±0,01 | ±0,60 / ±0,40 | ±1,79 / ±1,77 |
+
+O ciclo do compressor (minutos) quase não passa da superfície. Degelo, porta aberta e a diferença entre dia e noite chegam inteiros ao gelato, em qualquer tamanho de pote. O pote grande protege só contra oscilações rápidas.
+
+**Testes:**
+- `cycle.test.mjs` (6):
+  - Newton exato e inverso;
+  - ordem física entre modos, paredes e volumes (τ ∝ V^(1/3));
+  - `potTau` e `probeFit` iguais aos de antes;
+  - solução exata linearizada × simulação não linear;
+  - amplitude cai da superfície ao centro e cresce com o período até a do ar;
+  - etapas encadeadas (saída = entrada), aquecimento não simulado, nenhuma etapa sincronizada, calibração muda a fidelidade, calda mais quente alonga a mantecação, tempo total = soma das etapas.
+- E2E com 5 verificações novas: etapas e fidelidade na tela, cenário B pela interface, recipiente do processo mudando pela tela, 390 px sem rolagem horizontal, 22 fichas na Ciência do motor.
+- Node 95/95. Fumaça, PWA e armazenamento passam em Chromium e WebKit. Camadas: 0.
+
+**Limites:**
+- Os h de convecção são estimativas dentro de faixas de livro. Só a calda medida calibra a maturação, e o resfriamento no banho ainda não tem medição própria.
+- A calda é tratada como homogênea: sem mexer, o centro fica atrás da média.
+- A curva de temperatura dentro da mantecadora e o aquecimento não são simulados.
+- A oscilação real do freezer não é senoidal; a tabela mostra a resposta por período.
+- **Duas fontes de entrada na geladeira:** a página Maturação continua usando a "temperatura de entrada" que você informa; o ciclo calcula a sua própria a partir do resfriamento. Unificar fica para quando houver uma medição da calda para conferir.
+
 ## 6. Para publicar (requer sua autorização)
 1. Conferir a execução do workflow *Testes* na branch (inclui WebKit e o job *banco*).
 1b. Aplicar a migração 001 seguindo `supabase/README.md` (ensaio num projeto de teste primeiro). A ordem entre banco e app é indiferente.

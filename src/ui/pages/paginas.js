@@ -36,7 +36,7 @@ function pgBancada(m,F,sc){
 
 /* ---------- LAUDO ---------- */
 /* Laudo único (v17.7): resumo com problemas primeiro e riscos de defeito; congelamento, química/vida útil e parâmetros como seções */
-const LAUDO_SEC=[['resumo','Resumo'],['congelamento','Congelamento'],['textura','Textura e quenelle'],['quimica','Química e estabilidade da textura'],['medir','O que medir'],['parametros','Parâmetros']];
+const LAUDO_SEC=[['resumo','Resumo'],['congelamento','Congelamento'],['textura','Textura e quenelle'],['quimica','Química e estabilidade da textura'],['ciclo','Ciclo completo'],['medir','O que medir'],['parametros','Parâmetros']];
 function pgLaudo(m,F,sc){
  if(m.empty)return`<div class="pg"><h1>Laudo técnico</h1><p class="lead">Monte uma receita na Bancada para gerar o laudo.</p></div>`;
  const P=m.P,groups=['crit','warn','info','ok'];const t=subOf('laudo','resumo');
@@ -50,6 +50,7 @@ function pgLaudo(m,F,sc){
  if(t==='congelamento'){const E=embedPg(pgCongel(m));lead=E.lead;body=E.body;}
  else if(t==='textura'){lead='Dureza na colher pelo volume de gelo e ponto de quenelle para empratar.';body=quenelleCard(m)+textureCard(m);}
  else if(t==='quimica'){const E=embedPg(pgQuimica(m));lead=E.lead;body=E.body+brixMixCards(m);}
+ else if(t==='ciclo'){lead='Preparação, tratamento térmico, resfriamento, maturação, mantecação, endurecimento, armazenamento, temperagem e serviço encadeados, com o modelo e a fidelidade de cada etapa.';body=twinCard(m);}
  else if(t==='medir'){lead='As medições que mais aumentariam a confiança nas previsões desta receita, das mais úteis às menos úteis. Nenhuma é obrigatória para usar o app.';body=measureCard(m);}
  else if(t==='parametros'){lead='Cada parâmetro da receita contra a faixa de '+esc(P.n.toLowerCase())+'.';body=`<div class="card"><h2>Parâmetros</h2><div class="tw"><table class="tbl"><thead><tr><th>Parâmetro</th><th class="r">Valor</th><th class="r">Alvo</th><th style="width:30%">Posição</th></tr></thead><tbody>
   ${prm.map(([n,v,u,r,d])=>{const lo=r?Math.min(r[0],v)-(r[1]-r[0]||1)*.6:0,hi=r?Math.max(r[1],v)+(r[1]-r[0]||1)*.6:1;return`<tr><td>${n}</td><td class="r mono ${stCls(v,r)}">${d===0?f0(v):d===2?f2(v):f1(v)}${u}</td><td class="r mono muted">${r?(d===2?f2(r[0])+'–'+f2(r[1]):f0(r[0])+'–'+f0(r[1]))+u:'—'}</td><td>${r?rbar(v,r,lo,hi):''}</td></tr>`;}).join('')}
