@@ -678,6 +678,14 @@ O registro completo da decisão está em `docs/ARQUITETURA-COMPUTACAO.md`.
 
 **Falta:** os números do iPhone, do iPad e do Mac. É só abrir Ciência do motor → "Medir este aparelho" e me mandar o resultado ("Copiar resultado").
 
+**v18.14.1 · primeira medição no iPhone.** Tudo ficou muito abaixo do orçamento: as operações diárias abaixo de ~0,5 ms, Monte Carlo em 4 ms e alternativas em 6 ms. O WebAssembly ganha ~15× no núcleo térmico do Safari, mas só ~5 ms em valor absoluto, e a decisão (Alternativa A) se confirma.
+
+Os próprios números expuseram um **defeito do meu método de medição**. Os tempos curtos saíram quantizados pelo relógio de 1 ms do Safari (1/4, 1/200 ms), porque o tamanho do lote era decidido por uma única leitura do relógio. Na correção:
+- o lote dobra até durar ≥ 20 ms;
+- cada execução usa uma receita diferente, para nunca medir o cache.
+
+Um teste novo simula o relógio de 1 ms. Detalhes em `docs/ARQUITETURA-COMPUTACAO.md` §6. Node 100/100.
+
 ## 6. Para publicar (requer sua autorização)
 1. Conferir a execução do workflow *Testes* na branch (inclui WebKit e o job *banco*).
 1b. Aplicar a migração 001 seguindo `supabase/README.md` (ensaio num projeto de teste primeiro). A ordem entre banco e app é indiferente.

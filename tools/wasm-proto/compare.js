@@ -45,7 +45,7 @@ async function wasmCompare(E, bytes, reps) {
     const nc = wa(); M = mem(); const cv = X.p_curve() / 8;
     let maxd = 0; const n = Math.min(nc, ref.curve.length);
     for (let k = 0; k < n; k++) { const a = ref.curve[k]; maxd = Math.max(maxd, Math.abs(a.scoop - M[cv + k * 4 + 1]), Math.abs(a.core - M[cv + k * 4 + 2])); }
-    const time = f => { for (let k = 0; k < 5; k++) f(); let inner = 1; { const t = now(); f(); const d = now() - t; if (d < 4) inner = Math.min(200, Math.ceil(4 / Math.max(d, .02))); } const ts = []; for (let k = 0; k < reps; k++) { const t = now(); for (let j = 0; j < inner; j++) f(); ts.push((now() - t) / inner); } ts.sort((x, y) => x - y); return ts[Math.floor(ts.length / 2)]; };
+    const time = f => { for (let k = 0; k < 5; k++) f(); let inner = 1; for (;;) { const t = now(); for (let j = 0; j < inner; j++) f(); if (now() - t >= 20 || inner >= 4096) break; inner *= 2; } const ts = []; for (let k = 0; k < reps; k++) { const t = now(); for (let j = 0; j < inner; j++) f(); ts.push((now() - t) / inner); } ts.sort((x, y) => x - y); return ts[Math.floor(ts.length / 2)]; };
     const F = jsFast(o, tab, rho, r); let maxf = 0; for (let k = 0; k < Math.min(F.nc, ref.curve.length); k++) { const a = ref.curve[k]; maxf = Math.max(maxf, Math.abs(a.scoop - F.curve[k * 4 + 1]), Math.abs(a.core - F.curve[k * 4 + 2])); }
     const tj = time(js), tw = time(wa), tf = time(() => jsFast(o, tab, rho, r));
     out.push({ id: c.id, n: c.n, js: tj, jsOtim: tf, wasm: tw, ganho: tj / tw, ganhoOtim: tf / tw, difOtim: maxf, pontos: n, pontosJS: ref.curve.length, pontosWasm: nc, difMax: maxd });

@@ -49,3 +49,16 @@ test('trecho do Web Worker tem tudo de que as tarefas precisam (Monte Carlo e ba
   for (const f of ['function mulberry32', 'function uncertaintyMC', 'function benchRun', 'function cycleTwin', 'function storeResponse', 'function fitCalibration', 'function registerNeutro', 'var DEX_PREF'])
     assert.ok(w.includes(f), f + ' fora do trecho do worker');
 });
+
+test('medição em lote é correta com relógio de 1 ms (Safari) e nunca mede o cache', () => {
+  const real = () => performance.now(), coarse = () => Math.floor(performance.now());
+  const busy = us => { const t = real(); while (real() - t < us / 1000); };
+  for (const us of [5, 60, 400, 3000]) {
+    const r = E.benchRun({ now: coarse, ops: [{ id: 'x', n: 'x', cls: 'diario', reps: 9, fn: () => busy(us) }] });
+    const med = r.ops[0].med * 1000; assert.ok(Math.abs(med - us) / us < .15, `${us} µs medido como ${med.toFixed(1)} µs (lote ${r.ops[0].inner})`);
+  }
+  /* cada execução recebe um k diferente: nada se repete dentro de uma medição */
+  const ks = []; E.benchRun({ ops: [{ id: 'k', n: 'k', cls: 'diario', reps: 9, fn: k => { ks.push(k); busy(20); } }] });
+  assert.equal(new Set(ks).size, ks.length);
+});
+

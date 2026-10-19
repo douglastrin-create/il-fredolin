@@ -128,3 +128,25 @@ Candidatos prováveis: condução 2-D/3-D no pote (tampa, parede, prateleira), i
 | WebGPU e SIMD | Não usados: nada hoje precisa, e seriam aceleração opcional, nunca dependência |
 
 **Bug encontrado pelo teste ponta a ponta nesta versão:** o gerador aleatório com semente do Monte Carlo (`mulberry32`) estava em `core/experiments/doe.js`, fora do trecho que vai para o Web Worker. O Monte Carlo no worker falhava. Ele foi para `core/util.js`, e um teste agora confere que tudo de que as tarefas do worker precisam está dentro do trecho.
+
+## 6. Primeira medição no iPhone (v18.14, 18/10/2026)
+
+iPhone com iOS 18.7, Safari, 4 núcleos. A bateria rodou no Web Worker, que abriu em 56 ms; o total foi de 3,9 s. Dados brutos em `docs/bench/iphone-v18.14.json`.
+
+**Defeito de medição encontrado com esses números e corrigido na v18.14.1.** As operações curtas vieram como frações exatas: 0,25 = 1/4, 0,75 = 3/4, 0,005 = 1/200 ms. A regra de lote decidia o tamanho do lote por uma única leitura do relógio de 1 ms do Safari; quando essa leitura dava "1 ms", o lote ficava curto demais e a mediana saía quantizada. Por isso esses valores **valem só como limite superior**. Agora o lote dobra até durar ≥ 20 ms (erro < 5%), e cada execução usa uma receita diferente, para nunca medir o cache. Um teste reproduz um relógio de 1 ms e confere a medição de 5 µs a 3 ms com erro < 15%.
+
+O que já dá para afirmar:
+
+| | iPhone |
+|---|---|
+| Operações diárias | Todas abaixo de ~0,5 ms (limite superior), contra 50 ms de orçamento |
+| Oscilação, simulação completa | 11 ms (±1) |
+| Monte Carlo, 300 sorteios | 4 ms (±1) |
+| Alternativas, 60 metas | 6 ms (±1) |
+| Núcleo térmico, endurecimento: JavaScript × WebAssembly | 5 ms × ~0,3 ms (≈ 15×) |
+
+- **O iPhone é mais rápido que todos os ambientes de teste daqui.** O Monte Carlo leva 4 ms nele, contra 26 ms no Chromium deste servidor e 93 ms no Node.
+- **O WebAssembly ganha ~15× no núcleo térmico do Safari**, coerente com os 6–10× do WebKit no CI. Mas o ganho absoluto é de ~5 ms numa operação sob demanda.
+- **A decisão se confirma no aparelho real:** a condição 1 dos gatilhos (passar do orçamento) está longe de acontecer, então a Alternativa A continua.
+- Uma nova medição com a v18.14.1 vai trazer números limpos das operações curtas.
+
